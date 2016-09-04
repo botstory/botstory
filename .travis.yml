@@ -1,6 +1,13 @@
+sudo: required
+
 language: python
+
 python:
   - "3.5"
+
+services:
+  - docker
+
 env:
   DOCKER_COMPOSE_VERSION: 1.8.0
 
