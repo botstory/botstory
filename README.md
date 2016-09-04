@@ -1,3 +1,7 @@
+# State [![Build Status](https://travis-ci.org/hyzhak/bot-story.svg?branch=develop)](https://travis-ci.org/hyzhak/bot-story)
+
+Under active development
+
 # Idea
 
 Easy reading API to describe dialogs (scenery) of bots in Python language.
