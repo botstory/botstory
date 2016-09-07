@@ -45,9 +45,11 @@ def match_message(message):
         validator = validators[user.wait_for_message['type']]()
         validator.deserialize(user.wait_for_message['state'])
         if validator.validate(message):
+            step = user.wait_for_message['step']
+            user.wait_for_message = None
             story = [s for s in core['stories'] if s['topic'] == user.current_topic][0]
             return process_story(
-                idx=user.wait_for_message['step'],
+                idx=step,
                 message=message,
                 story=story,
                 user=user,

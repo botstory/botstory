@@ -53,3 +53,56 @@ def test_should_wait_for_answer_on_ask():
     match_pure_text('Great!', user)
 
     assert trigger.is_triggered
+
+
+def test_should_prevent_other_story_to_start_until_we_waiting_for_answer():
+    trigger = SimpleTrigger()
+    user = build_fake_user()
+
+    @story.on('hi there!')
+    def one_story():
+        @story.then()
+        def then(message):
+            return chat.ask('How are you?', message.user)
+
+        @story.then()
+        def then(message):
+            pass
+
+    @story.on('Great!')
+    def one_story():
+        @story.then()
+        def then(message):
+            trigger.passed()
+
+    match_pure_text('hi there!', user)
+    match_pure_text('Great!', user)
+
+    assert not trigger.is_triggered
+
+
+def test_should_start_next_story_after_current_finished():
+    trigger = SimpleTrigger()
+    user = build_fake_user()
+
+    @story.on('hi there!')
+    def one_story():
+        @story.then()
+        def then(message):
+            return chat.ask('How are you?', message.user)
+
+        @story.then()
+        def then(message):
+            pass
+
+    @story.on('Great!')
+    def one_story():
+        @story.then()
+        def then(message):
+            trigger.passed()
+
+    match_pure_text('hi there!', user)
+    match_pure_text('Great!', user)
+    match_pure_text('Great!', user)
+
+    assert trigger.is_triggered
