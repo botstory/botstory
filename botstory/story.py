@@ -1,11 +1,14 @@
+from .middlewares.any.any import Any
 from .middlewares.text.text import Text
 
 core = {
-    'current_topic': None,
-    'current_part': 0,
-    'topic': None,
     'stories': []
 }
+
+validators = {}
+
+validators[Any.type] = Any
+validators[Text.Match.type] = Text.Match
 
 
 def clear():
@@ -37,17 +40,45 @@ def then():
 
 
 def match_message(message):
+    user = message.user
+    if user.wait_for_message:
+        validator = validators[user.wait_for_message['type']]()
+        validator.deserialize(user.wait_for_message['state'])
+        if validator.validate(message):
+            story = [s for s in core['stories'] if s['topic'] == user.current_topic][0]
+            return process_story(
+                idx=user.wait_for_message['step'],
+                message=message,
+                story=story,
+                user=user,
+            )
+
     matched_stories = [task for task in core['stories'] if task['validator'].validate(message)]
     if len(matched_stories) == 0:
         return
 
     story = matched_stories[0]
-    core['current_topic'] = story['topic']
-    core['current_part'] = 0
-    parts = story['parts']
-    idx = 0
-    while idx < len(parts):
-        part = parts[idx]
+    user.current_topic = story['topic']
+    return process_story(
+        idx=0,
+        message=message,
+        story=story,
+        user=user,
+    )
+
+
+def process_story(user, message, story, idx=0):
+    steps = story['parts']
+    while idx < len(steps):
+        step = steps[idx]
         idx += 1
-        result = part(message)
-        # TODO: work with async requests
+        result = step(message)
+        if result:
+            # TODO: should wait result of async operation
+            # (for example answer from user)
+            user.wait_for_message = {
+                'type': result.type,
+                'state': result.serialize(),
+                'step': idx,
+            }
+            return

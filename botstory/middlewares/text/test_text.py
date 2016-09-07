@@ -1,5 +1,5 @@
 from ... import story
-from ...utils import match_pure_text, SimpleTrigger
+from ...utils import build_fake_user, match_pure_text, SimpleTrigger
 
 
 def teardown_function(function):
@@ -9,6 +9,7 @@ def teardown_function(function):
 
 def test_should_run_story_on_equal_message():
     trigger = SimpleTrigger()
+    user = build_fake_user()
 
     @story.on('hi there!')
     def one_story():
@@ -16,13 +17,14 @@ def test_should_run_story_on_equal_message():
         def then(message):
             trigger.passed()
 
-    match_pure_text('hi there!')
+    match_pure_text('hi there!', user)
 
     assert trigger.is_triggered
 
 
 def test_should_not_run_story_on_non_equal_message():
     trigger = SimpleTrigger()
+    user = build_fake_user()
 
     @story.on('hi there!')
     def one_story():
@@ -30,6 +32,6 @@ def test_should_not_run_story_on_non_equal_message():
         def then(message):
             trigger.passed()
 
-    match_pure_text('buy!')
+    match_pure_text('buy!', user)
 
     assert not trigger.is_triggered
