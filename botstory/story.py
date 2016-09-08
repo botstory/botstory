@@ -44,7 +44,7 @@ def then():
 
 
 def match_message(message):
-    user = message.user
+    user = message['user']
     if user.wait_for_message:
         validator = validators[user.wait_for_message['type']]()
         validator.deserialize(user.wait_for_message['state'])

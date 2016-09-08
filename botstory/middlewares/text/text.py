@@ -9,7 +9,7 @@ class Text:
             pass
 
         def validate(self, message):
-            return message.text and message.text.get('raw', None)
+            return message.get('text', {}).get('raw', None)
 
         def serialize(self):
             return None
@@ -24,7 +24,7 @@ class Text:
             self.test_string = test_string
 
         def validate(self, message):
-            return self.test_string == (message.text and message.text.get('raw', None))
+            return self.test_string == (message.get('text', {}).get('raw', None))
 
         def serialize(self):
             return self.test_string

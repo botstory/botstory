@@ -21,7 +21,7 @@ def test_should_say(mocker):
     def one_story():
         @story.then()
         def then(message):
-            chat.say('Nice to see you!', message.user)
+            chat.say('Nice to see you!', message['user'])
 
     matchers.pure_text('hi there!', user)
 
