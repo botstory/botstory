@@ -1,5 +1,6 @@
 from .middlewares.any.any import Any
 from .middlewares.text.text import Text
+from .utils import is_string
 
 core = {
     'stories': []
@@ -17,7 +18,10 @@ def clear():
 
 def on(receive):
     def fn(one_story):
-        validator = Text.Match(receive)
+        if is_string(receive):
+            validator = Text.Match(receive)
+        else:
+            validator = receive
 
         core['stories'].append({
             'validator': validator,

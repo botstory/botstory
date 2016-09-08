@@ -2,7 +2,7 @@ import pytest
 
 from . import story
 from . import chat
-from .utils import build_fake_user, match_pure_text, SimpleTrigger
+from .utils import build_fake_user, SimpleTrigger, matchers
 
 
 @pytest.fixture
@@ -26,7 +26,7 @@ def test_should_run_sequence_of_parts():
         def then(message):
             trigger_2.passed()
 
-    match_pure_text('hi there!', user)
+    matchers.pure_text('hi there!', user)
 
     assert trigger_1.is_triggered
     assert trigger_2.is_triggered
@@ -46,11 +46,11 @@ def test_should_wait_for_answer_on_ask():
         def then(message):
             trigger.passed()
 
-    match_pure_text('hi there!', user)
+    matchers.pure_text('hi there!', user)
 
     assert not trigger.is_triggered
 
-    match_pure_text('Great!', user)
+    matchers.pure_text('Great!', user)
 
     assert trigger.is_triggered
 
@@ -75,8 +75,8 @@ def test_should_prevent_other_story_to_start_until_we_waiting_for_answer():
         def then(message):
             trigger.passed()
 
-    match_pure_text('hi there!', user)
-    match_pure_text('Great!', user)
+    matchers.pure_text('hi there!', user)
+    matchers.pure_text('Great!', user)
 
     assert not trigger.is_triggered
 
@@ -101,8 +101,8 @@ def test_should_start_next_story_after_current_finished():
         def then(message):
             trigger.passed()
 
-    match_pure_text('hi there!', user)
-    match_pure_text('Great!', user)
-    match_pure_text('Great!', user)
+    matchers.pure_text('hi there!', user)
+    matchers.pure_text('Great!', user)
+    matchers.pure_text('Great!', user)
 
     assert trigger.is_triggered
