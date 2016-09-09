@@ -1,10 +1,7 @@
-import asyncio
-import pytest
-
 from .locations import Location
-from ... import story
+from ... import matchers, story
 from ...story import clear, match_message
-from ...utils import build_fake_user, matchers, SimpleTrigger
+from ...utils import build_fake_user, match, SimpleTrigger
 
 
 def teardown_function(function):
@@ -42,6 +39,12 @@ def test_should_not_react_on_common_message():
         def then(message):
             trigger.passed()
 
-    matchers.pure_text('Hey!', user)
+    match.pure_text('Hey!', user)
 
     assert not trigger.is_triggered
+
+
+def test_serialize_location():
+    m_old = Location.Any()
+    m_new = matchers.deserialize(matchers.serialize(m_old))
+    assert isinstance(m_new, Location.Any)

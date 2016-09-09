@@ -8,5 +8,7 @@ def is_location(message):
 class Location:
     @matchers.matcher()
     class Any:
+        type = 'Location.Any'
+
         def validate(self, message):
             return is_location(message)
