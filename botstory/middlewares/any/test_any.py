@@ -4,9 +4,8 @@ from ... import matchers
 
 def test_serialize_any():
     m_old = any.Any()
-    data = matchers.serialize(m_old)
-    m_new = matchers.deserialize(data)
-    assert m_new
+    m_new = matchers.deserialize(matchers.serialize(m_old))
+    assert isinstance(m_new, any.Any)
 
 
 def test_serialize_any_of():

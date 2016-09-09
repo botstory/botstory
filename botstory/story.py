@@ -48,8 +48,7 @@ def then():
 def match_message(message):
     user = message['user']
     if user.wait_for_message:
-        validator = matchers[user.wait_for_message['type']]()
-        validator.deserialize(user.wait_for_message['state'])
+        validator = matchers.deserialize(user.wait_for_message['data'])
         if validator.validate(message):
             step = user.wait_for_message['step']
             user.wait_for_message = None
@@ -87,7 +86,7 @@ def process_story(user, message, story, idx=0):
             result = get_validator(result)
             user.wait_for_message = {
                 'type': result.type,
-                'state': result.serialize(),
+                'data': matchers.serialize(result),
                 'step': idx,
             }
             return

@@ -1,8 +1,7 @@
 import pytest
 
-from . import story
-from . import chat
-from .utils import build_fake_user, SimpleTrigger, matchers
+from . import chat, story
+from .utils import build_fake_user, match, SimpleTrigger
 from .middlewares.text import text
 from .middlewares.locations import locations
 
@@ -28,7 +27,7 @@ def test_should_run_sequence_of_parts():
         def then(message):
             trigger_2.passed()
 
-    matchers.pure_text('hi there!', user)
+    match.pure_text('hi there!', user)
 
     assert trigger_1.is_triggered
     assert trigger_2.is_triggered
@@ -48,17 +47,18 @@ def test_should_wait_for_answer_on_ask():
         def then(message):
             trigger.passed()
 
-    matchers.pure_text('hi there!', user)
+    match.pure_text('hi there!', user)
 
     assert not trigger.is_triggered
 
-    matchers.pure_text('Great!', user)
+    match.pure_text('Great!', user)
 
     assert trigger.is_triggered
 
 
 def test_should_prevent_other_story_to_start_until_we_waiting_for_answer():
-    trigger = SimpleTrigger()
+    trigger_1 = SimpleTrigger()
+    trigger_2 = SimpleTrigger()
     user = build_fake_user()
 
     @story.on('hi there!')
@@ -69,18 +69,19 @@ def test_should_prevent_other_story_to_start_until_we_waiting_for_answer():
 
         @story.then()
         def then(message):
-            pass
+            trigger_2.passed()
 
     @story.on('Great!')
     def one_story():
         @story.then()
         def then(message):
-            trigger.passed()
+            trigger_1.passed()
 
-    matchers.pure_text('hi there!', user)
-    matchers.pure_text('Great!', user)
+    match.pure_text('hi there!', user)
+    match.pure_text('Great!', user)
 
-    assert not trigger.is_triggered
+    assert trigger_2.is_triggered
+    assert not trigger_1.is_triggered
 
 
 def test_should_start_next_story_after_current_finished():
@@ -103,15 +104,16 @@ def test_should_start_next_story_after_current_finished():
         def then(message):
             trigger.passed()
 
-    matchers.pure_text('hi there!', user)
-    matchers.pure_text('Great!', user)
-    matchers.pure_text('Great!', user)
+    match.pure_text('hi there!', user)
+    match.pure_text('Great!', user)
+    match.pure_text('Great!', user)
 
     assert trigger.is_triggered
 
 
 def test_should_match_group_of_matchers_between_parts_of_story():
-    trigger = SimpleTrigger()
+    trigger_1 = SimpleTrigger()
+    trigger_2 = SimpleTrigger()
     user = build_fake_user()
 
     @story.on('hi there!')
@@ -122,13 +124,14 @@ def test_should_match_group_of_matchers_between_parts_of_story():
 
         @story.then()
         def then(message):
+            trigger_1.passed()
             return [text.Text.Any(), locations.Location.Any()]
 
         @story.then()
         def then(message):
-            trigger.passed()
+            trigger_2.passed()
 
-    matchers.pure_text('hi there!', user)
+    match.pure_text('hi there!', user)
     story.match_message({
         'location': {
             'lat': 1,
@@ -136,8 +139,10 @@ def test_should_match_group_of_matchers_between_parts_of_story():
         },
         'user': user,
     })
+    match.pure_text('hi there!', user)
 
-    assert trigger.is_triggered
+    assert trigger_1.is_triggered
+    assert trigger_2.is_triggered
 
 
 def test_should_match_group_of_matchers_on_story_start():
@@ -150,7 +155,7 @@ def test_should_match_group_of_matchers_on_story_start():
         def then(message):
             trigger.passed()
 
-    matchers.pure_text('hi there!', user)
+    match.pure_text('hi there!', user)
     story.match_message({
         'location': {
             'lat': 1,

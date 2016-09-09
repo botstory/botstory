@@ -2,7 +2,7 @@ import pytest
 
 from . import story
 from . import chat
-from .utils import build_fake_user, SimpleTrigger, matchers
+from .utils import build_fake_user, match
 
 
 @pytest.fixture
@@ -23,6 +23,6 @@ def test_should_say(mocker):
         def then(message):
             chat.say('Nice to see you!', message['user'])
 
-    matchers.pure_text('hi there!', user)
+    match.pure_text('hi there!', user)
 
     mock_send_text_message.assert_called_once_with(user.id, text='Nice to see you!')
