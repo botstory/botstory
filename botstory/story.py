@@ -46,18 +46,18 @@ def then():
 
 
 def match_message(message):
-    user = message['user']
-    if user.wait_for_message:
-        validator = matchers.deserialize(user.wait_for_message['data'])
+    session = message['session']
+    if session.wait_for_message:
+        validator = matchers.deserialize(session.wait_for_message['data'])
         if validator.validate(message):
-            step = user.wait_for_message['step']
-            user.wait_for_message = None
-            story = [s for s in core['stories'] if s['topic'] == user.current_topic][0]
+            step = session.wait_for_message['step']
+            session.wait_for_message = None
+            story = [s for s in core['stories'] if s['topic'] == session.current_topic][0]
             return process_story(
                 idx=step,
                 message=message,
                 story=story,
-                user=user,
+                session=session,
             )
 
     matched_stories = [task for task in core['stories'] if task['validator'].validate(message)]
@@ -65,16 +65,16 @@ def match_message(message):
         return
 
     story = matched_stories[0]
-    user.current_topic = story['topic']
+    session.current_topic = story['topic']
     return process_story(
         idx=0,
         message=message,
         story=story,
-        user=user,
+        session=session,
     )
 
 
-def process_story(user, message, story, idx=0):
+def process_story(session, message, story, idx=0):
     steps = story['parts']
     while idx < len(steps):
         step = steps[idx]
@@ -84,7 +84,7 @@ def process_story(user, message, story, idx=0):
             # TODO: should wait result of async operation
             # (for example answer from user)
             result = get_validator(result)
-            user.wait_for_message = {
+            session.wait_for_message = {
                 'type': result.type,
                 'data': matchers.serialize(result),
                 'step': idx,

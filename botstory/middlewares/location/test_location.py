@@ -1,7 +1,7 @@
 from . import location
 from ... import matchers, story
 from ...story import clear, match_message
-from ...utils import answer, build_fake_user, SimpleTrigger
+from ...utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
 
 def teardown_function(function):
@@ -11,6 +11,7 @@ def teardown_function(function):
 
 def test_should_trigger_on_any_location():
     trigger = SimpleTrigger()
+    session = build_fake_session()
     user = build_fake_user()
 
     @story.on(receive=location.Any())
@@ -19,18 +20,13 @@ def test_should_trigger_on_any_location():
         def then(message):
             trigger.passed()
 
-    match_message({
-        'location': {
-            'lat': 1,
-            'lng': 1,
-        },
-        'user': user,
-    })
+    answer.location({'lat': 1, 'lng': 1}, session, user)
     assert trigger.is_triggered
 
 
 def test_should_not_react_on_common_message():
     trigger = SimpleTrigger()
+    session = build_fake_session()
     user = build_fake_user()
 
     @story.on(receive=location.Any())
@@ -39,7 +35,7 @@ def test_should_not_react_on_common_message():
         def then(message):
             trigger.passed()
 
-    answer.pure_text('Hey!', user)
+    answer.pure_text('Hey!', session, user)
 
     assert not trigger.is_triggered
 

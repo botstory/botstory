@@ -1,4 +1,4 @@
-from .middlewares.any import any.Any
+from .middlewares.any import any
 from .middlewares.location import location
 from .middlewares.text import text
 from .integrations.fb import messenger

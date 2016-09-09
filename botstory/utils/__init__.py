@@ -10,6 +10,11 @@ async def a_second():
 def build_fake_user():
     return jsdict.JSDict({
         'id': 1234,
+    })
+
+
+def build_fake_session():
+    return jsdict.JSDict({
         'wait_for_message': None,
     })
 
