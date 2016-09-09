@@ -1,4 +1,8 @@
+from ... import matchers
+
+
 class Text:
+    @matchers.matcher()
     class Any:
         """
         filter any raw text
@@ -17,6 +21,7 @@ class Text:
         def deserialize(self, state):
             pass
 
+    @matchers.matcher()
     class Match:
         type = 'text.match'
 

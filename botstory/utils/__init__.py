@@ -17,9 +17,11 @@ def build_fake_user():
 class SimpleTrigger:
     def __init__(self):
         self.is_triggered = False
+        self.triggered_times = 0
 
     def passed(self):
         self.is_triggered = True
+        self.triggered_times += 1
 
 
 def uniqify(seq, idfun=None):

@@ -3,7 +3,8 @@ import pytest
 from . import story
 from . import chat
 from .utils import build_fake_user, SimpleTrigger, matchers
-from .middlewares import any, text
+from .middlewares.text import text
+from .middlewares.locations import locations
 
 
 @pytest.fixture
@@ -107,3 +108,55 @@ def test_should_start_next_story_after_current_finished():
     matchers.pure_text('Great!', user)
 
     assert trigger.is_triggered
+
+
+def test_should_match_group_of_matchers_between_parts_of_story():
+    trigger = SimpleTrigger()
+    user = build_fake_user()
+
+    @story.on('hi there!')
+    def one_story():
+        @story.then()
+        def then(message):
+            return [text.Text.Any(), locations.Location.Any()]
+
+        @story.then()
+        def then(message):
+            return [text.Text.Any(), locations.Location.Any()]
+
+        @story.then()
+        def then(message):
+            trigger.passed()
+
+    matchers.pure_text('hi there!', user)
+    story.match_message({
+        'location': {
+            'lat': 1,
+            'lng': 1,
+        },
+        'user': user,
+    })
+
+    assert trigger.is_triggered
+
+
+def test_should_match_group_of_matchers_on_story_start():
+    trigger = SimpleTrigger()
+    user = build_fake_user()
+
+    @story.on(receive=['hi there!', locations.Location.Any()])
+    def one_story():
+        @story.then()
+        def then(message):
+            trigger.passed()
+
+    matchers.pure_text('hi there!', user)
+    story.match_message({
+        'location': {
+            'lat': 1,
+            'lng': 1,
+        },
+        'user': user,
+    })
+
+    assert trigger.triggered_times == 2
