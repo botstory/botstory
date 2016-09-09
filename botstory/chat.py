@@ -4,14 +4,16 @@ from .middlewares.location import location
 from .integrations.fb import messenger
 
 
-def ask(text, user):
-    say(text, user)
+def ask(body, user):
+    say(body, user)
     return Any()
 
 
-def ask_location(text, user):
+def ask_location(body, user):
     # TODO:
     # 1 ask user
+    say(body, user)
+
     # 2 wait for answer
     # 3 process answer
     # 4 ask details once we not sure

@@ -23,6 +23,12 @@ class SimpleTrigger:
         self.is_triggered = True
         self.triggered_times += 1
 
+    def receive(self, value):
+        self.value = value
+
+    def result(self):
+        return self.value
+
 
 def uniqify(seq, idfun=None):
     """

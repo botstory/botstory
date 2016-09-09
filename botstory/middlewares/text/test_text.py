@@ -1,6 +1,6 @@
 from . import text
 from ... import matchers, story
-from ...utils import build_fake_user, match, SimpleTrigger
+from ...utils import answer, build_fake_user, SimpleTrigger
 
 
 
@@ -19,7 +19,7 @@ def test_should_run_story_on_equal_message():
         def then(message):
             trigger.passed()
 
-    match.pure_text('hi there!', user)
+    answer.pure_text('hi there!', user)
 
     assert trigger.is_triggered
 
@@ -34,7 +34,7 @@ def test_should_not_run_story_on_non_equal_message():
         def then(message):
             trigger.passed()
 
-    match.pure_text('buy!', user)
+    answer.pure_text('buy!', user)
 
     assert not trigger.is_triggered
 
@@ -49,7 +49,7 @@ def test_should_catch_any_text_message():
         def then(message):
             trigger.passed()
 
-    match.pure_text('hi there!', user)
+    answer.pure_text('hi there!', user)
 
     assert trigger.is_triggered
 
@@ -64,7 +64,7 @@ def test_should_ignore_any_non_text_message():
         def then(message):
             trigger.passed()
 
-    match.location('some where', user)
+    answer.location('some where', user)
 
     assert not trigger.is_triggered
 

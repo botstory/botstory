@@ -1,7 +1,7 @@
 from . import location
 from ... import matchers, story
 from ...story import clear, match_message
-from ...utils import build_fake_user, match, SimpleTrigger
+from ...utils import answer, build_fake_user, SimpleTrigger
 
 
 def teardown_function(function):
@@ -39,7 +39,7 @@ def test_should_not_react_on_common_message():
         def then(message):
             trigger.passed()
 
-    match.pure_text('Hey!', user)
+    answer.pure_text('Hey!', user)
 
     assert not trigger.is_triggered
 
