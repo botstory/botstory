@@ -1,12 +1,12 @@
-from .middlewares.any.any import Any
-from .middlewares.text import text
+from .middlewares.any import any.Any
 from .middlewares.location import location
+from .middlewares.text import text
 from .integrations.fb import messenger
 
 
 def ask(body, user):
     say(body, user)
-    return Any()
+    return any.Any()
 
 
 def ask_location(body, user):
