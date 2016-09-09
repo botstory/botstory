@@ -1,5 +1,6 @@
 from .middlewares.any.any import Any
-from .middlewares.text.text import Text
+from .middlewares.text import text
+from .middlewares.location import location
 from .integrations.fb import messenger
 
 
@@ -14,8 +15,8 @@ def ask_location(text, user):
     # 2 wait for answer
     # 3 process answer
     # 4 ask details once we not sure
-    return Text.Any()
+    return [location.Any(), text.Any()]
 
 
-def say(text, user):
-    messenger.send_text_message(user.id, text=text)
+def say(body, user):
+    messenger.send_text_message(user.id, text=body)

@@ -1,32 +1,32 @@
 from ... import matchers
 
 
-class Text:
-    @matchers.matcher()
-    class Any:
-        """
-        filter any raw text
-        """
-        type = 'Text.Any'
+@matchers.matcher()
+class Any:
+    """
+    filter any raw text
+    """
+    type = 'text.Any'
 
-        def __init__(self):
-            pass
+    def __init__(self):
+        pass
 
-        def validate(self, message):
-            return message.get('text', {}).get('raw', None)
+    def validate(self, message):
+        return message.get('text', {}).get('raw', None)
 
-    @matchers.matcher()
-    class Match:
-        type = 'Text.Match'
 
-        def __init__(self, test_string):
-            self.test_string = test_string
+@matchers.matcher()
+class Match:
+    type = 'text.Match'
 
-        def validate(self, message):
-            return self.test_string == (message.get('text', {}).get('raw', None))
+    def __init__(self, test_string):
+        self.test_string = test_string
 
-        def serialize(self):
-            return self.test_string
+    def validate(self, message):
+        return self.test_string == (message.get('text', {}).get('raw', None))
 
-        def deserialize(self, state):
-            self.test_string = state
+    def serialize(self):
+        return self.test_string
+
+    def deserialize(self, state):
+        self.test_string = state

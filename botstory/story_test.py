@@ -3,7 +3,7 @@ import pytest
 from . import chat, story
 from .utils import build_fake_user, match, SimpleTrigger
 from .middlewares.text import text
-from .middlewares.locations import locations
+from .middlewares.location import location
 
 
 @pytest.fixture
@@ -120,12 +120,12 @@ def test_should_match_group_of_matchers_between_parts_of_story():
     def one_story():
         @story.then()
         def then(message):
-            return [text.Text.Any(), locations.Location.Any()]
+            return [text.Any(), location.Any()]
 
         @story.then()
         def then(message):
             trigger_1.passed()
-            return [text.Text.Any(), locations.Location.Any()]
+            return [text.Any(), location.Any()]
 
         @story.then()
         def then(message):
@@ -149,7 +149,7 @@ def test_should_match_group_of_matchers_on_story_start():
     trigger = SimpleTrigger()
     user = build_fake_user()
 
-    @story.on(receive=['hi there!', locations.Location.Any()])
+    @story.on(receive=['hi there!', location.Any()])
     def one_story():
         @story.then()
         def then(message):

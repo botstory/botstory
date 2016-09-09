@@ -1,7 +1,7 @@
+from . import text
 from ... import matchers, story
 from ...utils import build_fake_user, match, SimpleTrigger
 
-from .text import Text
 
 
 def teardown_function(function):
@@ -43,7 +43,7 @@ def test_should_catch_any_text_message():
     trigger = SimpleTrigger()
     user = build_fake_user()
 
-    @story.on(Text.Any())
+    @story.on(text.Any())
     def one_story():
         @story.then()
         def then(message):
@@ -58,7 +58,7 @@ def test_should_ignore_any_non_text_message():
     trigger = SimpleTrigger()
     user = build_fake_user()
 
-    @story.on(Text.Any())
+    @story.on(text.Any())
     def one_story():
         @story.then()
         def then(message):
@@ -70,6 +70,6 @@ def test_should_ignore_any_non_text_message():
 
 
 def test_serialize_text_any():
-    m_old = Text.Any()
+    m_old = text.Any()
     m_new = matchers.deserialize(matchers.serialize(m_old))
-    assert isinstance(m_new, Text.Any)
+    assert isinstance(m_new, text.Any)

@@ -1,6 +1,6 @@
 from . import matchers
 from .middlewares.any import any
-from .middlewares.text.text import Text
+from .middlewares.text import text
 from .utils import is_string
 
 core = {
@@ -16,7 +16,7 @@ def get_validator(receive):
     if isinstance(receive, list):
         return any.AnyOf([get_validator(r) for r in receive])
     elif is_string(receive):
-        return Text.Match(receive)
+        return text.Match(receive)
     else:
         return receive
 
