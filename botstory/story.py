@@ -1,23 +1,29 @@
-from .middlewares.any.any import Any
-from .middlewares.text.text import Text
+from . import matchers
+from .middlewares.any import any
+from .middlewares.text import text
+from .utils import is_string
 
 core = {
     'stories': []
 }
-
-validators = {}
-
-validators[Any.type] = Any
-validators[Text.Match.type] = Text.Match
 
 
 def clear():
     core['stories'] = []
 
 
+def get_validator(receive):
+    if isinstance(receive, list):
+        return any.AnyOf([get_validator(r) for r in receive])
+    elif is_string(receive):
+        return text.Match(receive)
+    else:
+        return receive
+
+
 def on(receive):
     def fn(one_story):
-        validator = Text.Match(receive)
+        validator = get_validator(receive)
 
         core['stories'].append({
             'validator': validator,
@@ -40,10 +46,9 @@ def then():
 
 
 def match_message(message):
-    user = message.user
+    user = message['user']
     if user.wait_for_message:
-        validator = validators[user.wait_for_message['type']]()
-        validator.deserialize(user.wait_for_message['state'])
+        validator = matchers.deserialize(user.wait_for_message['data'])
         if validator.validate(message):
             step = user.wait_for_message['step']
             user.wait_for_message = None
@@ -78,9 +83,10 @@ def process_story(user, message, story, idx=0):
         if result:
             # TODO: should wait result of async operation
             # (for example answer from user)
+            result = get_validator(result)
             user.wait_for_message = {
                 'type': result.type,
-                'state': result.serialize(),
+                'data': matchers.serialize(result),
                 'step': idx,
             }
             return
