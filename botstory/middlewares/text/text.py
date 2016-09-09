@@ -7,7 +7,7 @@ class Text:
         """
         filter any raw text
         """
-        type = 'text.any'
+        type = 'Text.Any'
 
         def __init__(self):
             pass
@@ -15,15 +15,9 @@ class Text:
         def validate(self, message):
             return message.get('text', {}).get('raw', None)
 
-        def serialize(self):
-            return None
-
-        def deserialize(self, state):
-            pass
-
     @matchers.matcher()
     class Match:
-        type = 'text.match'
+        type = 'Text.Match'
 
         def __init__(self, test_string):
             self.test_string = test_string
