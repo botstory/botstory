@@ -15,3 +15,11 @@ def pure_text(text, session=None, user=None):
         'session': session,
         'user': user
     })
+
+
+def option(payload, session=None, user=None):
+    return story.match_message({
+        'option': payload,
+        'session': session,
+        'user': user
+    })

@@ -43,7 +43,7 @@ def test_should_wait_for_answer_on_ask():
     def one_story():
         @story.then()
         def then(message):
-            return chat.ask('How are you?', message['user'])
+            return chat.ask('How are you?', user=message['user'])
 
         @story.then()
         def then(message):
@@ -68,7 +68,7 @@ def test_should_prevent_other_story_to_start_until_we_waiting_for_answer():
     def one_story():
         @story.then()
         def then(message):
-            return chat.ask('How are you?', message['user'])
+            return chat.ask('How are you?', user=message['user'])
 
         @story.then()
         def then(message):
@@ -96,7 +96,7 @@ def test_should_start_next_story_after_current_finished():
     def one_story():
         @story.then()
         def then(message):
-            return chat.ask('How are you?', message['user'])
+            return chat.ask('How are you?', user=message['user'])
 
         @story.then()
         def then(message):

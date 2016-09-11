@@ -71,7 +71,3 @@ def test_get_location_as_result_of_asking_of_location(mocker):
     answer.location('somewhere', session, user)
 
     assert trigger.result() == 'somewhere'
-
-
-def test_should_():
-    pass

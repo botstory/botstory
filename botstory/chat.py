@@ -4,8 +4,17 @@ from .middlewares.text import text
 from .integrations.fb import messenger
 
 
-def ask(body, user):
-    say(body, user)
+def ask(body, options=None, user=None):
+    """
+    simple ask with predefined options
+
+    :param body:
+    :param options: (optional)  in form of
+    {'title': <message>, 'payload': <any json>}
+    :param user:
+    :return:
+    """
+    messenger.send_text_message(user.id, text=body, options=options)
     return any.Any()
 
 
