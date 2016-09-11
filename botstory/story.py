@@ -45,6 +45,41 @@ def part():
     return fn
 
 
+class Parser:
+    def __init__(self):
+        self.begin_part = None
+
+    def build_ast(self, one_story):
+        one_story()
+        return ASTNode(self.begin_part)
+
+    def begin(self, story_part):
+        self.begin_part = story_part
+
+
+class ASTNode:
+    def __init__(self, story_part):
+        self.story_part = story_part
+
+
+parser = Parser()
+
+
+def callable():
+    def fn(callable_story):
+        ast = parser.build_ast(callable_story)
+        return ast.story_part
+
+    return fn
+
+
+def begin():
+    def fn(story_part):
+        parser.begin(story_part)
+
+    return fn
+
+
 def match_message(message):
     session = message['session']
     if session.wait_for_message:

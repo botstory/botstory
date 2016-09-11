@@ -156,6 +156,26 @@ def test_should_match_group_of_matchers_on_story_start():
             trigger.passed()
 
     answer.pure_text('hi there!', session, user)
-    answer.location({'lat': 1,'lng': 1}, session, user)
+    answer.location({'lat': 1, 'lng': 1}, session, user)
 
     assert trigger.triggered_times == 2
+
+
+def test_callable_story():
+    trigger = SimpleTrigger()
+
+    @story.callable()
+    def one_story():
+        @story.begin()
+        def store_arguments(arg1, arg2):
+            trigger.receive({
+                'value1': arg1,
+                'value2': arg2,
+            })
+
+    one_story(1, 2)
+
+    assert trigger.result() == {
+        'value1': 1,
+        'value2': 2,
+    }
