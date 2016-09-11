@@ -25,16 +25,16 @@ Bot asks user about destionation of space travelling.
 """
 @story.on('lets go!')
 def stateless_story(message):
-    @story.then()
+    @story.part()
     def then(message):
         return ask_location(message['user'], text='Where do you go?')
 
-    @story.then()
+    @story.part()
     def then(message):
         store_destination(message['location'])
         return ask_location(message['user'], text='Where do you now?')
 
-    @story.then()
+    @story.part()
     def then(message):
         store_origin(message['location'])
         return tell(message['user'], 'Thanks! Give me a minute I will find you right spaceship!')
@@ -50,11 +50,11 @@ Bot asks user about destionation of space travelling.
 """
 @story.on('lets go!')
 def stateless_story_with_bifurcation():
-    @story.then()
+    @story.part()
     def request_destination(message):
         return ask_location(message['user'], text='Where do you go?')
 
-    @story.then()
+    @story.part()
     def receive_destination(message):
         location = message['location']]
         if location == 'stars':
@@ -71,16 +71,16 @@ def stateless_story_with_bifurcation():
             store_destination(message['location'])
             return request_origin(message)
 
-    @story.then()
+    @story.part()
     def receive_destination_options(message):
         store_destination(message['location'])
         return request_origin(message)
 
-    @story.then()
+    @story.part()
     def request_origin(message):
         return ask_location(message['user'], text='Where do you now?', topic='get-origin')
 
-    @story.then()
+    @story.part()
     def receive_origin(message):
         store_origin(message['location'])
         return tell(message['user'], 'Thanks! Give me a minute I will find you right spaceship!')

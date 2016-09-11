@@ -20,11 +20,11 @@ def test_should_run_sequence_of_parts():
 
     @story.on('hi there!')
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             trigger_1.passed()
 
-        @story.then()
+        @story.part()
         def then(message):
             trigger_2.passed()
 
@@ -41,11 +41,11 @@ def test_should_wait_for_answer_on_ask():
 
     @story.on('hi there!')
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             return chat.ask('How are you?', user=message['user'])
 
-        @story.then()
+        @story.part()
         def then(message):
             trigger.passed()
 
@@ -66,17 +66,17 @@ def test_should_prevent_other_story_to_start_until_we_waiting_for_answer():
 
     @story.on('hi there!')
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             return chat.ask('How are you?', user=message['user'])
 
-        @story.then()
+        @story.part()
         def then(message):
             trigger_2.passed()
 
     @story.on('Great!')
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             trigger_1.passed()
 
@@ -94,17 +94,17 @@ def test_should_start_next_story_after_current_finished():
 
     @story.on('hi there!')
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             return chat.ask('How are you?', user=message['user'])
 
-        @story.then()
+        @story.part()
         def then(message):
             pass
 
     @story.on('Great!')
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             trigger.passed()
 
@@ -123,16 +123,16 @@ def test_should_match_group_of_matchers_between_parts_of_story():
 
     @story.on('hi there!')
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             return [text.Any(), location.Any()]
 
-        @story.then()
+        @story.part()
         def then(message):
             trigger_1.passed()
             return [text.Any(), location.Any()]
 
-        @story.then()
+        @story.part()
         def then(message):
             trigger_2.passed()
 
@@ -151,7 +151,7 @@ def test_should_match_group_of_matchers_on_story_start():
 
     @story.on(receive=['hi there!', location.Any()])
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             trigger.passed()
 

@@ -16,7 +16,7 @@ def test_should_run_story_on_equal_message():
 
     @story.on('hi there!')
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             trigger.passed()
 
@@ -32,7 +32,7 @@ def test_should_not_run_story_on_non_equal_message():
 
     @story.on('hi there!')
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             trigger.passed()
 
@@ -48,7 +48,7 @@ def test_should_catch_any_text_message():
 
     @story.on(text.Any())
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             trigger.passed()
 
@@ -64,7 +64,7 @@ def test_should_ignore_any_non_text_message():
 
     @story.on(text.Any())
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             trigger.passed()
 

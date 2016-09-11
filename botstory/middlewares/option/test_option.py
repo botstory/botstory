@@ -15,7 +15,7 @@ def test_should_ask_with_options(mocker):
 
     @story.on('How are you?')
     def one_story():
-        @story.then()
+        @story.part()
         def ask(message):
             return chat.ask(
                 'I feel fine. How about you?',
@@ -32,7 +32,7 @@ def test_should_ask_with_options(mocker):
                 user=message['user'],
             )
 
-        @story.then()
+        @story.part()
         def get_health(message):
             trigger.receive(message['option'])
 
@@ -49,7 +49,7 @@ def test_validate_option():
 
     @story.on(receive=option.Any())
     def one_story():
-        @story.then()
+        @story.part()
         def store_option(message):
             trigger.passed()
 
@@ -65,7 +65,7 @@ def test_validate_only_option():
 
     @story.on(receive=option.Any())
     def one_story():
-        @story.then()
+        @story.part()
         def store_option(message):
             trigger.passed()
 

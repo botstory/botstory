@@ -37,7 +37,7 @@ def on(receive):
     return fn
 
 
-def then():
+def part():
     def fn(part_of_story):
         last_story = core['stories'][-1]
         last_story['parts'].append(part_of_story)

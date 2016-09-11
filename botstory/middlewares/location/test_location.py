@@ -16,7 +16,7 @@ def test_should_trigger_on_any_location():
 
     @story.on(receive=location.Any())
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             trigger.passed()
 
@@ -31,7 +31,7 @@ def test_should_not_react_on_common_message():
 
     @story.on(receive=location.Any())
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             trigger.passed()
 

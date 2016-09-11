@@ -20,7 +20,7 @@ def test_should_say(mocker):
 
     @story.on('hi there!')
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             chat.say('Nice to see you!', message['user'])
 
@@ -40,7 +40,7 @@ def test_ask_location(mocker):
 
     @story.on('SOS!')
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             chat.ask_location('Hey, bro! Where is your rocket?', message['user'])
 
@@ -59,11 +59,11 @@ def test_get_location_as_result_of_asking_of_location(mocker):
 
     @story.on('SOS!')
     def one_story():
-        @story.then()
+        @story.part()
         def then(message):
             return chat.ask_location('Hey, bro! Where is your rocket?', message['user'])
 
-        @story.then()
+        @story.part()
         def then(message):
             trigger.receive(message['location'])
 
