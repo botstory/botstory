@@ -9,6 +9,8 @@ def ask(body, user):
     return any.Any()
 
 
+# TODO: move to middlewares/location/location.py
+
 def ask_location(body, user):
     # TODO:
     # 1 ask user

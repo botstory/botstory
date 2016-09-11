@@ -29,6 +29,8 @@ def test_should_say(mocker):
     mock_send_text_message.assert_called_once_with(user.id, text='Nice to see you!')
 
 
+# TODO: move to middlewares/location/test_location.py
+
 def test_ask_location(mocker):
     mock_send_text_message = mocker.patch('botstory.chat.messenger.send_text_message')
     mock_send_text_message.return_value = 'ok'
@@ -69,3 +71,7 @@ def test_get_location_as_result_of_asking_of_location(mocker):
     answer.location('somewhere', session, user)
 
     assert trigger.result() == 'somewhere'
+
+
+def test_should_():
+    pass
