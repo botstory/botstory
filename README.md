@@ -107,11 +107,13 @@ def ask_location():
     :return:
     """
     @story.begin()
-    def ask(body, options=None, user=None):
+    def ask(body=None, options=None, user=None):
         if not options:
             # default aliases for current user
             # like 'home', 'work', or other
             options = default_aleases(user)
+        if not body:
+            body = default_question(user)
         chat.say(body, options, user)
         return {
             'args': {
@@ -220,6 +222,73 @@ def ask_location():
             chat.say('Very funny! :)', message['user'])
             return {
                 'return': None,
+            }
+
+
+@story.callable()
+def ask_date_time():
+    """
+    
+    ask date time from user
+
+    :return:
+    """
+    @story.begin()
+    def ask(body=None, options=None, user=None):
+        if not options:
+            # default aliases for current user
+            # like 'home', 'work', or other
+            options = default_aleases(user)
+        if not body:
+            body = default_question(user)
+        chat.say(body, options, user)
+        return {
+            'args': {
+                'option': option.Any(),
+                'text': text.Any(),
+            },
+        }
+    
+    @story.case(match='option')
+    def option_case():
+        @story.part()
+        def return_option(message):
+            return {
+                'return': message['option']['data']
+            }
+        
+    @story.case(match='text')
+    def text_case():
+        @story.part()
+        def parse_text(message):
+            datetime_options = parse_text_to_date_time(message)
+            if len(datetime_options) == 0:
+                return {
+                    'return': {
+                        'datetime': datetime_options,
+                    },
+                }
+            elif len(datetime_options) == 1:
+                return {
+                    'return': {
+                        'datetime': datetime_options,
+                    },
+                }
+            else:
+                return {
+                    'wait': chat.choose_option(
+                        body='Hm what time do you mean?',
+                        options=[{
+                            'title': d['name'], 'data': {'datetime': d['value']}
+                        } for d in datetime_options],
+                        user=message['user'],
+                    )
+                }
+            
+        @story.part()
+        def return_option(message):
+            return {
+                'return': message['option']['data'],
             }
 
 
