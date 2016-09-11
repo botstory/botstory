@@ -90,7 +90,7 @@ def stateless_story_with_bifurcation():
 
 ```python
 
-from ... import chat, matchers, story
+from ... import chat, story
 from ...matchers.any import any
 from ...matchers.location import location
 from ...matchers.text import text
@@ -100,14 +100,18 @@ from ...matchers.text import text
 def ask_location():
     """
     v0.2.2
-    
+
     case/default/recursion version
     based on indents and no any goto
-    
-    :return: 
+
+    :return:
     """
     @story.begin()
     def ask(body, options=None, user=None):
+        if not options:
+            # default aliases for current user
+            # like 'home', 'work', or other
+            options = default_aleases(user)
         chat.say(body, options, user)
         return {
             'args': {
@@ -129,11 +133,10 @@ def ask_location():
     @story.case(match='option')
     def aliase():
         @story.part()
-        def aliase(message):
+        def return_aliase(message):
+            # it can be location or any other message data
             return {
-                'return': {
-                    'location': message['option']['data'],
-                }
+                'return': message['option']['data']
             }
 
     @story.case(match='text')
