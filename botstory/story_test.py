@@ -161,8 +161,9 @@ def test_should_match_group_of_matchers_on_story_start():
     assert trigger.triggered_times == 2
 
 
-def test_callable_story():
+def test_begin_of_callable_story():
     trigger = SimpleTrigger()
+    session = build_fake_session()
 
     @story.callable()
     def one_story():
@@ -173,9 +174,52 @@ def test_callable_story():
                 'value2': arg2,
             })
 
-    one_story(1, 2)
+    one_story(1, 2, session=session)
 
     assert trigger.result() == {
         'value1': 1,
         'value2': 2,
     }
+
+
+def test_parts_of_callable_story():
+    trigger_1 = SimpleTrigger()
+    trigger_2 = SimpleTrigger()
+    session = build_fake_session()
+    user = build_fake_user()
+
+    @story.callable()
+    def meet_ava_story():
+        @story.begin()
+        def ask_name(user):
+            return chat.ask(
+                'My name is Ava. What is your name?',
+                user=user,
+            )
+
+        @story.part()
+        def ask_age(message):
+            trigger_1.passed()
+            return chat.ask(
+                'Nice to see you {}. What do you do here?'.format(message['text']['raw']),
+                user=message['user'],
+            )
+
+        @story.part()
+        def store_arguments(message):
+            age = int(message['text']['raw'])
+            if age < 30:
+                res = 'You are so young! '
+            else:
+                res = 'Hm. Too old to die young'
+
+            chat.say(res, user=message['user'])
+            trigger_2.passed()
+
+    meet_ava_story(user, session=session)
+
+    answer.pure_text('Eugene', session, user=user)
+    answer.pure_text('13', session, user=user)
+
+    assert trigger_1.is_triggered
+    assert trigger_2.is_triggered
