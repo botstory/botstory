@@ -15,7 +15,7 @@ def build_fake_user():
 
 def build_fake_session():
     return jsdict.JSDict({
-        'wait_for_message': None,
+        'stack': [],
     })
 
 
@@ -23,6 +23,7 @@ class SimpleTrigger:
     def __init__(self):
         self.is_triggered = False
         self.triggered_times = 0
+        self.value = None
 
     def passed(self):
         self.is_triggered = True

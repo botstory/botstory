@@ -223,3 +223,45 @@ def test_parts_of_callable_story():
 
     assert trigger_1.is_triggered
     assert trigger_2.is_triggered
+
+
+def test_call_story_from_common_story():
+    trigger = SimpleTrigger()
+
+    session = build_fake_session()
+    user = build_fake_user()
+
+    @story.callable()
+    def common_greeting():
+        @story.begin()
+        def ask_name(user):
+            return chat.ask(
+                'Hi {}. How are you?'.format(user.name),
+                user=user,
+            )
+
+    @story.on('Hi!')
+    def meet():
+        @story.part()
+        def greeting(message):
+            return common_greeting(
+                user=message['user'],
+                session=message['session'],
+            )
+
+        @story.part()
+        def ask_location(message):
+            return chat.ask(
+                'Which planet are we going to visit today?',
+                user=message['user'],
+            )
+
+        @story.part()
+        def parse(message):
+            trigger.receive(message['text']['raw'])
+
+    answer.pure_text('Hi!', session, user=user)
+    answer.pure_text('I\'m fine', session, user=user)
+    answer.pure_text('Venus, as usual!', session, user=user)
+
+    assert trigger.value == 'Venus, as usual!'

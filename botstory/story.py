@@ -52,6 +52,10 @@ def part():
     return fn
 
 
+# parse callable
+# TODO: should refactor to separate py-file
+
+
 class Parser:
     def __init__(self):
         self.node = None
@@ -108,16 +112,19 @@ class ASTNode:
             raise AttributeError('Should pass session as well')
 
         session = kwargs.pop('session')
-        session.current_topic = self.topic
 
+        # TODO : should use process_story()
         wait_for = self.endpoint_story(*args, **kwargs)
 
         if wait_for:
-            session.wait_for_message = {
+            session.stack.append({
                 'type': wait_for.type,
                 'data': matchers.serialize(get_validator(wait_for)),
                 'step': 1,
-            }
+                'topic': self.topic,
+            })
+
+        return WaitForCallable()
 
 
 parser = Parser()
@@ -140,16 +147,34 @@ def begin():
     return fn
 
 
+@matchers.matcher()
+class WaitForCallable:
+    type = 'CallableReceiver'
+
+    def __init__(self):
+        pass
+
+    def validate(self, message):
+        return 'return' in message
+
+
+# match incoming messages
+# TODO: should refactor to separate py-file
+
+
 def match_message(message):
     session = message['session']
-    print('match_message')
-    print('session.wait_for_message', session.wait_for_message)
-    if session.wait_for_message:
-        validator = matchers.deserialize(session.wait_for_message['data'])
+    if len(session.stack) == 0:
+        session.stack = [None]
+        wait_for_message = None
+    else:
+        wait_for_message = session.stack[-1]
+    if wait_for_message:
+        validator = matchers.deserialize(wait_for_message['data'])
         if validator.validate(message):
-            step = session.wait_for_message['step']
-            session.wait_for_message = None
-            story = [s for s in [*core['callable'], *core['stories']] if s['topic'] == session.current_topic][0]
+            session.stack[-1] = None
+            step = wait_for_message['step']
+            story = [s for s in [*core['callable'], *core['stories']] if s['topic'] == wait_for_message['topic']][0]
             return process_story(
                 idx=step,
                 message=message,
@@ -162,7 +187,6 @@ def match_message(message):
         return
 
     story = matched_stories[0]
-    session.current_topic = story['topic']
     return process_story(
         idx=0,
         message=message,
@@ -172,22 +196,41 @@ def match_message(message):
 
 
 def process_story(session, message, story, idx=0):
-    print('process_story', session, message, story, idx)
+    logger.debug('process_story {}'.format(session))
+    logger.debug('message {}'.format(message))
+    logger.debug('story {}'.format(story))
+    logger.debug('idx {}'.format(idx))
+
     parts = story['parts']
     if hasattr(parts, 'story_line'):
         parts = parts.story_line
 
+    current_stack_level = len(session.stack) - 1
+
     while idx < len(parts):
         one_part = parts[idx]
         idx += 1
-        validator = one_part(message)
-        if validator:
-            # TODO: should wait result of async operation
+        logger.info('going to call: {}'.format(one_part.__name__))
+        waiting_for = one_part(message)
+        if waiting_for:
+            # should wait result of async operation
             # (for example answer from user)
-            validator = get_validator(validator)
-            session.wait_for_message = {
+            validator = get_validator(waiting_for)
+
+            session.stack[current_stack_level] = {
                 'type': validator.type,
                 'data': matchers.serialize(validator),
                 'step': idx,
+                'topic': story['topic'],
             }
             return
+
+    # current story line is over
+    if len(session.stack) > 1:
+        # but it seems that we have hierarchy of callable
+        # stories so we should drop current stack element
+        # because it is over and return to the previous story
+        session.stack.pop()
+        if 'return' not in message:
+            message['return'] = True
+        match_message(message)
