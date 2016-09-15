@@ -1,6 +1,7 @@
 import logging
 
-logger = logging.getLogger('story')
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 from . import matchers
 from .middlewares.any import any
@@ -29,25 +30,20 @@ def get_validator(receive):
 
 def on(receive):
     def fn(one_story):
-        validator = get_validator(receive)
-
-        core['stories'].append({
-            'validator': validator,
-            'topic': one_story.__name__,
-            'parts': []
-        })
-
-        # to parse inner sub-stories
-        one_story()
+        compiled_story = parser.compile(
+            one_story,
+        )
+        compiled_story['validator'] = get_validator(receive)
+        core['stories'].append(compiled_story)
+        return one_story
 
     return fn
 
 
 def part():
     def fn(part_of_story):
-        if not parser.part(part_of_story):
-            last_story = core['stories'][-1]
-            last_story['parts'].append(part_of_story)
+        parser.part(part_of_story)
+        return part_of_story
 
     return fn
 
@@ -59,27 +55,27 @@ def part():
 class Parser:
     def __init__(self):
         self.node = None
+        self.middlewares = []
 
-    def compile(self, one_story):
+    def compile(self, one_story, middlewares=[]):
         topic = one_story.__name__
+        self.middlewares = middlewares
         self.node = ASTNode(topic=topic)
         one_story()
 
+        parts = self.node
+        self.node = None
+
         return {
             'topic': topic,
-            'parts': self.node,
+            'parts': parts,
         }
 
-    def begin(self, story_part):
-        if not self.node:
-            return False
-        self.node.endpoint_story = story_part
-        self.node.append(self.node.endpoint)
-        return True
-
     def part(self, story_part):
-        if not self.node:
-            return False
+        for m in self.middlewares:
+            if m.process_part(self, story_part):
+                return True
+
         self.node.append(story_part)
         return True
 
@@ -93,7 +89,6 @@ class ASTNode:
         self.topic = topic
         self.story_line = []
         self.story_names = set()
-        self.endpoint_story = None
 
     def append(self, story_part):
         part_name = story_part.__name__,
@@ -103,28 +98,27 @@ class ASTNode:
         self.story_names.add(part_name)
         self.story_line.append(story_part)
 
-    @property
-    def first_part(self):
-        return self.story_line[0]
-
-    def endpoint(self, *args, **kwargs):
+    def startpoint(self, *args, **kwargs):
         if 'session' not in kwargs:
             raise AttributeError('Should pass session as well')
 
         session = kwargs.pop('session')
 
-        # TODO : should use process_story()
-        wait_for = self.endpoint_story(*args, **kwargs)
+        # we are going deeper so prepare one more item in stack
+        session.stack.append(None)
+        process_story(session,
+                      # we don't have message yet
+                      message=None,
+                      story=self.story,
+                      idx=0,
+                      story_args=args,
+                      story_kwargs=kwargs)
 
-        if wait_for:
-            session.stack.append({
-                'type': wait_for.type,
-                'data': matchers.serialize(get_validator(wait_for)),
-                'step': 1,
-                'topic': self.topic,
-            })
+        return WaitForCallableReturn()
 
-        return WaitForCallable()
+    @property
+    def story(self):
+        return [s for s in core['callable'] if s['topic'] == self.topic][0]
 
 
 parser = Parser()
@@ -132,24 +126,25 @@ parser = Parser()
 
 def callable():
     def fn(callable_story):
-        compiled_story = parser.compile(callable_story)
+        compiled_story = parser.compile(
+            callable_story,
+        )
         core['callable'].append(compiled_story)
-        parser.node = None
-        return compiled_story['parts'].first_part
+        return compiled_story['parts'].startpoint
 
     return fn
 
 
 def begin():
     def fn(story_part):
-        parser.begin(story_part)
+        parser.part(story_part)
 
     return fn
 
 
 @matchers.matcher()
-class WaitForCallable:
-    type = 'CallableReceiver'
+class WaitForCallableReturn:
+    type = 'WaitForCallableReturn'
 
     def __init__(self):
         pass
@@ -195,23 +190,27 @@ def match_message(message):
     )
 
 
-def process_story(session, message, story, idx=0):
+def process_story(session, message, story, idx=0, story_args=[], story_kwargs={}):
     logger.debug('process_story {}'.format(session))
     logger.debug('message {}'.format(message))
     logger.debug('story {}'.format(story))
     logger.debug('idx {}'.format(idx))
 
-    parts = story['parts']
-    if hasattr(parts, 'story_line'):
-        parts = parts.story_line
+    story_line = story['parts'].story_line
 
     current_stack_level = len(session.stack) - 1
 
-    while idx < len(parts):
-        one_part = parts[idx]
+    while idx < len(story_line):
+        one_part = story_line[idx]
         idx += 1
         logger.info('going to call: {}'.format(one_part.__name__))
-        waiting_for = one_part(message)
+        if message:
+            # process common story part
+            waiting_for = one_part(message)
+        else:
+            # process startpoint of callable story
+            waiting_for = one_part(*story_args, **story_kwargs)
+
         if waiting_for:
             # should wait result of async operation
             # (for example answer from user)

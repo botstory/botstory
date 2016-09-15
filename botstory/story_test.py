@@ -167,7 +167,7 @@ def test_begin_of_callable_story():
 
     @story.callable()
     def one_story():
-        @story.begin()
+        @story.part()
         def store_arguments(arg1, arg2):
             trigger.receive({
                 'value1': arg1,
@@ -190,7 +190,7 @@ def test_parts_of_callable_story():
 
     @story.callable()
     def meet_ava_story():
-        @story.begin()
+        @story.part()
         def ask_name(user):
             return chat.ask(
                 'My name is Ava. What is your name?',
@@ -233,7 +233,7 @@ def test_call_story_from_common_story():
 
     @story.callable()
     def common_greeting():
-        @story.begin()
+        @story.part()
         def ask_name(user):
             return chat.ask(
                 'Hi {}. How are you?'.format(user.name),
@@ -265,3 +265,26 @@ def test_call_story_from_common_story():
     answer.pure_text('Venus, as usual!', session, user=user)
 
     assert trigger.value == 'Venus, as usual!'
+
+
+def test_parts_of_callable_story_can_be_sync():
+    trigger_1 = SimpleTrigger()
+    trigger_2 = SimpleTrigger()
+    session = build_fake_session()
+
+    @story.callable()
+    def one_story():
+        @story.part()
+        def has():
+            trigger_1.passed()
+
+        @story.part()
+        def so():
+            trigger_2.passed()
+
+        print('locals:', locals())
+
+    one_story(session=session)
+
+    assert trigger_1.is_triggered
+    assert trigger_2.is_triggered
