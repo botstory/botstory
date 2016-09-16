@@ -1,4 +1,4 @@
-from ... import matchers
+from ... import matchers, utils
 
 
 @matchers.matcher()
@@ -30,3 +30,11 @@ class Match:
 
     def deserialize(self, state):
         self.test_string = state
+
+    @staticmethod
+    def can_handle(data):
+        return utils.is_string(data)
+
+    @staticmethod
+    def handle(data):
+        return Match(data)
