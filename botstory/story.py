@@ -229,6 +229,7 @@ def process_story(session, message, story, idx=0, story_args=[], story_kwargs={}
         # stories so we should drop current stack element
         # because it is over and return to the previous story
         session.stack.pop()
-        if 'return' not in message:
-            message['return'] = True
-        match_message(message)
+        if message:
+            if 'return' not in message:
+                message['return'] = True
+            match_message(message)

@@ -282,9 +282,44 @@ def test_parts_of_callable_story_can_be_sync():
         def so():
             trigger_2.passed()
 
-        print('locals:', locals())
-
     one_story(session=session)
+
+    assert trigger_1.is_triggered
+    assert trigger_2.is_triggered
+
+
+def test_call_story_from_another_callable():
+    trigger_1 = SimpleTrigger()
+    trigger_2 = SimpleTrigger()
+    session = build_fake_session()
+
+    @story.callable()
+    def one_story():
+        @story.part()
+        def so_1(session_1):
+            pass
+
+        @story.part()
+        def so_2(session_2):
+            another_story(session=session_2)
+
+        @story.part()
+        def so_3(session_3):
+            trigger_2.passed()
+
+    @story.callable()
+    def another_story():
+        @story.part()
+        def has():
+            pass
+
+        @story.part()
+        def so():
+            trigger_1.passed()
+
+    # push extra parameter with session
+    # and it will propagate up to other story as well
+    one_story(session, session=session)
 
     assert trigger_1.is_triggered
     assert trigger_2.is_triggered
