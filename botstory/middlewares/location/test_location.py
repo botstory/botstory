@@ -1,12 +1,11 @@
 from . import location
 from ... import matchers, story
-from ...story import clear, match_message
 from ...utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
 
 def teardown_function(function):
     print('tear down!')
-    clear()
+    story.core.clear()
 
 
 def test_should_trigger_on_any_location():

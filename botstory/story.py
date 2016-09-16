@@ -8,15 +8,34 @@ from .middlewares.any import any
 from .middlewares.text import text
 from .utils import is_string
 
-core = {
-    'stories': [],
-    'callable': [],
-}
+
+class Core:
+    def __init__(self):
+        self.stories = []
+        self.callable = []
+
+    def clear(self):
+        self.stories = []
+        self.callable = []
+
+    def add_story(self, one_story):
+        self.stories.append(one_story)
+
+    def add_callable(self, one_callable):
+        self.callable.append(one_callable)
+
+    def get_callable_by_topic(self, topic):
+        return [s for s in self.callable if s['topic'] == topic][0]
+
+    def valid_story(self, message):
+        matched_stories = [task for task in self.stories if task['validator'].validate(message)]
+        return matched_stories[0] if len(matched_stories) > 0 else None
+
+    def get_story_by_topic(self, topic):
+        return [s for s in [*self.callable, *self.stories] if s['topic'] == topic][0]
 
 
-def clear():
-    core['callable'] = []
-    core['stories'] = []
+core = Core()
 
 
 def get_validator(receive):
@@ -34,7 +53,8 @@ def on(receive):
             one_story,
         )
         compiled_story['validator'] = get_validator(receive)
-        core['stories'].append(compiled_story)
+        core.add_story(compiled_story)
+
         return one_story
 
     return fn
@@ -118,7 +138,7 @@ class ASTNode:
 
     @property
     def story(self):
-        return [s for s in core['callable'] if s['topic'] == self.topic][0]
+        return core.get_callable_by_topic(self.topic)
 
 
 parser = Parser()
@@ -129,7 +149,7 @@ def callable():
         compiled_story = parser.compile(
             callable_story,
         )
-        core['callable'].append(compiled_story)
+        core.add_callable(compiled_story)
         return compiled_story['parts'].startpoint
 
     return fn
@@ -168,7 +188,7 @@ def match_message(message):
             if validator.validate(message):
                 session.stack[-1] = None
                 step = wait_for_message['step']
-                story = [s for s in [*core['callable'], *core['stories']] if s['topic'] == wait_for_message['topic']][0]
+                story = core.get_story_by_topic(wait_for_message['topic'])
                 return process_story(
                     idx=step,
                     message=message,
@@ -176,11 +196,9 @@ def match_message(message):
                     session=session,
                 )
 
-    matched_stories = [task for task in core['stories'] if task['validator'].validate(message)]
-    if len(matched_stories) == 0:
+    story = core.valid_story(message)
+    if not story:
         return
-
-    story = matched_stories[0]
     return process_story(
         idx=0,
         message=message,

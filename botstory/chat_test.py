@@ -8,7 +8,7 @@ from .utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 @pytest.fixture
 def teardown_function(function):
     print('tear down!')
-    story.clear()
+    story.core.clear()
 
 
 def test_should_say(mocker):

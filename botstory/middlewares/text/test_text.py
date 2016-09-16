@@ -3,10 +3,9 @@ from ... import matchers, story
 from ...utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
 
-
 def teardown_function(function):
     print('tear down!')
-    story.clear()
+    story.core.clear()
 
 
 def test_should_run_story_on_equal_message():
