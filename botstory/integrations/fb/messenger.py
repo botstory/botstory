@@ -1,3 +1,3 @@
-def send_text_message(sender, text):
+def send_text_message(sender, text, options=None):
     # TODO
     pass

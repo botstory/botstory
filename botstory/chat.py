@@ -1,13 +1,24 @@
-from .middlewares.any.any import Any
-from .middlewares.text import text
+from .middlewares.any import any
 from .middlewares.location import location
+from .middlewares.text import text
 from .integrations.fb import messenger
 
 
-def ask(body, user):
-    say(body, user)
-    return Any()
+def ask(body, options=None, user=None):
+    """
+    simple ask with predefined options
 
+    :param body:
+    :param options: (optional)  in form of
+    {'title': <message>, 'payload': <any json>}
+    :param user:
+    :return:
+    """
+    messenger.send_text_message(user.id, text=body, options=options)
+    return any.Any()
+
+
+# TODO: move to middlewares/location/location.py
 
 def ask_location(body, user):
     # TODO:
