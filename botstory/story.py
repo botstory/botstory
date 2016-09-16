@@ -161,21 +161,20 @@ def match_message(message):
     session = message['session']
     if len(session.stack) == 0:
         session.stack = [None]
-        wait_for_message = None
     else:
         wait_for_message = session.stack[-1]
-    if wait_for_message:
-        validator = matchers.deserialize(wait_for_message['data'])
-        if validator.validate(message):
-            session.stack[-1] = None
-            step = wait_for_message['step']
-            story = [s for s in [*core['callable'], *core['stories']] if s['topic'] == wait_for_message['topic']][0]
-            return process_story(
-                idx=step,
-                message=message,
-                story=story,
-                session=session,
-            )
+        if wait_for_message:
+            validator = matchers.deserialize(wait_for_message['data'])
+            if validator.validate(message):
+                session.stack[-1] = None
+                step = wait_for_message['step']
+                story = [s for s in [*core['callable'], *core['stories']] if s['topic'] == wait_for_message['topic']][0]
+                return process_story(
+                    idx=step,
+                    message=message,
+                    story=story,
+                    session=session,
+                )
 
     matched_stories = [task for task in core['stories'] if task['validator'].validate(message)]
     if len(matched_stories) == 0:
