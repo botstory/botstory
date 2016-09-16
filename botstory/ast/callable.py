@@ -13,13 +13,15 @@ class WaitForCallableReturn:
 
 
 class CallableNodeWrapper:
+    """
+    helps start processing callable story
+    """
+
     def __init__(self, ast_node, processor_instance):
         self.ast_node = ast_node
         self.processor_instance = processor_instance
 
     def startpoint(self, *args, **kwargs):
-        # TODO: should be in callable but has access to node
-        # so it should be middleware
         if 'session' not in kwargs:
             raise AttributeError('Should pass session as well')
 

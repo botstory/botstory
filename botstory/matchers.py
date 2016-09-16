@@ -15,25 +15,18 @@ def build_deserialize(cls):
     return default_deserialize
 
 
-def get_validator(receive):
+def get_validator(filter_data):
     """
-    ask every matcher whether it can serve such filter
+    ask every matcher whether it can serve such filter ata
 
-    :param receive:
+    :param filter_data:
     :return:
     """
     for matcher_type, m in matchers.items():
-        if hasattr(m, 'can_handle') and m.can_handle(receive):
-            receive = m.handle(receive)
+        if hasattr(m, 'can_handle') and m.can_handle(filter_data):
+            filter_data = m.handle(filter_data)
 
-    return receive
-    # TODO: should
-    # if isinstance(receive, list):
-    #     return any.AnyOf([get_validator(r) for r in receive])
-    # elif is_string(receive):
-    #     return text.Match(receive)
-    # else:
-    #     return receive
+    return filter_data
 
 
 def matcher():
