@@ -32,7 +32,7 @@ class CallableNodeWrapper:
         self.processor_instance.process_story(session,
                                               # we don't have message yet
                                               message=None,
-                                              compiled_story=self.ast_node.compiled_story,
+                                              compiled_story=self.ast_node,
                                               idx=0,
                                               story_args=args,
                                               story_kwargs=kwargs)
@@ -53,7 +53,7 @@ class CallableStoriesAPI:
             )
             self.library.add_callable(compiled_story)
             return CallableNodeWrapper(
-                compiled_story['parts'],
+                compiled_story,
                 self.processor_instance
             ).startpoint
 

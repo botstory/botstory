@@ -15,15 +15,9 @@ class Parser:
 
         one_story()
 
-        compiled_story = {
-            'topic': topic,
-            'parts': self.node,
-        }
-
-        self.node.compiled_story = compiled_story
-
+        res = self.node
         self.node = None
-        return compiled_story
+        return res
 
     def part(self, story_part):
         for m in self.middlewares:
@@ -39,15 +33,9 @@ class Parser:
 
 
 class ASTNode:
-    # TODO: merge compiled_story with ASTNode
-    # because compiled_story has ASTNode, topic instances
-    # and validator (optionally)
-    #
-    # so maybe we should add endpoint for message handler endpoints
-    # with extra parameter (validator)
-    # and the result just ASTNode
     def __init__(self, topic):
         self.compiled_story = None
+        self.extensions = {}
         self.story_line = []
         self.story_names = set()
         self.topic = topic

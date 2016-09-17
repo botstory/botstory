@@ -44,7 +44,7 @@ class StoryProcessor:
         logger.debug('story {}'.format(compiled_story))
         logger.debug('idx {}'.format(idx))
 
-        story_line = compiled_story['parts'].story_line
+        story_line = compiled_story.story_line
 
         current_stack_level = len(session.stack) - 1
 
@@ -68,7 +68,7 @@ class StoryProcessor:
                     'type': validator.type,
                     'data': matchers.serialize(validator),
                     'step': idx,
-                    'topic': compiled_story['topic'],
+                    'topic': compiled_story.topic,
                 }
                 return
 

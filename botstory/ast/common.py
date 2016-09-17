@@ -11,7 +11,7 @@ class CommonStoriesAPI:
             compiled_story = self.parser_instance.compile(
                 one_story,
             )
-            compiled_story['validator'] = matchers.get_validator(receive)
+            compiled_story.extensions['validator'] = matchers.get_validator(receive)
             self.library.add_message_handler(compiled_story)
 
             return one_story

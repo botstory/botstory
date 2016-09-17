@@ -17,11 +17,12 @@ class StoriesLibrary:
         self.callable_stories.append(story)
 
     def get_callable_by_topic(self, topic):
-        return [s for s in self.callable_stories if s['topic'] == topic][0]
+        return [s for s in self.callable_stories if s.topic == topic][0]
 
     def get_right_story(self, message):
-        matched_stories = [task for task in self.message_handling_stories if task['validator'].validate(message)]
+        matched_stories = [story for story in self.message_handling_stories
+                           if story.extensions['validator'].validate(message)]
         return matched_stories[0] if len(matched_stories) > 0 else None
 
     def get_story_by_topic(self, topic):
-        return [s for s in [*self.callable_stories, *self.message_handling_stories] if s['topic'] == topic][0]
+        return [s for s in [*self.callable_stories, *self.message_handling_stories] if s.topic == topic][0]
