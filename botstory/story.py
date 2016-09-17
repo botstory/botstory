@@ -2,21 +2,24 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .ast import callable as callable_module, common, core, parser, processor
+from .ast import callable as callable_module, common, library, parser, processor
 
 # instantiate handlers
 
-core_instance = core.Core()
+stories_library = library.StoriesLibrary()
 
 parser_instance = parser.Parser()
 
-story_processor_instance = processor.StoryProcessor(parser_instance, core_instance)
+story_processor_instance = processor.StoryProcessor(
+    parser_instance,
+    stories_library)
 
 common_stories_instance = common.CommonStoriesAPI(
-    parser_instance, core_instance)
+    parser_instance,
+    stories_library)
 
 callable_stories_instance = callable_module.CallableStoriesAPI(
-    core_instance=core_instance,
+    library=stories_library,
     parser_instance=parser_instance,
     processor_instance=story_processor_instance,
 )

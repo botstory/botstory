@@ -41,8 +41,8 @@ class CallableNodeWrapper:
 
 
 class CallableStoriesAPI:
-    def __init__(self, core_instance, parser_instance, processor_instance):
-        self.core_instance = core_instance
+    def __init__(self, library, parser_instance, processor_instance):
+        self.library = library
         self.parser_instance = parser_instance
         self.processor_instance = processor_instance
 
@@ -51,7 +51,7 @@ class CallableStoriesAPI:
             compiled_story = self.parser_instance.compile(
                 callable_story,
             )
-            self.core_instance.add_callable(compiled_story)
+            self.library.add_callable(compiled_story)
             return CallableNodeWrapper(
                 compiled_story['parts'],
                 self.processor_instance

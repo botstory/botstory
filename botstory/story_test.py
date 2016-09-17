@@ -9,7 +9,7 @@ from .middlewares.location import location
 @pytest.fixture
 def teardown_function(function):
     print('tear down!')
-    story.core_instance.clear()
+    story.stories_library.clear()
 
 
 def test_should_run_sequence_of_parts():

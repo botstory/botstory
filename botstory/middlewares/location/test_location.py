@@ -5,7 +5,7 @@ from ...utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
 def teardown_function(function):
     print('tear down!')
-    story.core_instance.clear()
+    story.stories_library.clear()
 
 
 def test_should_trigger_on_any_location():

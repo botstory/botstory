@@ -39,6 +39,13 @@ class Parser:
 
 
 class ASTNode:
+    # TODO: merge compiled_story with ASTNode
+    # because compiled_story has ASTNode, topic instances
+    # and validator (optionally)
+    #
+    # so maybe we should add endpoint for message handler endpoints
+    # with extra parameter (validator)
+    # and the result just ASTNode
     def __init__(self, topic):
         self.compiled_story = None
         self.story_line = []

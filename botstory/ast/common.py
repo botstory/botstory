@@ -2,9 +2,9 @@ from .. import matchers
 
 
 class CommonStoriesAPI:
-    def __init__(self, parser_instance, core_instance):
+    def __init__(self, parser_instance, library):
         self.parser_instance = parser_instance
-        self.core_instance = core_instance
+        self.library = library
 
     def on(self, receive):
         def fn(one_story):
@@ -12,7 +12,7 @@ class CommonStoriesAPI:
                 one_story,
             )
             compiled_story['validator'] = matchers.get_validator(receive)
-            self.core_instance.add_story(compiled_story)
+            self.library.add_message_handler(compiled_story)
 
             return one_story
 

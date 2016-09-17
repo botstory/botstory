@@ -5,9 +5,9 @@ logger = logging.getLogger(__name__)
 
 
 class StoryProcessor:
-    def __init__(self, parser_instance, core_instance):
+    def __init__(self, parser_instance, library):
         self.parser_instance = parser_instance
-        self.core_instance = core_instance
+        self.library = library
 
     def match_message(self, message):
         session = message['session']
@@ -20,7 +20,7 @@ class StoryProcessor:
                 if validator.validate(message):
                     session.stack[-1] = None
                     step = wait_for_message['step']
-                    compiled_story = self.core_instance.get_story_by_topic(wait_for_message['topic'])
+                    compiled_story = self.library.get_story_by_topic(wait_for_message['topic'])
                     return self.process_story(
                         idx=step,
                         message=message,
@@ -28,7 +28,7 @@ class StoryProcessor:
                         session=session,
                     )
 
-        compiled_story = self.core_instance.get_right_story(message)
+        compiled_story = self.library.get_right_story(message)
         if not compiled_story:
             return
         return self.process_story(
