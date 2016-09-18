@@ -2,8 +2,8 @@ from .. import matchers
 
 
 @matchers.matcher()
-class WaitForCallableReturn:
-    type = 'WaitForCallableReturn'
+class WaitForReturn:
+    type = 'WaitForReturn'
 
     def __init__(self):
         pass
@@ -37,7 +37,7 @@ class CallableNodeWrapper:
                                               story_args=args,
                                               story_kwargs=kwargs)
 
-        return WaitForCallableReturn()
+        return WaitForReturn()
 
 
 class CallableStoriesAPI:

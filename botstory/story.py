@@ -2,7 +2,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .ast import callable as callable_module, common, library, parser, processor
+from .ast import callable as callable_module, common, \
+    forking, library, parser, processor
 
 # instantiate handlers
 
@@ -12,7 +13,9 @@ parser_instance = parser.Parser()
 
 story_processor_instance = processor.StoryProcessor(
     parser_instance,
-    stories_library)
+    stories_library,
+    middlewares=[forking.Middleware()]
+)
 
 common_stories_instance = common.CommonStoriesAPI(
     parser_instance,
@@ -24,11 +27,16 @@ callable_stories_instance = callable_module.CallableStoriesAPI(
     processor_instance=story_processor_instance,
 )
 
+forking_api = forking.ForkingStoriesAPI(
+    parser_instance=parser_instance,
+)
+
 # expose story API:
 
+callable = callable_stories_instance.callable
+case = forking_api.case
 on = common_stories_instance.on
 part = common_stories_instance.part
-callable = callable_stories_instance.callable
 
 # expose message handler API:
 
