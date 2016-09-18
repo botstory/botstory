@@ -1,3 +1,4 @@
+from . import processor
 from .. import matchers
 
 
@@ -28,7 +29,7 @@ class CallableNodeWrapper:
         session = kwargs.pop('session')
 
         # we are going deeper so prepare one more item in stack
-        session.stack.append(None)
+        session.stack.append(processor.build_empty_stack_item())
         self.processor_instance.process_story(session,
                                               # we don't have message yet
                                               message=None,

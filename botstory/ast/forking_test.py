@@ -1,5 +1,6 @@
 import json
 import pytest
+import random
 
 from . import forking
 from .. import chat, story, matchers
@@ -26,7 +27,7 @@ def test_cases():
     def one_story():
         @story.part()
         def start(message):
-            chat.say('Where we you go?', user=message['user'])
+            chat.say('Where do you go?', user=message['user'])
             return forking.Switch({
                 'location': location.Any(),
                 'text': text.Any(),
@@ -54,6 +55,36 @@ def test_cases():
     assert trigger_location.result() == {'x': 123, 'y': 321}
     assert not trigger_text.result()
     assert trigger_after_switch.is_triggered
+
+
+def test_sync_value():
+    user = build_fake_user()
+    session = build_fake_session()
+    trigger_heads = SimpleTrigger()
+    trigger_tails = SimpleTrigger()
+
+    @story.on('Flip a coin!')
+    def one_story():
+        @story.part()
+        def start(message):
+            coin = random.choice(['heads', 'tails'])
+            return forking.SwitchOnValue(coin)
+
+        @story.case(equal_to='heads')
+        def heads():
+            @story.part()
+            def store_heads(message):
+                trigger_heads.passed()
+
+        @story.case(equal_to='tails')
+        def tails():
+            @story.part()
+            def store_tails(message):
+                trigger_tails.passed()
+
+    answer.pure_text('Flip a coin!', session, user)
+
+    assert trigger_heads.is_triggered != trigger_tails.is_triggered
 
 
 def test_serialize():

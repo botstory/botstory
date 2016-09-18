@@ -2,8 +2,23 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from . import callable
+from . import callable, processor
 from .. import matchers
+
+
+class Undefined:
+    """
+    Because we can got ever None value we should have something
+    that definitely noted that value wasn't defined
+    """
+
+    def __init__(self):
+        pass
+
+
+def match_children(data, key, value):
+    return [child for child in data['story'].children
+            if child.extensions.get(key, Undefined) == value]
 
 
 class Middleware:
@@ -12,16 +27,13 @@ class Middleware:
 
     def process(self, data, validation_result):
         logger.debug('process_switch data: {}, validation_result: {}'.format(data, validation_result))
-        logger.debug([child.extensions['case_id'] for child in data['story'].children])
-        case_story = [
-            child for child in data['story'].children
-            if child.extensions['case_id'] == validation_result
-            ]
+        case_story = match_children(data, 'case_id', validation_result)
+        if len(case_story) == 0:
+            case_story = match_children(data, 'case_equal', validation_result)
+        if len(case_story) == 0:
+            return data
 
         logger.debug('got case_story {}'.format(case_story))
-
-        if not case_story or len(case_story) == 0:
-            return data
 
         last_stack_item = data['stack_tail'][-1]
         new_stack_item = {
@@ -32,8 +44,10 @@ class Middleware:
 
         return {
             'step': 0,
-            'story': case_story,
-            'stack_tail': data['stack_tail'][:-1] + [new_stack_item, None],  # we are going deeper
+            'story': case_story[0],
+            'stack_tail':
+                data['stack_tail'][:-1] +
+                [new_stack_item, processor.build_empty_stack_item()],  # we are going deeper
         }
 
 
@@ -62,14 +76,26 @@ class Switch:
                           })
 
 
+class SwitchOnValue:
+    """
+    don't need to wait result
+    """
+    def __init__(self, value):
+        self.value = value
+        self.immediately = True
+
+
 class ForkingStoriesAPI:
     def __init__(self, parser_instance):
         self.parser_instance = parser_instance
 
-    def case(self, match):
+    def case(self, match=Undefined, equal_to=Undefined):
         def decorate(story_part):
             compiled_story = self.parser_instance.go_deeper(story_part)
-            compiled_story.extensions['case_id'] = match
+            if match is not Undefined:
+                compiled_story.extensions['case_id'] = match
+            if equal_to is not Undefined:
+                compiled_story.extensions['case_equal'] = equal_to
             return story_part
 
         return decorate
