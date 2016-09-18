@@ -45,17 +45,12 @@ class Switch:
     def validate(self, message):
         for case_id, validator in self.cases.items():
             if validator.validate(message):
-                # TODO: should have case and return it
                 return case_id
-        # TODO: should be valid anyway if we have default case
         return False
 
     def serialize(self):
-        # TODO:
         return [{
                     'id': id,
-                    # TODO: should get case-topic
-                    # 'casetopic': None,
                     'data': matchers.serialize(c),
                 } for id, c in self.cases.items()]
 
@@ -63,7 +58,8 @@ class Switch:
     def deserialize(data):
         return Switch({
                           case['id']: matchers.deserialize(case['data'])
-                          for case in data})
+                          for case in data
+                          })
 
 
 class ForkingStoriesAPI:
