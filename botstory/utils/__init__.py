@@ -20,10 +20,10 @@ def build_fake_session():
 
 
 class SimpleTrigger:
-    def __init__(self):
+    def __init__(self, value = None):
         self.is_triggered = False
         self.triggered_times = 0
-        self.value = None
+        self.value = value
 
     def passed(self):
         self.is_triggered = True

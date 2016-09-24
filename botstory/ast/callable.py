@@ -1,16 +1,21 @@
+import logging
 from . import processor
 from .. import matchers
+
+logger = logging.getLogger(__name__)
 
 
 @matchers.matcher()
 class WaitForReturn:
     type = 'WaitForReturn'
 
-    def __init__(self):
+    def __init__(self, immediately = False):
+        # self.immediately = immediately
         pass
 
     def validate(self, message):
-        return 'return' in message
+        # return 'return' in message
+        return True
 
 
 class CallableNodeWrapper:
@@ -29,6 +34,7 @@ class CallableNodeWrapper:
         session = kwargs.pop('session')
 
         # we are going deeper so prepare one more item in stack
+        logger.debug('  action: extend stack by +1')
         session.stack.append(processor.build_empty_stack_item())
         self.processor_instance.process_story(session,
                                               # we don't have message yet

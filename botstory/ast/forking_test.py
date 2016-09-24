@@ -60,8 +60,47 @@ def test_cases():
 def test_sync_value():
     user = build_fake_user()
     session = build_fake_session()
+    trigger_start = SimpleTrigger()
     trigger_heads = SimpleTrigger()
     trigger_tails = SimpleTrigger()
+
+    @story.on('Flip a coin!')
+    def one_story():
+        @story.part()
+        def start(message):
+            coin = random.choice(['heads', 'tails'])
+            assert not trigger_start.is_triggered
+            assert not trigger_heads.is_triggered
+            assert not trigger_tails.is_triggered
+            trigger_start.passed()
+            return forking.SwitchOnValue(coin)
+
+        @story.case(equal_to='heads')
+        def heads():
+            @story.part()
+            def store_heads(message):
+                assert not trigger_heads.is_triggered
+                trigger_heads.passed()
+
+        @story.case(equal_to='tails')
+        def tails():
+            @story.part()
+            def store_tails(message):
+                assert not trigger_tails.is_triggered
+                trigger_tails.passed()
+
+    answer.pure_text('Flip a coin!', session, user)
+
+    assert trigger_heads.is_triggered != trigger_tails.is_triggered
+
+
+def test_few_switches_in_one_story():
+    user = build_fake_user()
+    session = build_fake_session()
+    trigger_heads = SimpleTrigger()
+    trigger_heads.receive(0)
+    trigger_tails = SimpleTrigger()
+    trigger_tails.receive(0)
 
     @story.on('Flip a coin!')
     def one_story():
@@ -71,20 +110,195 @@ def test_sync_value():
             return forking.SwitchOnValue(coin)
 
         @story.case(equal_to='heads')
-        def heads():
+        def heads_0():
             @story.part()
             def store_heads(message):
-                trigger_heads.passed()
+                trigger_heads.receive(trigger_heads.value + 1)
 
         @story.case(equal_to='tails')
-        def tails():
+        def tails_0():
             @story.part()
             def store_tails(message):
-                trigger_tails.passed()
+                trigger_tails.receive(trigger_tails.value + 1)
+
+        @story.part()
+        def start(message):
+            assert trigger_heads.value + trigger_tails.value == 1
+            coin = random.choice(['heads', 'tails'])
+            return forking.SwitchOnValue(coin)
+
+        @story.case(equal_to='heads')
+        def heads_1():
+            @story.part()
+            def store_heads(message):
+                trigger_heads.receive(trigger_heads.value + 1)
+
+        @story.case(equal_to='tails')
+        def tails_1():
+            @story.part()
+            def store_tails(message):
+                trigger_tails.receive(trigger_tails.value + 1)
 
     answer.pure_text('Flip a coin!', session, user)
 
-    assert trigger_heads.is_triggered != trigger_tails.is_triggered
+    assert trigger_heads.value + trigger_tails.value == 2
+
+
+def test_default_sync_value():
+    user = build_fake_user()
+    session = build_fake_session()
+    trigger_1 = SimpleTrigger()
+    trigger_default = SimpleTrigger()
+
+    @story.on('Roll the dice!')
+    def one_story_1():
+        @story.part()
+        def start(message):
+            side = random.randint(1, 6)
+            return forking.SwitchOnValue(side)
+
+        @story.case(equal_to=1)
+        def side_1():
+            @story.part()
+            def store_1(message):
+                trigger_1.passed()
+
+        @story.case(default=True)
+        def other_sides():
+            @story.part()
+            def store_other(message):
+                trigger_default.passed()
+
+    answer.pure_text('Roll the dice!', session, user)
+
+    assert trigger_1.is_triggered != trigger_default.is_triggered
+
+
+def test_one_sync_switch_inside_of_another_sync_switch():
+    user = build_fake_user()
+    session = build_fake_session()
+    visited_rooms = SimpleTrigger(0)
+
+    @story.on('enter')
+    def labyrinth():
+        @story.part()
+        def enter(message):
+            turn = random.choice(['left', 'right'])
+            visited_rooms.receive(visited_rooms.value + 1)
+            return forking.SwitchOnValue(turn)
+
+        @story.case(equal_to='left')
+        def room_1():
+            @story.part()
+            def next_room_1(message):
+                turn = random.choice(['left', 'right'])
+                visited_rooms.receive(visited_rooms.value + 1)
+                return forking.SwitchOnValue(turn)
+
+            @story.case(equal_to='left')
+            def room_1_1():
+                @story.part()
+                def next_room_1_1(message):
+                    visited_rooms.receive(visited_rooms.value + 1)
+
+            @story.case(equal_to='right')
+            def room_1_2():
+                @story.part()
+                def next_room_1_2(message):
+                    visited_rooms.receive(visited_rooms.value + 1)
+
+        @story.case(equal_to='right')
+        def room_2():
+            @story.part()
+            def next_room_2(message):
+                turn = random.choice(['left', 'right'])
+                visited_rooms.receive(visited_rooms.value + 1)
+                return forking.SwitchOnValue(turn)
+
+            @story.case(equal_to='left')
+            def room_2_1():
+                @story.part()
+                def next_room_2_1(message):
+                    visited_rooms.receive(visited_rooms.value + 1)
+
+            @story.case(equal_to='right')
+            def room_2_2():
+                @story.part()
+                def next_room_2_2(message):
+                    visited_rooms.receive(visited_rooms.value + 1)
+
+    answer.pure_text('enter', session, user)
+
+    assert visited_rooms.value == 3
+
+
+def test_one_sync_switch_inside_of_another_async_switch():
+    user = build_fake_user()
+    session = build_fake_session()
+    visited_rooms = SimpleTrigger(0)
+
+    @story.on('enter')
+    def labyrinth():
+        @story.part()
+        def enter(message):
+            visited_rooms.receive(visited_rooms.value + 1)
+            return chat.ask('Which turn to choose?', user=message['user'])
+
+        @story.part()
+        def parse_direction_0(message):
+            return forking.SwitchOnValue(message['text']['raw'])
+
+        @story.case(equal_to='left')
+        def room_1():
+            @story.part()
+            def next_room_1(message):
+                visited_rooms.receive(visited_rooms.value + 1)
+                return chat.ask('Which turn to choose?', user=message['user'])
+
+            @story.part()
+            def parse_direction_1(message):
+                return forking.SwitchOnValue(message['text']['raw'])
+
+            @story.case(equal_to='left')
+            def room_1_1():
+                @story.part()
+                def next_room_1_1(message):
+                    visited_rooms.receive(visited_rooms.value + 1)
+
+            @story.case(equal_to='right')
+            def room_1_2():
+                @story.part()
+                def next_room_1_2(message):
+                    visited_rooms.receive(visited_rooms.value + 1)
+
+        @story.case(equal_to='right')
+        def room_2():
+            @story.part()
+            def next_room_2(message):
+                visited_rooms.receive(visited_rooms.value + 1)
+                return chat.ask('Which turn to choose?', user=message['user'])
+
+            @story.part()
+            def parse_direction_2(message):
+                return forking.SwitchOnValue(message['text']['raw'])
+
+            @story.case(equal_to='left')
+            def room_2_1():
+                @story.part()
+                def next_room_2_1(message):
+                    visited_rooms.receive(visited_rooms.value + 1)
+
+            @story.case(equal_to='right')
+            def room_2_2():
+                @story.part()
+                def next_room_2_2(message):
+                    visited_rooms.receive(visited_rooms.value + 1)
+
+    answer.pure_text('enter', session, user)
+    answer.pure_text(random.choice(['left', 'right']), session, user)
+    answer.pure_text(random.choice(['left', 'right']), session, user)
+
+    assert visited_rooms.value == 3
 
 
 def test_serialize():
