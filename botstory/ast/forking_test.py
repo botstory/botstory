@@ -1,6 +1,9 @@
 import json
+import logging
 import pytest
 import random
+
+logger = logging.getLogger(__name__)
 
 from . import forking
 from .. import chat, story, matchers
@@ -11,7 +14,7 @@ from ..utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
 @pytest.fixture
 def teardown_function(function):
-    print('tear down!')
+    logger.debug('tear down!')
     story.stories_library.clear()
 
 
