@@ -178,7 +178,7 @@ def test_call_story_from_another_callable():
     assert trigger_2.is_triggered
 
 
-def test_end_of_story():
+def test_async_end_of_story():
     sides = ['heads', 'tails']
     user = build_fake_user()
     session = build_fake_session()
@@ -248,3 +248,33 @@ def test_end_of_story():
     answer.pure_text(random.choice(sides), session, user)
 
     assert game_result.result() in ['loose', 'win', 'in progress']
+
+
+def test_sync_end_of_story():
+    session = build_fake_session()
+
+    part_1 = SimpleTrigger()
+    part_2 = SimpleTrigger()
+    part_3 = SimpleTrigger()
+
+    @story.callable()
+    def one_story():
+        @story.part()
+        def story_part_1():
+            part_1.passed()
+
+        @story.part()
+        def story_part_2():
+            part_2.passed()
+            return story.EndOfStory('Break Point')
+
+        @story.part()
+        def story_part_3():
+            part_3.passed()
+
+    res = one_story(session=session)
+
+    assert part_1.is_triggered
+    assert part_2.is_triggered
+    assert not part_3.is_triggered
+    assert res == 'Break Point'

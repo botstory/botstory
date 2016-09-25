@@ -21,8 +21,8 @@ class WaitForReturn:
 class EndOfStory:
     type = 'EndOfStory'
 
-    def __init__(self, res):
-        self.res = res
+    def __init__(self, data={}):
+        self.data = data
 
 
 class CallableNodeWrapper:
@@ -43,7 +43,7 @@ class CallableNodeWrapper:
         # we are going deeper so prepare one more item in stack
         logger.debug('  action: extend stack by +1')
         session.stack.append(processor.build_empty_stack_item())
-        return self.processor_instance.process_story(session,
+        res = self.processor_instance.process_story(session,
                                                      # we don't have message yet
                                                      message=None,
                                                      compiled_story=self.ast_node,
@@ -51,7 +51,9 @@ class CallableNodeWrapper:
                                                      story_args=args,
                                                      story_kwargs=kwargs)
 
-        # return WaitForReturn()
+        if isinstance(res, EndOfStory):
+            return res.data
+        return res
 
 
 class CallableStoriesAPI:

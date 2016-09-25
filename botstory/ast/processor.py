@@ -165,10 +165,12 @@ class StoryProcessor:
                                 # if processed story part is waiting for result
                                 # neither this story should continue working
                                 return waiting_for
+
+                    # TODO: should be refactor and put somewhere
                     elif isinstance(waiting_for, callable.EndOfStory):
                         logger.debug('  got EndOfStory!')
-                        # TODO: should be refactor and put somewhere
-                        message['data'] = {**message['data'], **waiting_for.res}
+                        if message:
+                            message['data'] = {**message['data'], **waiting_for.data}
                         return waiting_for
                     else:
                         # should wait result of async operation
