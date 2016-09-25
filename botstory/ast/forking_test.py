@@ -301,6 +301,85 @@ def test_one_sync_switch_inside_of_another_async_switch():
     assert visited_rooms.value == 3
 
 
+def test_switch_inside_of_callable_inside_of_switch():
+    user = build_fake_user()
+    session = build_fake_session()
+
+    visited_rooms = SimpleTrigger(0)
+    spell_type = SimpleTrigger()
+    spell_power = SimpleTrigger()
+
+    @story.callable()
+    def cast_the_magic():
+        @story.part()
+        def ask_kind_of_spell(user):
+            return chat.ask('What kind of spell do you cast?', user=user)
+
+        @story.part()
+        def switch_by_kind_of_spell(message):
+            return forking.SwitchOnValue(message['text']['raw'])
+
+        @story.case(equal_to='fireball')
+        def fireball():
+            @story.part()
+            def power_of_spell(message):
+                spell_type.receive(message['text']['raw'])
+                return chat.ask('What is the power of fireball?', user=message['user'])
+
+        @story.case(equal_to='lightning')
+        def lightning():
+            @story.part()
+            def power_of_spell(message):
+                spell_type.receive(message['text']['raw'])
+                return chat.ask('What is the power of lightning?', user=message['user'])
+
+        @story.part()
+        def store_power(message):
+            spell_power.receive(message['text']['raw'])
+
+    @story.on('enter')
+    def dungeon():
+        @story.part()
+        def ask_direction(message):
+            return chat.ask(
+                'Where do you go?',
+                user=message['user']
+            )
+
+        @story.part()
+        def parser_direction(message):
+            return forking.SwitchOnValue(message['text']['raw'])
+
+        @story.case(equal_to='left')
+        def room_1():
+            @story.part()
+            def meet_dragon(message):
+                return cast_the_magic(message['user'], session=session)
+
+            @story.part()
+            def store_end(message):
+                visited_rooms.receive(visited_rooms.value + 1)
+
+        @story.case(equal_to='right')
+        def room_2():
+            @story.part()
+            def meet_ogr(message):
+                return cast_the_magic(message['user'], session=session)
+
+            @story.part()
+            def store_end(message):
+                visited_rooms.receive(visited_rooms.value + 1)
+
+    answer.pure_text('enter', session, user)
+    answer.pure_text(random.choice(['left', 'right']), session, user)
+    answer.pure_text(random.choice(['fireball', 'lightning']), session, user)
+    answer.pure_text(random.choice(['light', 'strong']), session, user)
+
+    assert visited_rooms.value == 1
+    assert spell_type.value in ['fireball', 'lightning']
+    assert spell_power.value in ['light', 'strong']
+
+
 def test_serialize():
     m_old = forking.Switch({
         'location': location.Any(),
