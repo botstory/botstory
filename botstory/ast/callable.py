@@ -9,13 +9,20 @@ logger = logging.getLogger(__name__)
 class WaitForReturn:
     type = 'WaitForReturn'
 
-    def __init__(self, immediately = False):
+    def __init__(self, immediately=False):
         # self.immediately = immediately
         pass
 
     def validate(self, message):
         # return 'return' in message
         return True
+
+
+class EndOfStory:
+    type = 'EndOfStory'
+
+    def __init__(self, res):
+        self.res = res
 
 
 class CallableNodeWrapper:
@@ -36,15 +43,15 @@ class CallableNodeWrapper:
         # we are going deeper so prepare one more item in stack
         logger.debug('  action: extend stack by +1')
         session.stack.append(processor.build_empty_stack_item())
-        self.processor_instance.process_story(session,
-                                              # we don't have message yet
-                                              message=None,
-                                              compiled_story=self.ast_node,
-                                              idx=0,
-                                              story_args=args,
-                                              story_kwargs=kwargs)
+        return self.processor_instance.process_story(session,
+                                                     # we don't have message yet
+                                                     message=None,
+                                                     compiled_story=self.ast_node,
+                                                     idx=0,
+                                                     story_args=args,
+                                                     story_kwargs=kwargs)
 
-        return WaitForReturn()
+        # return WaitForReturn()
 
 
 class CallableStoriesAPI:

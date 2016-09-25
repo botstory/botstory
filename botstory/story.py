@@ -41,3 +41,9 @@ part = common_stories_instance.part
 # expose message handler API:
 
 match_message = story_processor_instance.match_message
+
+# expose operators
+
+EndOfStory = callable_module.EndOfStory
+Switch = forking.Switch
+SwitchOnValue = forking.SwitchOnValue

@@ -1,5 +1,6 @@
 import logging
 import pytest
+import random
 
 from .. import chat, story
 from ..utils import answer, build_fake_session, build_fake_user, SimpleTrigger
@@ -175,3 +176,75 @@ def test_call_story_from_another_callable():
 
     assert trigger_1.is_triggered
     assert trigger_2.is_triggered
+
+
+def test_end_of_story():
+    sides = ['heads', 'tails']
+    user = build_fake_user()
+    session = build_fake_session()
+    budget = SimpleTrigger(2)
+    game_result = SimpleTrigger()
+
+    @story.callable()
+    def flip_a_coin():
+        @story.part()
+        def choose_side(user):
+            return chat.ask('Please choose a side', user=user)
+
+        @story.part()
+        def flip(message):
+            user_side = message['text']['raw']
+            chat.say('Thanks!', user=message['user'])
+            chat.say('And I am flipping a Coin', user=message['user'])
+            coin_side = random.choice(sides)
+            chat.say('and got {}'.format(coin_side), user=message['user'])
+            if coin_side == user_side:
+                chat.say('My greetings! You guessed!', user=message['user'])
+                budget.receive(budget.value + 1)
+            else:
+                chat.say('Sad but you loose!', user=message['user'])
+                budget.receive(budget.value - 1)
+            return story.SwitchOnValue(budget.value)
+
+        @story.case(equal_to=0)
+        def loose():
+            @story.part()
+            def end_of_story(message):
+                return story.EndOfStory({
+                    'game_result': 'loose'
+                })
+
+        @story.case(equal_to=5)
+        def win():
+            @story.part()
+            def end_of_story(message):
+                return story.EndOfStory({
+                    'game_result': 'win'
+                })
+
+        @story.part()
+        def tail_recursion(message):
+            # TODO: add test for recursion
+            # return flip_a_coin(message['user'], session)
+            return story.EndOfStory({
+                'game_result': 'in progress'
+            })
+
+    @story.on('enter to the saloon')
+    def enter_to_the_saloon():
+        @story.part()
+        def start_a_game(message):
+            return flip_a_coin(user, session=message['session'])
+
+        @story.part()
+        def game_over(message):
+            logger.debug('game_over')
+            logger.debug(message)
+            game_result.receive(message['game_result'])
+
+    answer.pure_text('enter to the saloon',
+                     session=session, user=user)
+
+    answer.pure_text(random.choice(sides), session, user)
+
+    assert game_result.result() in ['loose', 'win', 'in progress']

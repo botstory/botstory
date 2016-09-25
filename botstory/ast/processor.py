@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from .. import matchers
-from . import parser
+from . import parser, callable
 
 
 class StoryProcessor:
@@ -178,11 +178,24 @@ class StoryProcessor:
                         logger.debug('  after process_next_part_of_story')
                         logger.debug('      waiting_for = {}'.format(waiting_for))
                         logger.debug('      session.stack = {}'.format(session.stack))
+                        logger.debug('      bubble_up = {}'.format(bubble_up))
                         if waiting_for:
                             logger.debug('  bubble up')
-                            # if processed story part is waiting for result
-                            # neither this story should continue working
-                            return waiting_for
+                            if bubble_up and isinstance(waiting_for, callable.EndOfStory):
+                                break
+                            else:
+                                # if processed story part is waiting for result
+                                # neither this story should continue working
+                                return waiting_for
+                    elif isinstance(waiting_for, callable.EndOfStory):
+                        logger.debug('  got EndOfStory!')
+                        # TODO: should be refactor and put somewhere
+                        # TODO: once we put all data to message['data']
+                        # message['data'] = {**message['data'], **waiting_for.res}
+                        # but now we should have temporal solution:
+                        for key, value in waiting_for.res.items():
+                            message[key] = value
+                        return waiting_for
                     else:
                         # should wait result of async operation
                         # (for example answer from user)
@@ -191,6 +204,8 @@ class StoryProcessor:
                                 waiting_for = m.process_validator(self, waiting_for, compiled_story)
 
                         validator = matchers.get_validator(waiting_for)
+
+                        logger.debug('  before serialize validator')
 
                         session.stack[current_stack_level] = {
                             'type': validator.type,
