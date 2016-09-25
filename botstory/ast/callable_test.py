@@ -54,13 +54,13 @@ def test_parts_of_callable_story():
         def ask_age(message):
             trigger_1.passed()
             return chat.ask(
-                'Nice to see you {}. What do you do here?'.format(message['text']['raw']),
+                'Nice to see you {}. What do you do here?'.format(message['data']['text']['raw']),
                 user=message['user'],
             )
 
         @story.part()
         def store_arguments(message):
-            age = int(message['text']['raw'])
+            age = int(message['data']['text']['raw'])
             if age < 30:
                 res = 'You are so young! '
             else:
@@ -111,7 +111,7 @@ def test_call_story_from_common_story():
 
         @story.part()
         def parse(message):
-            trigger.receive(message['text']['raw'])
+            trigger.receive(message['data']['text']['raw'])
 
     answer.pure_text('Hi!', session, user=user)
     answer.pure_text('I\'m fine', session, user=user)
@@ -193,7 +193,7 @@ def test_end_of_story():
 
         @story.part()
         def flip(message):
-            user_side = message['text']['raw']
+            user_side = message['data']['text']['raw']
             chat.say('Thanks!', user=message['user'])
             chat.say('And I am flipping a Coin', user=message['user'])
             coin_side = random.choice(sides)
@@ -240,7 +240,7 @@ def test_end_of_story():
         def game_over(message):
             logger.debug('game_over')
             logger.debug(message)
-            game_result.receive(message['game_result'])
+            game_result.receive(message['data']['game_result'])
 
     answer.pure_text('enter to the saloon',
                      session=session, user=user)

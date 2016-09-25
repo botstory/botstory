@@ -40,13 +40,13 @@ def test_cases():
         def location_case():
             @story.part()
             def store_location(message):
-                trigger_location.receive(message['location'])
+                trigger_location.receive(message['data']['location'])
 
         @story.case(match='text')
         def text_case():
             @story.part()
             def store_location(message):
-                trigger_text.receive(message['text']['raw'])
+                trigger_text.receive(message['data']['text']['raw'])
 
         @story.part()
         def after_switch(message):
@@ -249,7 +249,7 @@ def test_one_sync_switch_inside_of_another_async_switch():
 
         @story.part()
         def parse_direction_0(message):
-            return forking.SwitchOnValue(message['text']['raw'])
+            return forking.SwitchOnValue(message['data']['text']['raw'])
 
         @story.case(equal_to='left')
         def room_1():
@@ -260,7 +260,7 @@ def test_one_sync_switch_inside_of_another_async_switch():
 
             @story.part()
             def parse_direction_1(message):
-                return forking.SwitchOnValue(message['text']['raw'])
+                return forking.SwitchOnValue(message['data']['text']['raw'])
 
             @story.case(equal_to='left')
             def room_1_1():
@@ -283,7 +283,7 @@ def test_one_sync_switch_inside_of_another_async_switch():
 
             @story.part()
             def parse_direction_2(message):
-                return forking.SwitchOnValue(message['text']['raw'])
+                return forking.SwitchOnValue(message['data']['text']['raw'])
 
             @story.case(equal_to='left')
             def room_2_1():
@@ -320,25 +320,25 @@ def test_switch_inside_of_callable_inside_of_switch():
 
         @story.part()
         def switch_by_kind_of_spell(message):
-            return forking.SwitchOnValue(message['text']['raw'])
+            return forking.SwitchOnValue(message['data']['text']['raw'])
 
         @story.case(equal_to='fireball')
         def fireball():
             @story.part()
             def power_of_spell(message):
-                spell_type.receive(message['text']['raw'])
+                spell_type.receive(message['data']['text']['raw'])
                 return chat.ask('What is the power of fireball?', user=message['user'])
 
         @story.case(equal_to='lightning')
         def lightning():
             @story.part()
             def power_of_spell(message):
-                spell_type.receive(message['text']['raw'])
+                spell_type.receive(message['data']['text']['raw'])
                 return chat.ask('What is the power of lightning?', user=message['user'])
 
         @story.part()
         def store_power(message):
-            spell_power.receive(message['text']['raw'])
+            spell_power.receive(message['data']['text']['raw'])
 
     @story.on('enter')
     def dungeon():
@@ -351,7 +351,7 @@ def test_switch_inside_of_callable_inside_of_switch():
 
         @story.part()
         def parser_direction(message):
-            return forking.SwitchOnValue(message['text']['raw'])
+            return forking.SwitchOnValue(message['data']['text']['raw'])
 
         @story.case(equal_to='left')
         def room_1():
@@ -401,7 +401,7 @@ def test_switch_without_right_case():
 
         @story.part()
         def parse_result(message):
-            return forking.SwitchOnValue(message['text']['raw'])
+            return forking.SwitchOnValue(message['data']['text']['raw'])
 
         @story.case(equal_to='yes')
         def yes():

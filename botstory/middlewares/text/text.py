@@ -12,7 +12,7 @@ class Any:
         pass
 
     def validate(self, message):
-        return message.get('text', {}).get('raw', None)
+        return message.get('data', {}).get('text', {}).get('raw', None)
 
 
 @matchers.matcher()
@@ -23,7 +23,7 @@ class Match:
         self.test_string = test_string
 
     def validate(self, message):
-        return self.test_string == (message.get('text', {}).get('raw', None))
+        return self.test_string == (message.get('data', {}).get('text', {}).get('raw', None))
 
     def serialize(self):
         return self.test_string

@@ -60,22 +60,6 @@ class StoryProcessor:
                 validation_result = validator.validate(message)
                 logger.debug('      validation_result {}'.format(validation_result))
                 if not not validation_result:
-                    # wait_for_message['data'] = None
-
-                    # TODO: should remove!
-                    # if wait_for_message['topic'] == 'one_story_1' and wait_for_message['step'] == 2:
-                    #     logger.debug('>>> assert False')
-                    # assert False
-                    # logger.debug('  action: reduce stack by -1')
-
-                    # stack_tail = None
-                    # while not stack_tail
-                    #     and len(session.stack) > 0:
-                    #     stack_tail = session.stack.pop()
-
-                    # stack_tail = session.stack.pop()
-
-                    # logger.debug('  session.stack = {}'.format(session.stack))
                     return self.process_next_part_of_story({
                         'step': stack_tail['step'],
                         'story': self.library.get_story_by_topic(stack_tail['topic'], stack=session.stack),
@@ -83,8 +67,6 @@ class StoryProcessor:
                     },
                         validation_result, session, message,
                         bubble_up=True)
-                    # else:
-                    #     assert False
 
         if len(session.stack) == 0:
             session.stack = [build_empty_stack_item()]
@@ -104,10 +86,6 @@ class StoryProcessor:
         logger.debug('')
         logger.debug('process_story')
         logger.debug('')
-
-        # TODO: new fix
-        # if len(session.stack) == 0:
-        #     return False
 
         logger.debug('  bubble_up {}'.format(bubble_up))
         logger.debug('! topic {}'.format(compiled_story.topic))
@@ -190,11 +168,7 @@ class StoryProcessor:
                     elif isinstance(waiting_for, callable.EndOfStory):
                         logger.debug('  got EndOfStory!')
                         # TODO: should be refactor and put somewhere
-                        # TODO: once we put all data to message['data']
-                        # message['data'] = {**message['data'], **waiting_for.res}
-                        # but now we should have temporal solution:
-                        for key, value in waiting_for.res.items():
-                            message[key] = value
+                        message['data'] = {**message['data'], **waiting_for.res}
                         return waiting_for
                     else:
                         # should wait result of async operation
@@ -233,12 +207,6 @@ class StoryProcessor:
             if message:
                 if 'return' not in message:
                     message['return'] = True
-                # TODO: should remove!
-                if compiled_story.topic == 'other_sides':
-                    logger.debug('  session.stack {}'.format(session.stack))
-                    logger.debug('  message.session {}'.format(message['session'].stack))
-                    logger.debug('  message {}'.format(message))
-                    # assert False
                 if bubble_up:
                     waiting_for = self.match_message(message)
                 else:
@@ -253,16 +221,6 @@ class StoryProcessor:
         logger.debug('  topic {}'.format(received_data['story'].topic))
         logger.debug('  step {} ({})'.format(received_data['step'], len(received_data['story'].story_line)))
 
-        # TODO: new fix
-        # if received_data['step'] >= len(received_data['story'].story_line):
-        #     session.stack.extend(received_data['stack_tail'])
-        #     return False
-
-        # TODO: should remove
-        # should_stop_after = False
-        # if received_data['story'].topic == 'one_story_1' and received_data['step'] == 1:
-        #     should_stop_after = True
-
         for m in self.middlewares:
             received_data = m.process(received_data, validation_result)
 
@@ -276,10 +234,6 @@ class StoryProcessor:
         logger.debug('  session.stack = {}'.format(session.stack))
         logger.debug('! after topic {}'.format(received_data['story'].topic))
         logger.debug('! after step {}'.format(received_data['step']))
-
-        # TODO: should remove!
-        # if should_stop_after:
-        #     assert False
 
         # we shouldn't bubble up because we inside other story
         # that under control
