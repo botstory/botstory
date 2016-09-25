@@ -383,6 +383,45 @@ def test_switch_inside_of_callable_inside_of_switch():
     assert spell_power.value in ['light', 'strong']
 
 
+def test_switch_without_right_case():
+    user = build_fake_user()
+    session = build_fake_session()
+
+    get_help = SimpleTrigger()
+    say_goodbay = SimpleTrigger()
+
+    @story.on('I do not know')
+    def meet_someone():
+        @story.part()
+        def ask(message):
+            return chat.ask(
+                'Do you need a help?',
+                user=message['user'],
+            )
+
+        @story.part()
+        def parse_result(message):
+            return forking.SwitchOnValue(message['text']['raw'])
+
+        @story.case(equal_to='yes')
+        def yes():
+            @story.part()
+            def lets_go(message):
+                chat.say('Let\'s google together!', message['user'])
+                get_help.passed()
+
+        @story.part()
+        def see_you(message):
+            chat.say('Nice to see you!', user=message['user'])
+            say_goodbay.passed()
+
+    answer.pure_text('I do not know', session, user)
+    answer.pure_text('No', session, user)
+
+    assert not get_help.is_triggered
+    assert say_goodbay.is_triggered
+
+
 def test_serialize():
     m_old = forking.Switch({
         'location': location.Any(),

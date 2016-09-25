@@ -3,6 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from .. import matchers
+from . import parser
 
 
 class StoryProcessor:
@@ -134,67 +135,70 @@ class StoryProcessor:
 
             logger.debug('  going to call: {}'.format(story_part.__name__))
 
-            if message:
-                # process common story part
-                waiting_for = story_part(message)
-            else:
-                # process startpoint of callable story
-                waiting_for = story_part(*story_args, **story_kwargs)
-
-            logger.debug('  got result {}'.format(waiting_for))
-            if waiting_for:
-                # story part return value so we should somehow react on it
-                if hasattr(waiting_for, 'immediately'):
-                    # ... without waiting for user feedback
-                    logger.debug('  process immediately')
-
-                    # it seems that next item can use passed values
-                    idx += 1
-                    session.stack[current_stack_level]['step'] = idx
-
-                    waiting_for = self.process_next_part_of_story({
-                        'step': idx,
-                        'story': compiled_story,
-                        'stack_tail': [session.stack.pop()],
-                    },
-                        waiting_for.value, session, message,
-                        bubble_up=False)
-
-                    # TODO:
-                    # should check whether we test case
-                    # when we got request to wait for user feedback
-                    # inside of fork
-                    # and now should wait for result
-                    # then just prevent processing until result
-
-                    # it should be something like this
-                    # if waiting_for and not hasattr(waiting_for, 'immediately'):
-                    #     return
-
-                    logger.debug('  after process_next_part_of_story')
-                    logger.debug('      waiting_for = {}'.format(waiting_for))
-                    logger.debug('      session.stack = {}'.format(session.stack))
-                    if waiting_for:
-                        logger.debug('  bubble up')
-                        # if processed story part is waiting for result
-                        # neither this story should continue working
-                        return waiting_for
+            # TODO: just should skip story part
+            # but it should be done in process_next_part_of_story
+            if not isinstance(story_part, parser.StoryPartFork):
+                if message:
+                    # process common story part
+                    waiting_for = story_part(message)
                 else:
-                    # should wait result of async operation
-                    # (for example answer from user)
-                    for m in self.middlewares:
-                        if hasattr(m, 'process_validator'):
-                            waiting_for = m.process_validator(self, waiting_for, compiled_story)
+                    # process startpoint of callable story
+                    waiting_for = story_part(*story_args, **story_kwargs)
 
-                    validator = matchers.get_validator(waiting_for)
+                logger.debug('  got result {}'.format(waiting_for))
+                if waiting_for:
+                    # story part return value so we should somehow react on it
+                    if hasattr(waiting_for, 'immediately'):
+                        # ... without waiting for user feedback
+                        logger.debug('  process immediately')
 
-                    session.stack[current_stack_level] = {
-                        'type': validator.type,
-                        'data': matchers.serialize(validator),
-                        'step': idx + 1,
-                        'topic': compiled_story.topic,
-                    }
-                    return waiting_for
+                        # it seems that next item can use passed values
+                        idx += 1
+                        session.stack[current_stack_level]['step'] = idx
+
+                        waiting_for = self.process_next_part_of_story({
+                            'step': idx,
+                            'story': compiled_story,
+                            'stack_tail': [session.stack.pop()],
+                        },
+                            waiting_for.value, session, message,
+                            bubble_up=False)
+
+                        # TODO:
+                        # should check whether we test case
+                        # when we got request to wait for user feedback
+                        # inside of fork
+                        # and now should wait for result
+                        # then just prevent processing until result
+
+                        # it should be something like this
+                        # if waiting_for and not hasattr(waiting_for, 'immediately'):
+                        #     return
+
+                        logger.debug('  after process_next_part_of_story')
+                        logger.debug('      waiting_for = {}'.format(waiting_for))
+                        logger.debug('      session.stack = {}'.format(session.stack))
+                        if waiting_for:
+                            logger.debug('  bubble up')
+                            # if processed story part is waiting for result
+                            # neither this story should continue working
+                            return waiting_for
+                    else:
+                        # should wait result of async operation
+                        # (for example answer from user)
+                        for m in self.middlewares:
+                            if hasattr(m, 'process_validator'):
+                                waiting_for = m.process_validator(self, waiting_for, compiled_story)
+
+                        validator = matchers.get_validator(waiting_for)
+
+                        session.stack[current_stack_level] = {
+                            'type': validator.type,
+                            'data': matchers.serialize(validator),
+                            'step': idx + 1,
+                            'topic': compiled_story.topic,
+                        }
+                        return waiting_for
 
             idx += 1
             if len(session.stack) > current_stack_level:
