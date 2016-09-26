@@ -52,14 +52,14 @@ class Middleware:
             'step': last_stack_item['step'] + 1,
             # 'step': last_stack_item['step'],
             'topic': last_stack_item['topic'],
-            'data': matchers.serialize(callable.WaitForReturn(True)),
+            'data': matchers.serialize(callable.WaitForReturn()),
         }
 
         return {
             'step': 0,
             'story': case_story[0],
             'stack_tail':
-                # data['stack_tail'][:-1] +
+            # data['stack_tail'][:-1] +
                 [new_stack_item, processor.build_empty_stack_item()],  # we are going deeper
         }
 
@@ -97,6 +97,25 @@ class SwitchOnValue:
     def __init__(self, value):
         self.value = value
         self.immediately = True
+
+
+def process_switch_on_value(compiled_story, idx, message, processor, session, waiting_for):
+    # ... without waiting for user feedback
+    logger.debug('  process immediately')
+
+    waiting_for = processor.process_next_part_of_story({
+        'step': idx,
+        'story': compiled_story,
+        'stack_tail': [session.stack.pop()],
+    },
+        waiting_for.value, session, message,
+        bubble_up=False)
+
+    logger.debug('  after process_next_part_of_story')
+    logger.debug('      waiting_for = {}'.format(waiting_for))
+    logger.debug('      session.stack = {}'.format(session.stack))
+
+    return waiting_for
 
 
 class ForkingStoriesAPI:

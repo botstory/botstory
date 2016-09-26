@@ -9,8 +9,7 @@ logger = logging.getLogger(__name__)
 class WaitForReturn:
     type = 'WaitForReturn'
 
-    def __init__(self, immediately=False):
-        # self.immediately = immediately
+    def __init__(self):
         pass
 
     def validate(self, message):
@@ -23,6 +22,13 @@ class EndOfStory:
 
     def __init__(self, data={}):
         self.data = data
+
+
+def process_end_of_story(message, waiting_for):
+    logger.debug('  got EndOfStory!')
+    if message:
+        message['data'] = {**message['data'], **waiting_for.data}
+    return waiting_for
 
 
 class CallableNodeWrapper:
@@ -44,12 +50,12 @@ class CallableNodeWrapper:
         logger.debug('  action: extend stack by +1')
         session.stack.append(processor.build_empty_stack_item())
         res = self.processor_instance.process_story(session,
-                                                     # we don't have message yet
-                                                     message=None,
-                                                     compiled_story=self.ast_node,
-                                                     idx=0,
-                                                     story_args=args,
-                                                     story_kwargs=kwargs)
+                                                    # we don't have message yet
+                                                    message=None,
+                                                    compiled_story=self.ast_node,
+                                                    idx=0,
+                                                    story_args=args,
+                                                    story_kwargs=kwargs)
 
         if isinstance(res, EndOfStory):
             return res.data

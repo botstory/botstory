@@ -1,9 +1,9 @@
 import logging
 
-logger = logging.getLogger(__name__)
-
 from .. import matchers
-from . import parser, callable
+from . import parser, callable, forking
+
+logger = logging.getLogger(__name__)
 
 
 class StoryProcessor:
@@ -99,7 +99,6 @@ class StoryProcessor:
 
         current_stack_level = len(session.stack) - 1
         session.stack[-1]['topic'] = compiled_story.topic
-        # session.stack[-1]['topic'] = compiled_story.topic
 
         waiting_for = None
 
@@ -124,76 +123,36 @@ class StoryProcessor:
                     waiting_for = story_part(*story_args, **story_kwargs)
 
                 logger.debug('  got result {}'.format(waiting_for))
-                if waiting_for:
-                    # story part return value so we should somehow react on it
-                    if hasattr(waiting_for, 'immediately'):
-                        # ... without waiting for user feedback
-                        logger.debug('  process immediately')
-
-                        # it seems that next item can use passed values
-                        idx += 1
-                        session.stack[current_stack_level]['step'] = idx
-
-                        waiting_for = self.process_next_part_of_story({
-                            'step': idx,
-                            'story': compiled_story,
-                            'stack_tail': [session.stack.pop()],
-                        },
-                            waiting_for.value, session, message,
-                            bubble_up=False)
-
-                        # TODO:
-                        # should check whether we test case
-                        # when we got request to wait for user feedback
-                        # inside of fork
-                        # and now should wait for result
-                        # then just prevent processing until result
-
-                        # it should be something like this
-                        # if waiting_for and not hasattr(waiting_for, 'immediately'):
-                        #     return
-
-                        logger.debug('  after process_next_part_of_story')
-                        logger.debug('      waiting_for = {}'.format(waiting_for))
-                        logger.debug('      session.stack = {}'.format(session.stack))
-                        logger.debug('      bubble_up = {}'.format(bubble_up))
-                        if waiting_for:
-                            logger.debug('  bubble up')
-                            if bubble_up and isinstance(waiting_for, callable.EndOfStory):
-                                break
-                            else:
-                                # if processed story part is waiting for result
-                                # neither this story should continue working
-                                return waiting_for
-
-                    # TODO: should be refactor and put somewhere
-                    elif isinstance(waiting_for, callable.EndOfStory):
-                        logger.debug('  got EndOfStory!')
-                        if message:
-                            message['data'] = {**message['data'], **waiting_for.data}
-                        return waiting_for
-                    else:
-                        # should wait result of async operation
-                        # (for example answer from user)
-                        for m in self.middlewares:
-                            if hasattr(m, 'process_validator'):
-                                waiting_for = m.process_validator(self, waiting_for, compiled_story)
-
-                        validator = matchers.get_validator(waiting_for)
-
-                        logger.debug('  before serialize validator')
-
-                        session.stack[current_stack_level] = {
-                            'type': validator.type,
-                            'data': matchers.serialize(validator),
-                            'step': idx + 1,
-                            'topic': compiled_story.topic,
-                        }
-                        return waiting_for
 
             idx += 1
             if len(session.stack) > current_stack_level:
                 session.stack[current_stack_level]['step'] = idx
+
+            # TODO: should be refactor and put somewhere
+            if waiting_for:
+                # story part return value so we should somehow react on it
+                if isinstance(waiting_for, forking.SwitchOnValue):
+                    # SwitchOnValue is so special because it is the only result
+                    # that doesn't async.
+                    waiting_for = forking.process_switch_on_value(compiled_story,
+                                                                  idx, message, self, session, waiting_for)
+
+                    if waiting_for:
+                        logger.debug('  bubble up')
+                        if bubble_up and isinstance(waiting_for, callable.EndOfStory):
+                            break
+                        else:
+                            # if processed story part is waiting for result
+                            # neither this story should continue working
+                            return waiting_for
+
+                elif isinstance(waiting_for, callable.EndOfStory):
+                    if bubble_up:
+                        break
+                    return callable.process_end_of_story(message, waiting_for)
+                else:
+                    return process_async_operation(compiled_story, current_stack_level,
+                                                   idx, self, session, waiting_for)
 
         # current story line is over
         if len(session.stack) > 1:
@@ -247,7 +206,25 @@ class StoryProcessor:
             bubble_up=bubble_up,
         )
 
-        # return received_data
+
+def process_async_operation(compiled_story, current_stack_level, idx, processor, session, waiting_for):
+    # should wait result of async operation
+    # (for example answer from user)
+    for m in processor.middlewares:
+        if hasattr(m, 'process_validator'):
+            waiting_for = m.process_validator(processor, waiting_for, compiled_story)
+
+    validator = matchers.get_validator(waiting_for)
+
+    logger.debug('  before serialize validator')
+
+    session.stack[current_stack_level] = {
+        'type': validator.type,
+        'data': matchers.serialize(validator),
+        'step': idx,
+        'topic': compiled_story.topic,
+    }
+    return waiting_for
 
 
 def build_empty_stack_item():
