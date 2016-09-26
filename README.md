@@ -13,13 +13,13 @@ and show sequence of questions and reactions.
 Sure dialog can be made in diagrams but my thought that code should 
 clear enough to show story of dialog and should be open for modification. 
 
-# Draft of API 0.2.0
+# Draft of API 0.2.2
 
 ## Simple example
 
 ```python
 """
-v0.2.0
+v0.2.2
 Bot asks user about destionation of space travelling.
 - stateless story. it stores context of story (current question and results) somewhere (maybe DB)
 """
@@ -27,24 +27,24 @@ Bot asks user about destionation of space travelling.
 def stateless_story(message):
     @story.part()
     def then(message):
-        return ask_location(message['user'], text='Where do you go?')
+        return chat.ask_location(text='Where do you go?', user=message['user'])
 
     @story.part()
     def then(message):
         store_destination(message['location'])
-        return ask_location(message['user'], text='Where do you now?')
+        return chat.ask_location(text='Where do you now?', user=message['user'])
 
     @story.part()
     def then(message):
         store_origin(message['location'])
-        return tell(message['user'], 'Thanks! Give me a minute I will find you right spaceship!')
+        return chat.say('Thanks! Give me a minute I will find you right spaceship!', user=message['user'])
 ```
 
 ## example with bifurcations
 
 ```python
 """
-v0.2.1
+v0.2.2
 Bot asks user about destionation of space travelling.
 - stateless story. it stores context of story (current question and results) somewhere (maybe DB)
 """
@@ -52,38 +52,43 @@ Bot asks user about destionation of space travelling.
 def stateless_story_with_bifurcation():
     @story.part()
     def request_destination(message):
-        return ask_location(message['user'], text='Where do you go?')
+        return chat.ask_location(text='Where do you go?', user=message['user'])
 
     @story.part()
     def receive_destination(message):
         location = message['location']]
-        if location == 'stars':
-            #cycle back
-            return ask_location(message['user'], text='Which star do you prefer?', then=receive_destination)
-        elif location == 'planets':
-            #cycle back
-            return ask_location(message['user'], text='Which planet do you prefer?', then=receive_destination)
-        elif:
-            return choose_option(top10_planets, 
-                                 text='Here is the most popular places. Maybe you would like to choose one?',
-                                 then=receive_destination_options)
+        return SwitchOnValue(location)
+        
         else:
             store_destination(message['location'])
             return request_origin(message)
 
-    @story.part()
-    def receive_destination_options(message):
-        store_destination(message['location'])
-        return request_origin(message)
+    @story.case(equal_to='stars')
+    def stars():
+        @story.part()
+        def receive_destination_options(message):
+            return chat.ask_location(text='Which star do you prefer?', then=receive_destination)
 
-    @story.part()
-    def request_origin(message):
-        return ask_location(message['user'], text='Where do you now?', topic='get-origin')
+    @story.case(equal_to='planets')
+    def planets():
+        @story.part()
+        def request_origin(message):
+            #cycle back
+            return ask_location(message['user'], text='Which planet do you prefer?', then=receive_destination)
 
+    @story.case(default=True)
+    def other():
+        @story.part()
+        def choose_from_top10_planets(message):
+            return choose_option(top10_planets,
+                                 text='Here is the most popular places. Maybe you would like to choose one?',
+                                 then=receive_destination_options)
+    
     @story.part()
     def receive_origin(message):
         store_origin(message['location'])
-        return tell(message['user'], 'Thanks! Give me a minute I will find you right spaceship!')
+        return chat.say('Thanks! Give me a minute I will find you right spaceship!', message['user'])
+        
 ```
 
 ## example of callable function
@@ -115,31 +120,29 @@ def ask_location():
         if not body:
             body = default_question(user)
         chat.say(body, options, user)
-        return {
-            'args': {
-                'location': location.Any(),
-                'option': option.Any(),
-                'text': text.Any(),
-            },
-        }
+        return Switch({
+            'location': location.Any(),
+            'option': option.Any(),
+            'text': text.Any(),
+        })
 
     # 2 wait for answer
     @story.case(match='location')
     def location_case():
         @story.part()
         def return_location(message):
-            return {
-                'return': message,
-            }
+            return EndOfStory({
+                'location': message,
+            })
 
     @story.case(match='option')
     def aliase():
         @story.part()
         def return_aliase(message):
             # it can be location or any other message data
-            return {
-                'return': message['option']['data']
-            }
+            return EndOfStory({
+                'location': message['option']['data'],
+            })
 
     @story.case(match='text')
     def text_case():
@@ -149,11 +152,9 @@ def ask_location():
             # try aliases (common names like home, work, or other)
             aliase = aliases.lookup(text_message)
             if aliase:
-                return {
-                    'return': {
-                        'location': aliase['data'],
-                    }
-                }
+                return return EndOfStory({
+                    'location': aliase['data'],
+                })
 
             # if it is not alias maybe it is name of some place
             options = googlemap.lookup_location_by_name(text_message)
@@ -171,22 +172,20 @@ def ask_location():
                     'args': None,
                 }
 
-        @story.case(value='many')
+        @story.case(equal_to='many')
         def have_options():
             @story.part()
             def choose_one_location_from_many(message):
                 location = message['option']['data']
                 if location:
-                    return {
-                        'return': {
-                            'location': location,
-                        },
-                    }
+                    return EndOfStory({
+                        'location': location,
+                    })
                 else:
                     # choose something else
                     pass
 
-        @story.case(value=None)
+        @story.case(equal_=None)
         def not_any_option():
             @story.check_alternative_stories()
             @story.part()
@@ -204,9 +203,9 @@ def ask_location():
             @story.part()
             def unknown_name(message):
                 if message['option']['data'] == 'skip':
-                    return {
-                        'return': None,
-                    }
+                    return EndOfStory({
+                        'location': None,
+                    })
                 else:
                     # TODO: restart (tail recursion?)
                     return {
@@ -220,9 +219,9 @@ def ask_location():
         @story.part()
         def react_on_joke(message):
             chat.say('Very funny! :)', message['user'])
-            return {
-                'return': None,
-            }
+            return EndOfStory({
+                'location': None,
+            })
 
 
 @story.callable()
@@ -233,7 +232,7 @@ def ask_date_time():
 
     :return:
     """
-    @story.begin()
+    @story.part()
     def ask(body=None, options=None, user=None):
         if not options:
             # default aliases for current user
@@ -242,12 +241,10 @@ def ask_date_time():
         if not body:
             body = default_question(user)
         chat.say(body, options, user)
-        return {
-            'args': {
-                'option': option.Any(),
-                'text': text.Any(),
-            },
-        }
+        return SwitchOnValue({
+            'option': option.Any(),
+            'text': text.Any(),
+        })
     
     @story.case(match='option')
     def option_case():
@@ -263,33 +260,27 @@ def ask_date_time():
         def parse_text(message):
             datetime_options = parse_text_to_date_time(message)
             if len(datetime_options) == 0:
-                return {
-                    'return': {
-                        'datetime': datetime_options,
-                    },
-                }
+                return EndOfStory({
+                    'datetime': datetime_options,
+                })
             elif len(datetime_options) == 1:
-                return {
-                    'return': {
-                        'datetime': datetime_options,
-                    },
-                }
+                return EndOfStory({
+                    'datetime': datetime_options,
+                })
             else:
-                return {
-                    'wait': chat.choose_option(
-                        body='Hm what time do you mean?',
-                        options=[{
-                            'title': d['name'], 'data': {'datetime': d['value']}
-                        } for d in datetime_options],
-                        user=message['user'],
-                    )
-                }
+                return chat.choose_option(
+                    body='Hm what time do you mean?',
+                    options=[{
+                        'title': d['name'], 'data': {'datetime': d['value']}
+                    } for d in datetime_options],
+                    user=message['user'],
+                )
             
         @story.part()
         def return_option(message):
-            return {
-                'return': message['option']['data'],
-            }
+            return EndOfStory({
+                'datetime': message['option']['data'],
+            })
 
 
 ```
