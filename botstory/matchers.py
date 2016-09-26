@@ -15,6 +15,20 @@ def build_deserialize(cls):
     return default_deserialize
 
 
+def get_validator(filter_data):
+    """
+    ask every matcher whether it can serve such filter ata
+
+    :param filter_data:
+    :return:
+    """
+    for matcher_type, m in matchers.items():
+        if hasattr(m, 'can_handle') and m.can_handle(filter_data):
+            filter_data = m.handle(filter_data)
+
+    return filter_data
+
+
 def matcher():
     def register(m):
         m.type = getattr(m, 'type', m.__name__)

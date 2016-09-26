@@ -8,7 +8,7 @@ from .utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 @pytest.fixture
 def teardown_function(function):
     print('tear down!')
-    story.clear()
+    story.stories_library.clear()
 
 
 def test_should_say(mocker):
@@ -65,7 +65,7 @@ def test_get_location_as_result_of_asking_of_location(mocker):
 
         @story.part()
         def then(message):
-            trigger.receive(message['location'])
+            trigger.receive(message['data']['location'])
 
     answer.pure_text('SOS!', session, user)
     answer.location('somewhere', session, user)

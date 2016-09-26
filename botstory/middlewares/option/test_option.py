@@ -34,7 +34,7 @@ def test_should_ask_with_options(mocker):
 
         @story.part()
         def get_health(message):
-            trigger.receive(message['option'])
+            trigger.receive(message['data']['option'])
 
     answer.pure_text('How are you?', session, user)
     answer.option({'health': 1}, session, user)

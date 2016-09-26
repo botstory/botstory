@@ -2,7 +2,7 @@ from ... import matchers
 
 
 def is_location(message):
-    return message.get('location', False)
+    return message.get('data', {}).get('location', False)
 
 
 @matchers.matcher()

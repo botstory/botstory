@@ -9,4 +9,4 @@ class Any:
         pass
 
     def validate(self, message):
-        return message.get('option', False)
+        return message.get('data', {}).get('option', False)
