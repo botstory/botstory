@@ -46,8 +46,6 @@ class StoryProcessor:
                 ):
                     # if we haven't reach last step in list of story so we can parse result
                     break
-                if 'return' not in message:
-                    message['return'] = True
 
             logger.debug('    after check session.stack = {}'.format(session.stack))
             if stack_tail:
@@ -166,8 +164,6 @@ class StoryProcessor:
             logger.debug('  session.stack = {}'.format(session.stack))
 
             if message:
-                if 'return' not in message:
-                    message['return'] = True
                 if bubble_up:
                     waiting_for = self.match_message(message)
                 else:
