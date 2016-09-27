@@ -12,13 +12,22 @@ env:
   DOCKER_COMPOSE_VERSION: 1.8.0
 
 before_install:
-  - sudo rm /usr/local/bin/docker-compose
-  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-  - chmod +x docker-compose
-  - sudo mv docker-compose /usr/local/bin
+#
+# Try to launch tests withotu docker
+#
+#  - sudo rm /usr/local/bin/docker-compose
+#  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+#  - chmod +x docker-compose
+#  - sudo mv docker-compose /usr/local/bin
+#
+#script: docker-compose build && docker-compose up
+
+before_install:
+  - pip install -r requirements.txt
   - pip install coveralls
 
-script: docker-compose build && docker-compose up
+script:
+  - py.test --cov --cov-report term-missing
 
 after_success:
   - coveralls
