@@ -5,8 +5,8 @@ import pytest
 
 
 def test_should_ask_with_options(mocker):
-    mock_send_text_message = mocker.patch('botstory.chat.messenger.send_text_message')
-    mock_send_text_message.return_value = 'ok'
+    # mock_send_text_message = mocker.patch('botstory.chat.messenger.send_text_message')
+    # mock_send_text_message.return_value = 'ok'
 
     session = build_fake_session()
     user = build_fake_user()

@@ -1,20 +1,31 @@
+import logging
 import pytest
 
+import botstory.integrations.fb.messenger
 from . import story
 from . import chat
 from .utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
+logger = logging.getLogger(__name__)
 
-@pytest.fixture
+
+@pytest.fixture()
+def mock_interface(mocker):
+    MockInteface = mocker.patch.object(
+        botstory.integrations.fb.messenger.FBInterface,
+        'send_text_message',
+    )
+    return chat.add_interface(MockInteface())
+
+
+@pytest.fixture()
 def teardown_function(function):
-    print('tear down!')
+    logger.debug('tear down!')
+    chat.interfaces = {}
     story.stories_library.clear()
 
 
-def test_should_say(mocker):
-    mock_send_text_message = mocker.patch('botstory.chat.messenger.send_text_message')
-    mock_send_text_message.return_value = 'ok'
-
+def test_should_say(mock_interface):
     session = build_fake_session()
     user = build_fake_user()
 
@@ -26,15 +37,12 @@ def test_should_say(mocker):
 
     answer.pure_text('hi there!', session, user)
 
-    mock_send_text_message.assert_called_once_with(user.id, text='Nice to see you!')
+    mock_interface.send_text_message.assert_called_once_with(user.id, text='Nice to see you!')
 
 
 # TODO: move to middlewares/location/test_location.py
 
-def test_ask_location(mocker):
-    mock_send_text_message = mocker.patch('botstory.chat.messenger.send_text_message')
-    mock_send_text_message.return_value = 'ok'
-
+def test_ask_location(mock_interface):
     session = build_fake_session()
     user = build_fake_user()
 
@@ -46,12 +54,10 @@ def test_ask_location(mocker):
 
     answer.pure_text('SOS!', session, user)
 
-    mock_send_text_message.assert_called_once_with(user.id, text='Hey, bro! Where is your rocket?')
+    mock_interface.send_text_message.assert_called_once_with(user.id, text='Hey, bro! Where is your rocket?')
 
 
-def test_get_location_as_result_of_asking_of_location(mocker):
-    mock_send_text_message = mocker.patch('botstory.chat.messenger.send_text_message')
-    mock_send_text_message.return_value = 'ok'
+def test_get_location_as_result_of_asking_of_location(mock_interface):
     session = build_fake_session()
     user = build_fake_user()
 

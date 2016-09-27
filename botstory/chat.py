@@ -1,7 +1,8 @@
 from .middlewares.any import any
 from .middlewares.location import location
 from .middlewares.text import text
-from .integrations.fb import messenger
+
+interfaces = {}
 
 
 def ask(body, options=None, user=None):
@@ -14,7 +15,7 @@ def ask(body, options=None, user=None):
     :param user:
     :return:
     """
-    messenger.send_text_message(user.id, text=body, options=options)
+    send_text_message_to_all_interfaces(user.id, text=body, options=options)
     return any.Any()
 
 
@@ -32,4 +33,16 @@ def ask_location(body, user):
 
 
 def say(body, user):
-    messenger.send_text_message(user.id, text=body)
+    send_text_message_to_all_interfaces(user.id, text=body)
+
+
+def send_text_message_to_all_interfaces(*args, **kwargs):
+    # TODO we should know from where user has come and use right interface
+    # as well right interface can be chosen
+    for type, interface in interfaces.items():
+        interface.send_text_message(*args, **kwargs)
+
+
+def add_interface(interface):
+    interfaces[interface.type] = interface
+    return interface
