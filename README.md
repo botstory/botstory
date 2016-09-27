@@ -4,7 +4,7 @@ Under active development
 
 # Idea
 
-Easy reading API to describe dialogs (scenery) of bots in Python language.
+Easy reading API to describe dialogs (scenario) of bots in Python language.
 Key problem is asyn nature of any dialog - 
 we can wait for are months answer from user and should store context 
 until that. As well dialog structure should be simply and clear 
