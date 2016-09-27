@@ -1,3 +1,4 @@
+coveralls
 pytest==2.9.2
 pytest-asyncio==0.4.1
 pytest-cov==2.3.1

@@ -2,6 +2,6 @@ version: '2'
 services:
   bot:
     build: .
-    command: py.test --cov --cov-report term-missing
+    command: py.test --cov=botstory --cov-report term-missing
     volumes:
       - .:/usr/src/app
