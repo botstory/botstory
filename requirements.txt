@@ -1,5 +1,5 @@
-coveralls
 pytest==2.9.2
+pytest-aiohttp
 pytest-asyncio==0.4.1
 pytest-cov==2.3.1
 pytest-catchlog==1.2.2
