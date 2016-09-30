@@ -1,4 +1,5 @@
 import asyncio
+import random
 
 from . import jsdict
 
@@ -9,7 +10,8 @@ async def a_second():
 
 def build_fake_user():
     return jsdict.JSDict({
-        'id': 1234,
+        'id': random.randint(100000000, 123456789),
+        'facebook_user_id': random.randint(100000000, 123456789),
     })
 
 
@@ -20,7 +22,7 @@ def build_fake_session():
 
 
 class SimpleTrigger:
-    def __init__(self, value = None):
+    def __init__(self, value=None):
         self.is_triggered = False
         self.triggered_times = 0
         self.value = value

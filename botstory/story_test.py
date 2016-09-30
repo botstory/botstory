@@ -9,7 +9,6 @@ from .middlewares.location import location
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture
 def teardown_function(function):
     logger.debug('tear down!')
     story.stories_library.clear()

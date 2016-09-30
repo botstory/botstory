@@ -4,14 +4,16 @@ https://github.com/KeepSafe/aiohttp/blob/master/examples/fake_server.py
 
 """
 
-import pathlib
-import socket
-import ssl
-
 import aiohttp
 from aiohttp import web
 from aiohttp.resolver import DefaultResolver
 from aiohttp.test_utils import unused_port
+import logging
+import pathlib
+import socket
+import ssl
+
+logger = logging.getLogger(__name__)
 
 
 def http_method(method, path):
@@ -86,8 +88,11 @@ class FakeFacebook:
                 self.app.router.add_route(func.__method__,
                                           func.__path__,
                                           getattr(self, name))
+
+        self.app.middlewares.append(self.middleware_factory)
         self.handler = None
         self.server = None
+        self.history = []
         here = pathlib.Path(__file__)
         ssl_cert = here.parent / 'server.crt'
         ssl_key = here.parent / 'server.key'
@@ -108,6 +113,20 @@ class FakeFacebook:
         await self.app.shutdown()
         await self.handler.finish_connections()
         await self.app.cleanup()
+
+    async def middleware_factory(self, app, handler):
+        async def middleware(request):
+            response = await handler(request)
+            logger.debug('request: {}'.format(request))
+            logger.debug('response: {}'.format(response))
+
+            self.history.append({
+                'request': request,
+                'response': response,
+            })
+            return response
+
+        return middleware
 
     @get('/v2.7/me')
     async def on_me(self, request):
@@ -155,6 +174,10 @@ class FakeFacebook:
 class Server:
     def __init__(self, loop):
         self.loop = loop
+
+    @property
+    def history(self):
+        return self.fake_facebook.history
 
     async def __aenter__(self):
         self.fake_facebook = FakeFacebook(loop=self.loop)

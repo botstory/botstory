@@ -9,6 +9,18 @@ from .utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 logger = logging.getLogger(__name__)
 
 
+def setup_function(function):
+    logger.debug('setup')
+    chat.interfaces = {}
+    story.stories_library.clear()
+
+
+def teardown_function(function):
+    logger.debug('tear down!')
+    chat.interfaces = {}
+    story.stories_library.clear()
+
+
 @pytest.fixture()
 def mock_interface(mocker):
     MockInteface = mocker.patch.object(
@@ -16,13 +28,6 @@ def mock_interface(mocker):
         'send_text_message',
     )
     return chat.add_interface(MockInteface())
-
-
-@pytest.fixture()
-def teardown_function(function):
-    logger.debug('tear down!')
-    chat.interfaces = {}
-    story.stories_library.clear()
 
 
 def test_should_say(mock_interface):

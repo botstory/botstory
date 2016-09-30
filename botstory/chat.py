@@ -1,7 +1,12 @@
+import aiohttp
+import asyncio
+import logging
+
 from .middlewares.any import any
 from .middlewares.location import location
 from .middlewares.text import text
 
+logger = logging.getLogger(__name__)
 interfaces = {}
 
 
@@ -15,7 +20,7 @@ def ask(body, options=None, user=None):
     :param user:
     :return:
     """
-    send_text_message_to_all_interfaces(user.id, text=body, options=options)
+    send_text_message_to_all_interfaces(recipient=user, text=body, options=options)
     return any.Any()
 
 
@@ -41,6 +46,43 @@ def send_text_message_to_all_interfaces(*args, **kwargs):
     # as well right interface can be chosen
     for type, interface in interfaces.items():
         interface.send_text_message(*args, **kwargs)
+
+
+async def async_say(body, user, session=None):
+    """
+    async replace for say(body, user)
+
+    :param body:
+    :param user:
+    :param session:
+    :return:
+    """
+    return await async_send_text_message_to_all_interfaces(recipient=user, text=body, session=session)
+
+
+async def async_send_text_message_to_all_interfaces(*args, **kwargs):
+    """
+    TODO:
+    we should know from where user has come and use right interface
+    as well right interface can be chosen
+
+    :param args:
+    :param kwargs:
+    :return:
+    """
+    logger.debug('async_send_text_message_to_all_interfaces')
+    loop = asyncio.get_event_loop()
+    with aiohttp.ClientSession(loop=loop) as session:
+        # TODO: temporal hack to mock session
+        kwargs = {'session': session, **kwargs,}
+        # tasks = [interface.send_text_message(session=session, *args, **kwargs) for type, interface in
+        tasks = [interface.send_text_message(*args, **kwargs) for type, interface in
+                 interfaces.items()]
+
+        res = [body for body in await asyncio.gather(*tasks)]
+        logger.debug('  res')
+        logger.debug(res)
+        return res
 
 
 def add_interface(interface):

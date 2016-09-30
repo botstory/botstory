@@ -12,7 +12,6 @@ from ..middlewares.text import text
 from ..utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
 
-@pytest.fixture
 def teardown_function(function):
     logger.debug('tear down!')
     story.stories_library.clear()

@@ -1,13 +1,21 @@
+import logging
+import pytest
 from . import option
 from ... import chat, story
 from ...utils import answer, build_fake_session, build_fake_user, SimpleTrigger
-import pytest
+
+logger = logging.getLogger(__name__)
 
 
-def test_should_ask_with_options(mocker):
-    # mock_send_text_message = mocker.patch('botstory.chat.messenger.send_text_message')
-    # mock_send_text_message.return_value = 'ok'
+def setup_function(function):
+    logger.debug('setup')
+    chat.interfaces = {}
+    story.stories_library.clear()
 
+
+def test_should_ask_with_options():
+    logger.debug('chat.interfaces')
+    logger.debug(chat.interfaces)
     session = build_fake_session()
     user = build_fake_user()
 
