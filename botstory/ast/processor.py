@@ -1,4 +1,6 @@
+import asyncio
 import logging
+import inspect
 
 from .. import matchers
 from . import parser, callable, forking
@@ -119,6 +121,11 @@ class StoryProcessor:
                 else:
                     # process startpoint of callable story
                     waiting_for = story_part(*story_args, **story_kwargs)
+
+                # TODO: should convert all story processor to async/await
+                if inspect.iscoroutinefunction(story_part):
+                    loop = asyncio.get_event_loop()
+                    waiting_for = loop.run_until_complete(waiting_for)
 
                 logger.debug('  got result {}'.format(waiting_for))
 

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import pytest
 
@@ -161,3 +162,25 @@ def test_should_match_group_of_matchers_on_story_start():
     answer.location({'lat': 1, 'lng': 1}, session, user)
 
     assert trigger.triggered_times == 2
+
+
+def test_can_combine_async_with_sync_parts():
+    session = build_fake_session()
+    user = build_fake_user()
+    async_trigger = SimpleTrigger()
+    sync_trigger = SimpleTrigger()
+
+    @story.on('yo!')
+    def one_story():
+        @story.part()
+        async def async_part(message):
+            await asyncio.sleep(1)
+            async_trigger.passed()
+
+        @story.part()
+        def sync_part(message):
+            sync_trigger.passed()
+
+    answer.pure_text('yo!', session, user)
+    assert async_trigger.is_triggered
+    assert sync_trigger.is_triggered
