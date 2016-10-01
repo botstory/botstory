@@ -10,3 +10,21 @@ class Any:
 
     def validate(self, message):
         return message.get('data', {}).get('option', False)
+
+
+@matchers.matcher()
+class Match:
+    type = 'Option.Match'
+
+    def __init__(self, option):
+        self.option = option
+
+    def validate(self, message):
+        return message.get('data', {}).get('option', None) == self.option
+
+    def serialize(self):
+        return self.option
+
+    @staticmethod
+    def deserialize(option):
+        return Match(option)

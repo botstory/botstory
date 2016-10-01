@@ -1,7 +1,7 @@
 import logging
 import pytest
 from . import option
-from ... import chat, story
+from ... import chat, matchers, story
 from ...utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
 logger = logging.getLogger(__name__)
@@ -82,3 +82,27 @@ async def test_validate_only_option():
 
     await answer.pure_text('Start engine!', session, user)
     assert not trigger.is_triggered
+
+
+def test_serialize_option_match():
+    m_old = option.Match('yellow')
+    m_new = matchers.deserialize(matchers.serialize(m_old))
+    assert isinstance(m_new, option.Match)
+    assert m_new.option == m_old.option
+
+
+@pytest.mark.asyncio
+async def test_validate_only_option():
+    session = build_fake_session()
+    user = build_fake_user()
+
+    trigger = SimpleTrigger()
+
+    @story.on(receive=option.Match('green'))
+    def one_story():
+        @story.part()
+        def store_option(message):
+            trigger.passed()
+
+    await answer.option('green', session, user)
+    assert trigger.is_triggered

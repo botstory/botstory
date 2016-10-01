@@ -3,6 +3,7 @@ import pytest
 from . import fake_fb
 from .. import messenger
 from .... import chat, story, utils
+from ....middlewares.option import option
 
 
 @pytest.mark.asyncio
