@@ -25,8 +25,8 @@ async def test_should_ask_with_options():
     @story.on('How are you?')
     def one_story():
         @story.part()
-        def ask(message):
-            return chat.ask(
+        async def ask(message):
+            return await chat.ask(
                 'I feel fine. How about you?',
                 options=[{
                     'title': 'Good!',

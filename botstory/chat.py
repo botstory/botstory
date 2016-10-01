@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 interfaces = {}
 
 
-def ask(body, options=None, user=None):
+async def ask(body, options=None, user=None):
     """
     simple ask with predefined options
 
@@ -20,7 +20,7 @@ def ask(body, options=None, user=None):
     :param user:
     :return:
     """
-    send_text_message_to_all_interfaces(recipient=user, text=body, options=options)
+    await async_send_text_message_to_all_interfaces(recipient=user, text=body, options=options)
     return any.Any()
 
 
@@ -37,10 +37,6 @@ def ask_location(body, user):
     return [location.Any(), text.Any()]
 
 
-def say(body, user):
-    send_text_message_to_all_interfaces(user.id, text=body)
-
-
 def send_text_message_to_all_interfaces(*args, **kwargs):
     # TODO we should know from where user has come and use right interface
     # as well right interface can be chosen
@@ -48,9 +44,9 @@ def send_text_message_to_all_interfaces(*args, **kwargs):
         interface.send_text_message(*args, **kwargs)
 
 
-async def async_say(body, user, session=None):
+async def say(body, user, session=None):
     """
-    async replace for say(body, user)
+    say something to user
 
     :param body:
     :param user:

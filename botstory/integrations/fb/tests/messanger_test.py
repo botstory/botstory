@@ -28,9 +28,9 @@ async def test_integration(event_loop):
             interface = messenger.FBInterface(token='qwerty')
             interface.session = session
             chat.add_interface(interface)
-            await chat.async_say('hi there!', user,
-                                 # TODO: temporal hack to mock session
-                                 session=session)
+            await chat.say('hi there!', user,
+                           # TODO: temporal hack to mock session
+                           session=session)
 
             assert len(server.history) > 0
             assert server.history[-1]['request'].content_type == 'application/json'

@@ -45,29 +45,29 @@ async def test_parts_of_callable_story():
     @story.callable()
     def meet_ava_story():
         @story.part()
-        def ask_name(user):
-            return chat.ask(
+        async def ask_name(user):
+            return await chat.ask(
                 'My name is Ava. What is your name?',
                 user=user,
             )
 
         @story.part()
-        def ask_age(message):
+        async def ask_age(message):
             trigger_1.passed()
-            return chat.ask(
+            return await chat.ask(
                 'Nice to see you {}. What do you do here?'.format(message['data']['text']['raw']),
                 user=message['user'],
             )
 
         @story.part()
-        def store_arguments(message):
+        async def store_arguments(message):
             age = int(message['data']['text']['raw'])
             if age < 30:
                 res = 'You are so young! '
             else:
                 res = 'Hm. Too old to die young'
 
-            chat.say(res, user=message['user'])
+            await chat.say(res, user=message['user'])
             trigger_2.passed()
 
     await meet_ava_story(user, session=session)
@@ -88,8 +88,8 @@ async def test_call_story_from_common_story():
     @story.callable()
     def common_greeting():
         @story.part()
-        def ask_name(user):
-            return chat.ask(
+        async def ask_name(user):
+            return await chat.ask(
                 'Hi {}. How are you?'.format(user.name),
                 user=user,
             )
@@ -104,8 +104,8 @@ async def test_call_story_from_common_story():
             )
 
         @story.part()
-        def ask_location(message):
-            return chat.ask(
+        async def ask_location(message):
+            return await chat.ask(
                 'Which planet are we going to visit today?',
                 user=message['user'],
             )
@@ -192,21 +192,21 @@ async def test_async_end_of_story():
     @story.callable()
     def flip_a_coin():
         @story.part()
-        def choose_side(user):
-            return chat.ask('Please choose a side', user=user)
+        async def choose_side(user):
+            return await chat.ask('Please choose a side', user=user)
 
         @story.part()
-        def flip(message):
+        async def flip(message):
             user_side = message['data']['text']['raw']
-            chat.say('Thanks!', user=message['user'])
-            chat.say('And I am flipping a Coin', user=message['user'])
+            await chat.say('Thanks!', user=message['user'])
+            await chat.say('And I am flipping a Coin', user=message['user'])
             coin_side = random.choice(sides)
-            chat.say('and got {}'.format(coin_side), user=message['user'])
+            await chat.say('and got {}'.format(coin_side), user=message['user'])
             if coin_side == user_side:
-                chat.say('My greetings! You guessed!', user=message['user'])
+                await chat.say('My greetings! You guessed!', user=message['user'])
                 budget.receive(budget.value + 1)
             else:
-                chat.say('Sad but you loose!', user=message['user'])
+                await chat.say('Sad but you loose!', user=message['user'])
                 budget.receive(budget.value - 1)
             return story.SwitchOnValue(budget.value)
 

@@ -29,8 +29,8 @@ async def test_cases():
     @story.on('Hi there!')
     def one_story():
         @story.part()
-        def start(message):
-            chat.say('Where do you go?', user=message['user'])
+        async def start(message):
+            await chat.say('Where do you go?', user=message['user'])
             return forking.Switch({
                 'location': location.Any(),
                 'text': text.Any(),
@@ -248,9 +248,9 @@ async def test_one_sync_switch_inside_of_another_async_switch():
     @story.on('enter')
     def labyrinth():
         @story.part()
-        def enter(message):
+        async def enter(message):
             visited_rooms.receive(visited_rooms.value + 1)
-            return chat.ask('Which turn to choose?', user=message['user'])
+            return await chat.ask('Which turn to choose?', user=message['user'])
 
         @story.part()
         def parse_direction_0(message):
@@ -259,9 +259,9 @@ async def test_one_sync_switch_inside_of_another_async_switch():
         @story.case(equal_to='left')
         def room_1():
             @story.part()
-            def next_room_1(message):
+            async def next_room_1(message):
                 visited_rooms.receive(visited_rooms.value + 1)
-                return chat.ask('Which turn to choose?', user=message['user'])
+                return await chat.ask('Which turn to choose?', user=message['user'])
 
             @story.part()
             def parse_direction_1(message):
@@ -282,9 +282,9 @@ async def test_one_sync_switch_inside_of_another_async_switch():
         @story.case(equal_to='right')
         def room_2():
             @story.part()
-            def next_room_2(message):
+            async def next_room_2(message):
                 visited_rooms.receive(visited_rooms.value + 1)
-                return chat.ask('Which turn to choose?', user=message['user'])
+                return await chat.ask('Which turn to choose?', user=message['user'])
 
             @story.part()
             def parse_direction_2(message):
@@ -321,8 +321,8 @@ async def test_switch_inside_of_callable_inside_of_switch():
     @story.callable()
     def cast_the_magic():
         @story.part()
-        def ask_kind_of_spell(user):
-            return chat.ask('What kind of spell do you cast?', user=user)
+        async def ask_kind_of_spell(user):
+            return await chat.ask('What kind of spell do you cast?', user=user)
 
         @story.part()
         def switch_by_kind_of_spell(message):
@@ -331,16 +331,16 @@ async def test_switch_inside_of_callable_inside_of_switch():
         @story.case(equal_to='fireball')
         def fireball():
             @story.part()
-            def power_of_spell(message):
+            async def power_of_spell(message):
                 spell_type.receive(message['data']['text']['raw'])
-                return chat.ask('What is the power of fireball?', user=message['user'])
+                return await chat.ask('What is the power of fireball?', user=message['user'])
 
         @story.case(equal_to='lightning')
         def lightning():
             @story.part()
-            def power_of_spell(message):
+            async def power_of_spell(message):
                 spell_type.receive(message['data']['text']['raw'])
-                return chat.ask('What is the power of lightning?', user=message['user'])
+                return await chat.ask('What is the power of lightning?', user=message['user'])
 
         @story.part()
         def store_power(message):
@@ -349,8 +349,8 @@ async def test_switch_inside_of_callable_inside_of_switch():
     @story.on('enter')
     def dungeon():
         @story.part()
-        def ask_direction(message):
-            return chat.ask(
+        async def ask_direction(message):
+            return await chat.ask(
                 'Where do you go?',
                 user=message['user']
             )
@@ -400,8 +400,8 @@ async def test_switch_without_right_case():
     @story.on('I do not know')
     def meet_someone():
         @story.part()
-        def ask(message):
-            return chat.ask(
+        async def ask(message):
+            return await chat.ask(
                 'Do you need a help?',
                 user=message['user'],
             )
@@ -413,13 +413,13 @@ async def test_switch_without_right_case():
         @story.case(equal_to='yes')
         def yes():
             @story.part()
-            def lets_go(message):
-                chat.say('Let\'s google together!', message['user'])
+            async def lets_go(message):
+                await chat.say('Let\'s google together!', message['user'])
                 get_help.passed()
 
         @story.part()
-        def see_you(message):
-            chat.say('Nice to see you!', user=message['user'])
+        async def see_you(message):
+            await chat.say('Nice to see you!', user=message['user'])
             say_goodbay.passed()
 
     await answer.pure_text('I do not know', session, user)
