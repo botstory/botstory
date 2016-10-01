@@ -9,6 +9,8 @@ from .middlewares.text import text
 logger = logging.getLogger(__name__)
 interfaces = {}
 
+# temporal hack to be able hack web session from unit tests
+web_session = None
 
 async def ask(body, options=None, user=None):
     """
@@ -20,7 +22,8 @@ async def ask(body, options=None, user=None):
     :param user:
     :return:
     """
-    await send_text_message_to_all_interfaces(recipient=user, text=body, options=options)
+    await send_text_message_to_all_interfaces(
+        recipient=user, text=body, options=options, session=web_session)
     return any.Any()
 
 
@@ -37,16 +40,16 @@ def ask_location(body, user):
     return [location.Any(), text.Any()]
 
 
-async def say(body, user, session=None):
+async def say(body, user):
     """
     say something to user
 
     :param body:
     :param user:
-    :param session:
     :return:
     """
-    return await send_text_message_to_all_interfaces(recipient=user, text=body, session=session)
+    return await send_text_message_to_all_interfaces(
+        recipient=user, text=body, session=web_session)
 
 
 async def send_text_message_to_all_interfaces(*args, **kwargs):
