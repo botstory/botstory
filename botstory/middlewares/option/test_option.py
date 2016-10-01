@@ -13,7 +13,8 @@ def setup_function(function):
     story.stories_library.clear()
 
 
-def test_should_ask_with_options():
+@pytest.mark.asyncio
+async def test_should_ask_with_options():
     logger.debug('chat.interfaces')
     logger.debug(chat.interfaces)
     session = build_fake_session()
@@ -44,12 +45,13 @@ def test_should_ask_with_options():
         def get_health(message):
             trigger.receive(message['data']['option'])
 
-    answer.pure_text('How are you?', session, user)
-    answer.option({'health': 1}, session, user)
+    await answer.pure_text('How are you?', session, user)
+    await answer.option({'health': 1}, session, user)
     assert trigger.result() == {'health': 1}
 
 
-def test_validate_option():
+@pytest.mark.asyncio
+async def test_validate_option():
     session = build_fake_session()
     user = build_fake_user()
 
@@ -61,11 +63,12 @@ def test_validate_option():
         def store_option(message):
             trigger.passed()
 
-    answer.option({'engine': 'start'}, session, user)
+    await answer.option({'engine': 'start'}, session, user)
     assert trigger.is_triggered
 
 
-def test_validate_only_option():
+@pytest.mark.asyncio
+async def test_validate_only_option():
     session = build_fake_session()
     user = build_fake_user()
 
@@ -77,5 +80,5 @@ def test_validate_only_option():
         def store_option(message):
             trigger.passed()
 
-    answer.pure_text('Start engine!', session, user)
+    await answer.pure_text('Start engine!', session, user)
     assert not trigger.is_triggered

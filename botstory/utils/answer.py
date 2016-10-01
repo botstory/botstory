@@ -1,8 +1,8 @@
 from .. import story
 
 
-def location(loc, session=None, user=None):
-    return story.match_message({
+async def location(loc, session=None, user=None):
+    return await story.match_message({
         'data': {
             'location': loc,
         },
@@ -11,8 +11,8 @@ def location(loc, session=None, user=None):
     })
 
 
-def pure_text(text, session=None, user=None):
-    return story.match_message({
+async def pure_text(text, session=None, user=None):
+    return await story.match_message({
         'data': {
             'text': {'raw': text},
         },
@@ -21,8 +21,8 @@ def pure_text(text, session=None, user=None):
     })
 
 
-def option(payload, session=None, user=None):
-    return story.match_message({
+async def option(payload, session=None, user=None):
+    return await story.match_message({
         'data': {
             'option': payload,
         },

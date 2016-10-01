@@ -30,7 +30,8 @@ def mock_interface(mocker):
     return chat.add_interface(MockInteface())
 
 
-def test_should_say(mock_interface):
+@pytest.mark.asyncio
+async def test_should_say(mock_interface):
     session = build_fake_session()
     user = build_fake_user()
 
@@ -40,14 +41,15 @@ def test_should_say(mock_interface):
         def then(message):
             chat.say('Nice to see you!', message['user'])
 
-    answer.pure_text('hi there!', session, user)
+    await answer.pure_text('hi there!', session, user)
 
     mock_interface.send_text_message.assert_called_once_with(user.id, text='Nice to see you!')
 
 
 # TODO: move to middlewares/location/test_location.py
 
-def test_ask_location(mock_interface):
+@pytest.mark.asyncio
+async def test_ask_location(mock_interface):
     session = build_fake_session()
     user = build_fake_user()
 
@@ -57,12 +59,13 @@ def test_ask_location(mock_interface):
         def then(message):
             chat.ask_location('Hey, bro! Where is your rocket?', message['user'])
 
-    answer.pure_text('SOS!', session, user)
+    await answer.pure_text('SOS!', session, user)
 
     mock_interface.send_text_message.assert_called_once_with(user.id, text='Hey, bro! Where is your rocket?')
 
 
-def test_get_location_as_result_of_asking_of_location(mock_interface):
+@pytest.mark.asyncio
+async def test_get_location_as_result_of_asking_of_location(mock_interface):
     session = build_fake_session()
     user = build_fake_user()
 
@@ -78,7 +81,7 @@ def test_get_location_as_result_of_asking_of_location(mock_interface):
         def then(message):
             trigger.receive(message['data']['location'])
 
-    answer.pure_text('SOS!', session, user)
-    answer.location('somewhere', session, user)
+    await answer.pure_text('SOS!', session, user)
+    await answer.location('somewhere', session, user)
 
     assert trigger.result() == 'somewhere'

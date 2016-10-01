@@ -13,7 +13,8 @@ def teardown_function(function):
     story.stories_library.clear()
 
 
-def test_begin_of_callable_story():
+@pytest.mark.asyncio
+async def test_begin_of_callable_story():
     trigger = SimpleTrigger()
     session = build_fake_session()
 
@@ -26,7 +27,7 @@ def test_begin_of_callable_story():
                 'value2': arg2,
             })
 
-    one_story(1, 2, session=session)
+    await one_story(arg1=1, arg2=2, session=session)
 
     assert trigger.result() == {
         'value1': 1,
@@ -34,7 +35,8 @@ def test_begin_of_callable_story():
     }
 
 
-def test_parts_of_callable_story():
+@pytest.mark.asyncio
+async def test_parts_of_callable_story():
     trigger_1 = SimpleTrigger()
     trigger_2 = SimpleTrigger()
     session = build_fake_session()
@@ -68,16 +70,16 @@ def test_parts_of_callable_story():
             chat.say(res, user=message['user'])
             trigger_2.passed()
 
-    meet_ava_story(user, session=session)
+    await meet_ava_story(user, session=session)
 
-    answer.pure_text('Eugene', session, user=user)
-    answer.pure_text('13', session, user=user)
+    await answer.pure_text('Eugene', session, user=user)
+    await answer.pure_text('13', session, user=user)
 
     assert trigger_1.is_triggered
     assert trigger_2.is_triggered
 
-
-def test_call_story_from_common_story():
+@pytest.mark.asyncio
+async def test_call_story_from_common_story():
     trigger = SimpleTrigger()
 
     session = build_fake_session()
@@ -95,8 +97,8 @@ def test_call_story_from_common_story():
     @story.on('Hi!')
     def meet():
         @story.part()
-        def greeting(message):
-            return common_greeting(
+        async def greeting(message):
+            return await common_greeting(
                 user=message['user'],
                 session=message['session'],
             )
@@ -112,14 +114,15 @@ def test_call_story_from_common_story():
         def parse(message):
             trigger.receive(message['data']['text']['raw'])
 
-    answer.pure_text('Hi!', session, user=user)
-    answer.pure_text('I\'m fine', session, user=user)
-    answer.pure_text('Venus, as usual!', session, user=user)
+    await answer.pure_text('Hi!', session, user=user)
+    await answer.pure_text('I\'m fine', session, user=user)
+    await answer.pure_text('Venus, as usual!', session, user=user)
 
     assert trigger.value == 'Venus, as usual!'
 
 
-def test_parts_of_callable_story_can_be_sync():
+@pytest.mark.asyncio
+async def test_parts_of_callable_story_can_be_sync():
     trigger_1 = SimpleTrigger()
     trigger_2 = SimpleTrigger()
     session = build_fake_session()
@@ -134,13 +137,14 @@ def test_parts_of_callable_story_can_be_sync():
         def so():
             trigger_2.passed()
 
-    one_story(session=session)
+    await one_story(session=session)
 
     assert trigger_1.is_triggered
     assert trigger_2.is_triggered
 
 
-def test_call_story_from_another_callable():
+@pytest.mark.asyncio
+async def test_call_story_from_another_callable():
     trigger_1 = SimpleTrigger()
     trigger_2 = SimpleTrigger()
     session = build_fake_session()
@@ -152,8 +156,8 @@ def test_call_story_from_another_callable():
             pass
 
         @story.part()
-        def so_2(session_2):
-            another_story(session=session_2)
+        async def so_2(session_2):
+            await another_story(session=session_2)
 
         @story.part()
         def so_3(session_3):
@@ -171,13 +175,14 @@ def test_call_story_from_another_callable():
 
     # push extra parameter with session
     # and it will propagate up to other story as well
-    one_story(session, session=session)
+    await one_story(session, session=session)
 
     assert trigger_1.is_triggered
     assert trigger_2.is_triggered
 
 
-def test_async_end_of_story():
+@pytest.mark.asyncio
+async def test_async_end_of_story():
     sides = ['heads', 'tails']
     user = build_fake_user()
     session = build_fake_session()
@@ -232,8 +237,8 @@ def test_async_end_of_story():
     @story.on('enter to the saloon')
     def enter_to_the_saloon():
         @story.part()
-        def start_a_game(message):
-            return flip_a_coin(user, session=message['session'])
+        async def start_a_game(message):
+            return await flip_a_coin(user, session=message['session'])
 
         @story.part()
         def game_over(message):
@@ -241,15 +246,16 @@ def test_async_end_of_story():
             logger.debug(message)
             game_result.receive(message['data']['game_result'])
 
-    answer.pure_text('enter to the saloon',
+    await answer.pure_text('enter to the saloon',
                      session=session, user=user)
 
-    answer.pure_text(random.choice(sides), session, user)
+    await answer.pure_text(random.choice(sides), session, user)
 
     assert game_result.result() in ['loose', 'win', 'in progress']
 
 
-def test_sync_end_of_story():
+@pytest.mark.asyncio
+async def test_sync_end_of_story():
     session = build_fake_session()
 
     part_1 = SimpleTrigger()
@@ -271,7 +277,9 @@ def test_sync_end_of_story():
         def story_part_3():
             part_3.passed()
 
-    res = one_story(session=session)
+    logger.debug('one_story')
+    logger.debug(one_story)
+    res = await one_story(session=session)
 
     assert part_1.is_triggered
     assert part_2.is_triggered
