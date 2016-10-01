@@ -20,11 +20,11 @@ async def ask(body, options=None, user=None):
     :param user:
     :return:
     """
-    await async_send_text_message_to_all_interfaces(recipient=user, text=body, options=options)
+    await send_text_message_to_all_interfaces(recipient=user, text=body, options=options)
     return any.Any()
 
 
-# TODO: move to middlewares/location/location.py
+# TODO: move to middlewares/location/location.py and make async
 
 def ask_location(body, user):
     # TODO:
@@ -37,13 +37,6 @@ def ask_location(body, user):
     return [location.Any(), text.Any()]
 
 
-def send_text_message_to_all_interfaces(*args, **kwargs):
-    # TODO we should know from where user has come and use right interface
-    # as well right interface can be chosen
-    for type, interface in interfaces.items():
-        interface.send_text_message(*args, **kwargs)
-
-
 async def say(body, user, session=None):
     """
     say something to user
@@ -53,10 +46,10 @@ async def say(body, user, session=None):
     :param session:
     :return:
     """
-    return await async_send_text_message_to_all_interfaces(recipient=user, text=body, session=session)
+    return await send_text_message_to_all_interfaces(recipient=user, text=body, session=session)
 
 
-async def async_send_text_message_to_all_interfaces(*args, **kwargs):
+async def send_text_message_to_all_interfaces(*args, **kwargs):
     """
     TODO:
     we should know from where user has come and use right interface
