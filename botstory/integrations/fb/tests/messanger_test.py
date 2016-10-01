@@ -2,7 +2,7 @@ import pytest
 
 from . import fake_fb
 from .. import messenger
-from .... import chat, utils
+from .... import chat, story, utils
 
 
 @pytest.mark.asyncio
@@ -97,3 +97,64 @@ async def test_options(event_loop):
                     ],
                 },
             }
+
+
+@pytest.mark.asyncio
+async def test_handler_raw_text():
+    user = utils.build_fake_user()
+    session = utils.build_fake_session()
+
+    interface = messenger.FBInterface(token='qwerty')
+    story.story_processor_instance.add_interface(interface)
+
+    correct_trigger = utils.SimpleTrigger()
+    incorrect_trigger = utils.SimpleTrigger()
+
+    @story.on('hello, world!')
+    def correct_story():
+        @story.part()
+        def store_result(message):
+            correct_trigger.receive(message)
+
+    @story.on('Goodbye, world!')
+    def incorrect_story():
+        @story.part()
+        def store_result(message):
+            incorrect_trigger.receive(message)
+
+    interface.user = user
+    interface.session = session
+
+    await interface.handle([
+        {
+            "id": "PAGE_ID",
+            "time": 1473204787206,
+            "messaging": [
+                {
+                    "sender": {
+                        "id": "USER_ID"
+                    },
+                    "recipient": {
+                        "id": "PAGE_ID"
+                    },
+                    "timestamp": 1458692752478,
+                    "message": {
+                        "mid": "mid.1457764197618:41d102a3e1ae206a38",
+                        "seq": 73,
+                        "text": "hello, world!"
+                    }
+                }
+            ]
+        }
+    ])
+
+    assert incorrect_trigger.value is None
+    assert correct_trigger.value == {
+        'user': user,
+        'session': session,
+        'data': {
+            'text': {
+                'raw': 'hello, world!'
+            }
+        }
+    }

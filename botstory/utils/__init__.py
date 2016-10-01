@@ -1,7 +1,7 @@
 import asyncio
 import random
 
-from . import jsdict
+from .jsdict import JSDict
 
 
 async def a_second():
@@ -9,14 +9,14 @@ async def a_second():
 
 
 def build_fake_user():
-    return jsdict.JSDict({
+    return JSDict({
         'id': random.randint(100000000, 123456789),
         'facebook_user_id': random.randint(100000000, 123456789),
     })
 
 
 def build_fake_session():
-    return jsdict.JSDict({
+    return JSDict({
         'stack': [],
     })
 

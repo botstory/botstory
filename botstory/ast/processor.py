@@ -13,11 +13,17 @@ class StoryProcessor:
         self.parser_instance = parser_instance
         self.library = library
         self.middlewares = middlewares
+        self.interfaces = []
+
+    def add_interface(self, interface):
+        self.interfaces.append(interface)
+        interface.processor = self
 
     async def match_message(self, message):
         logger.debug('')
-        logger.debug('match_message {} '.format(message))
+        logger.debug('> match_message <')
         logger.debug('')
+        logger.debug('  {} '.format(message))
         session = message['session']
         if len(session.stack) > 0:
             logger.debug('  check stack')
@@ -185,7 +191,8 @@ class StoryProcessor:
         logger.debug('  step {} ({})'.format(received_data['step'], len(received_data['story'].story_line)))
 
         for m in self.middlewares:
-            received_data = m.process(received_data, validation_result)
+            if hasattr(m, 'process'):
+                received_data = m.process(received_data, validation_result)
 
         logger.debug('  len(session.stack) = {}'.format(len(session.stack)))
         logger.debug('  session.stack = {}'.format(session.stack))
