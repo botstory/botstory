@@ -90,14 +90,20 @@ class FBInterface:
                     logger.warning('  entry {} "message" field is empty'.format(e))
 
                 logger.debug('  raw_message: {}'.format(raw_message))
+
+                data = {}
                 text = raw_message.get('text', None)
                 if text is not None:
-                    message['data'] = {
-                        'text': {
-                            'raw': text,
-                        },
+                    data['text'] = {
+                        'raw': text,
                     }
                 else:
                     logger.warning('  entry {} "text"'.format(e))
+
+                quick_reply = raw_message.get('quick_reply', None)
+                if quick_reply is not None:
+                    data['option'] = quick_reply['payload']
+
+                message['data'] = data
 
                 await self.processor.match_message(message)

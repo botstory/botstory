@@ -159,3 +159,68 @@ async def test_handler_raw_text():
             }
         }
     }
+
+
+@pytest.mark.asyncio
+async def test_handler_selected_option():
+    user = utils.build_fake_user()
+    session = utils.build_fake_session()
+
+    interface = messenger.FBInterface(token='qwerty')
+    story.story_processor_instance.add_interface(interface)
+
+    correct_trigger = utils.SimpleTrigger()
+    incorrect_trigger = utils.SimpleTrigger()
+
+    @story.on(receive=option.Match('GREEN'))
+    def correct_story():
+        @story.part()
+        def store_result(message):
+            correct_trigger.receive(message)
+
+    @story.on(receive=option.Match('BLUE'))
+    def incorrect_story():
+        @story.part()
+        def store_result(message):
+            incorrect_trigger.receive(message)
+
+    interface.user = user
+    interface.session = session
+
+    await interface.handle([
+        {
+            "id": "PAGE_ID",
+            "time": 1473204787206,
+            "messaging": [
+                {
+                    "sender": {
+                        "id": "USER_ID"
+                    },
+                    "recipient": {
+                        "id": "PAGE_ID"
+                    },
+                    "timestamp": 1458692752478,
+                    "message": {
+                        "mid": "mid.1457764197618:41d102a3e1ae206a38",
+                        "seq": 73,
+                        "text": "Green!",
+                        "quick_reply": {
+                            "payload": "GREEN"
+                        }
+                    }
+                }
+            ]
+        }
+    ])
+
+    assert incorrect_trigger.value is None
+    assert correct_trigger.value == {
+        'user': user,
+        'session': session,
+        'data': {
+            'option': 'GREEN',
+            'text': {
+                'raw': 'Green!'
+            }
+        }
+    }
