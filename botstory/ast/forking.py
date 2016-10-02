@@ -99,11 +99,11 @@ class SwitchOnValue:
         self.immediately = True
 
 
-def process_switch_on_value(compiled_story, idx, message, processor, session, waiting_for):
+async def process_switch_on_value(compiled_story, idx, message, processor, session, waiting_for):
     # ... without waiting for user feedback
     logger.debug('  process immediately')
 
-    waiting_for = processor.process_next_part_of_story({
+    waiting_for = await processor.process_next_part_of_story({
         'step': idx,
         'story': compiled_story,
         'stack_tail': [session.stack.pop()],

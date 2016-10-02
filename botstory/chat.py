@@ -1,10 +1,18 @@
+import aiohttp
+import asyncio
+import logging
+
 from .middlewares.any import any
 from .middlewares.location import location
 from .middlewares.text import text
-from .integrations.fb import messenger
 
+logger = logging.getLogger(__name__)
+interfaces = {}
 
-def ask(body, options=None, user=None):
+# temporal hack to be able hack web session from unit tests
+web_session = None
+
+async def ask(body, options=None, user=None):
     """
     simple ask with predefined options
 
@@ -14,11 +22,12 @@ def ask(body, options=None, user=None):
     :param user:
     :return:
     """
-    messenger.send_text_message(user.id, text=body, options=options)
+    await send_text_message_to_all_interfaces(
+        recipient=user, text=body, options=options, session=web_session)
     return any.Any()
 
 
-# TODO: move to middlewares/location/location.py
+# TODO: move to middlewares/location/location.py and make async
 
 def ask_location(body, user):
     # TODO:
@@ -31,5 +40,43 @@ def ask_location(body, user):
     return [location.Any(), text.Any()]
 
 
-def say(body, user):
-    messenger.send_text_message(user.id, text=body)
+async def say(body, user):
+    """
+    say something to user
+
+    :param body:
+    :param user:
+    :return:
+    """
+    return await send_text_message_to_all_interfaces(
+        recipient=user, text=body, session=web_session)
+
+
+async def send_text_message_to_all_interfaces(*args, **kwargs):
+    """
+    TODO:
+    we should know from where user has come and use right interface
+    as well right interface can be chosen
+
+    :param args:
+    :param kwargs:
+    :return:
+    """
+    logger.debug('async_send_text_message_to_all_interfaces')
+    loop = asyncio.get_event_loop()
+    with aiohttp.ClientSession(loop=loop) as session:
+        # TODO: temporal hack to mock session
+        kwargs = {'session': session, **kwargs,}
+        # tasks = [interface.send_text_message(session=session, *args, **kwargs) for type, interface in
+        tasks = [interface.send_text_message(*args, **kwargs) for type, interface in
+                 interfaces.items()]
+
+        res = [body for body in await asyncio.gather(*tasks)]
+        logger.debug('  res')
+        logger.debug(res)
+        return res
+
+
+def add_interface(interface):
+    interfaces[interface.type] = interface
+    return interface

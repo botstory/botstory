@@ -1,9 +1,9 @@
 import logging
 
-logger = logging.getLogger(__name__)
-
 from .ast import callable as callable_module, common, \
     forking, library, parser, processor
+
+logger = logging.getLogger(__name__)
 
 # instantiate handlers
 

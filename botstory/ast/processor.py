@@ -1,4 +1,6 @@
+import asyncio
 import logging
+import inspect
 
 from .. import matchers
 from . import parser, callable, forking
@@ -11,11 +13,17 @@ class StoryProcessor:
         self.parser_instance = parser_instance
         self.library = library
         self.middlewares = middlewares
+        self.interfaces = []
 
-    def match_message(self, message):
+    def add_interface(self, interface):
+        self.interfaces.append(interface)
+        interface.processor = self
+
+    async def match_message(self, message):
         logger.debug('')
-        logger.debug('match_message {} '.format(message))
+        logger.debug('> match_message <')
         logger.debug('')
+        logger.debug('  {} '.format(message))
         session = message['session']
         if len(session.stack) > 0:
             logger.debug('  check stack')
@@ -58,7 +66,7 @@ class StoryProcessor:
                 validation_result = validator.validate(message)
                 logger.debug('      validation_result {}'.format(validation_result))
                 if not not validation_result:
-                    return self.process_next_part_of_story({
+                    return await self.process_next_part_of_story({
                         'step': stack_tail['step'],
                         'story': self.library.get_story_by_topic(stack_tail['topic'], stack=session.stack),
                         'stack_tail': [stack_tail],
@@ -72,7 +80,7 @@ class StoryProcessor:
         compiled_story = self.library.get_right_story(message)
         if not compiled_story:
             return
-        return self.process_story(
+        return await self.process_story(
             idx=0,
             message=message,
             compiled_story=compiled_story,
@@ -80,7 +88,8 @@ class StoryProcessor:
             bubble_up=True,
         )
 
-    def process_story(self, session, message, compiled_story, idx=0, story_args=[], story_kwargs={}, bubble_up=True):
+    async def process_story(self, session, message, compiled_story, idx=0, story_args=[], story_kwargs={},
+                            bubble_up=True):
         logger.debug('')
         logger.debug('process_story')
         logger.debug('')
@@ -120,6 +129,9 @@ class StoryProcessor:
                     # process startpoint of callable story
                     waiting_for = story_part(*story_args, **story_kwargs)
 
+                if inspect.iscoroutinefunction(story_part):
+                    waiting_for = await waiting_for
+
                 logger.debug('  got result {}'.format(waiting_for))
 
             idx += 1
@@ -132,8 +144,8 @@ class StoryProcessor:
                 if isinstance(waiting_for, forking.SwitchOnValue):
                     # SwitchOnValue is so special because it is the only result
                     # that doesn't async.
-                    waiting_for = forking.process_switch_on_value(compiled_story,
-                                                                  idx, message, self, session, waiting_for)
+                    waiting_for = await forking.process_switch_on_value(compiled_story,
+                                                                        idx, message, self, session, waiting_for)
 
                     if waiting_for:
                         logger.debug('  bubble up')
@@ -165,13 +177,13 @@ class StoryProcessor:
 
             if message:
                 if bubble_up:
-                    waiting_for = self.match_message(message)
+                    waiting_for = await self.match_message(message)
                 else:
                     logger.debug('  we reject bubbling in this call')
 
         return waiting_for
 
-    def process_next_part_of_story(self, received_data, validation_result, session, message, bubble_up=True):
+    async def process_next_part_of_story(self, received_data, validation_result, session, message, bubble_up=True):
         logger.debug('')
         logger.debug('process_next_part_of_story')
         logger.debug('')
@@ -179,7 +191,8 @@ class StoryProcessor:
         logger.debug('  step {} ({})'.format(received_data['step'], len(received_data['story'].story_line)))
 
         for m in self.middlewares:
-            received_data = m.process(received_data, validation_result)
+            if hasattr(m, 'process'):
+                received_data = m.process(received_data, validation_result)
 
         logger.debug('  len(session.stack) = {}'.format(len(session.stack)))
         logger.debug('  session.stack = {}'.format(session.stack))
@@ -194,7 +207,7 @@ class StoryProcessor:
 
         # we shouldn't bubble up because we inside other story
         # that under control
-        return self.process_story(
+        return await self.process_story(
             idx=received_data['step'],
             message=message,
             compiled_story=received_data['story'],

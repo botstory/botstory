@@ -12,13 +12,13 @@ from ..middlewares.text import text
 from ..utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
 
-@pytest.fixture
 def teardown_function(function):
     logger.debug('tear down!')
     story.stories_library.clear()
 
 
-def test_cases():
+@pytest.mark.asyncio
+async def test_cases():
     user = build_fake_user()
     session = build_fake_session()
 
@@ -29,8 +29,8 @@ def test_cases():
     @story.on('Hi there!')
     def one_story():
         @story.part()
-        def start(message):
-            chat.say('Where do you go?', user=message['user'])
+        async def start(message):
+            await chat.say('Where do you go?', user=message['user'])
             return forking.Switch({
                 'location': location.Any(),
                 'text': text.Any(),
@@ -52,15 +52,16 @@ def test_cases():
         def after_switch(message):
             trigger_after_switch.passed()
 
-    answer.pure_text('Hi there!', session, user)
-    answer.location({'x': 123, 'y': 321}, session, user)
+    await answer.pure_text('Hi there!', session, user)
+    await answer.location({'x': 123, 'y': 321}, session, user)
 
     assert trigger_location.result() == {'x': 123, 'y': 321}
     assert not trigger_text.result()
     assert trigger_after_switch.is_triggered
 
 
-def test_sync_value():
+@pytest.mark.asyncio
+async def test_sync_value():
     user = build_fake_user()
     session = build_fake_session()
     trigger_start = SimpleTrigger()
@@ -92,12 +93,13 @@ def test_sync_value():
                 assert not trigger_tails.is_triggered
                 trigger_tails.passed()
 
-    answer.pure_text('Flip a coin!', session, user)
+    await answer.pure_text('Flip a coin!', session, user)
 
     assert trigger_heads.is_triggered != trigger_tails.is_triggered
 
 
-def test_few_switches_in_one_story():
+@pytest.mark.asyncio
+async def test_few_switches_in_one_story():
     user = build_fake_user()
     session = build_fake_session()
     trigger_heads = SimpleTrigger()
@@ -142,12 +144,13 @@ def test_few_switches_in_one_story():
             def store_tails(message):
                 trigger_tails.receive(trigger_tails.value + 1)
 
-    answer.pure_text('Flip a coin!', session, user)
+    await answer.pure_text('Flip a coin!', session, user)
 
     assert trigger_heads.value + trigger_tails.value == 2
 
 
-def test_default_sync_value():
+@pytest.mark.asyncio
+async def test_default_sync_value():
     user = build_fake_user()
     session = build_fake_session()
     trigger_1 = SimpleTrigger()
@@ -172,12 +175,13 @@ def test_default_sync_value():
             def store_other(message):
                 trigger_default.passed()
 
-    answer.pure_text('Roll the dice!', session, user)
+    await answer.pure_text('Roll the dice!', session, user)
 
     assert trigger_1.is_triggered != trigger_default.is_triggered
 
 
-def test_one_sync_switch_inside_of_another_sync_switch():
+@pytest.mark.asyncio
+async def test_one_sync_switch_inside_of_another_sync_switch():
     user = build_fake_user()
     session = build_fake_session()
     visited_rooms = SimpleTrigger(0)
@@ -230,12 +234,13 @@ def test_one_sync_switch_inside_of_another_sync_switch():
                 def next_room_2_2(message):
                     visited_rooms.receive(visited_rooms.value + 1)
 
-    answer.pure_text('enter', session, user)
+    await answer.pure_text('enter', session, user)
 
     assert visited_rooms.value == 3
 
 
-def test_one_sync_switch_inside_of_another_async_switch():
+@pytest.mark.asyncio
+async def test_one_sync_switch_inside_of_another_async_switch():
     user = build_fake_user()
     session = build_fake_session()
     visited_rooms = SimpleTrigger(0)
@@ -243,9 +248,9 @@ def test_one_sync_switch_inside_of_another_async_switch():
     @story.on('enter')
     def labyrinth():
         @story.part()
-        def enter(message):
+        async def enter(message):
             visited_rooms.receive(visited_rooms.value + 1)
-            return chat.ask('Which turn to choose?', user=message['user'])
+            return await chat.ask('Which turn to choose?', user=message['user'])
 
         @story.part()
         def parse_direction_0(message):
@@ -254,9 +259,9 @@ def test_one_sync_switch_inside_of_another_async_switch():
         @story.case(equal_to='left')
         def room_1():
             @story.part()
-            def next_room_1(message):
+            async def next_room_1(message):
                 visited_rooms.receive(visited_rooms.value + 1)
-                return chat.ask('Which turn to choose?', user=message['user'])
+                return await chat.ask('Which turn to choose?', user=message['user'])
 
             @story.part()
             def parse_direction_1(message):
@@ -277,9 +282,9 @@ def test_one_sync_switch_inside_of_another_async_switch():
         @story.case(equal_to='right')
         def room_2():
             @story.part()
-            def next_room_2(message):
+            async def next_room_2(message):
                 visited_rooms.receive(visited_rooms.value + 1)
-                return chat.ask('Which turn to choose?', user=message['user'])
+                return await chat.ask('Which turn to choose?', user=message['user'])
 
             @story.part()
             def parse_direction_2(message):
@@ -297,14 +302,15 @@ def test_one_sync_switch_inside_of_another_async_switch():
                 def next_room_2_2(message):
                     visited_rooms.receive(visited_rooms.value + 1)
 
-    answer.pure_text('enter', session, user)
-    answer.pure_text(random.choice(['left', 'right']), session, user)
-    answer.pure_text(random.choice(['left', 'right']), session, user)
+    await answer.pure_text('enter', session, user)
+    await answer.pure_text(random.choice(['left', 'right']), session, user)
+    await answer.pure_text(random.choice(['left', 'right']), session, user)
 
     assert visited_rooms.value == 3
 
 
-def test_switch_inside_of_callable_inside_of_switch():
+@pytest.mark.asyncio
+async def test_switch_inside_of_callable_inside_of_switch():
     user = build_fake_user()
     session = build_fake_session()
 
@@ -315,8 +321,8 @@ def test_switch_inside_of_callable_inside_of_switch():
     @story.callable()
     def cast_the_magic():
         @story.part()
-        def ask_kind_of_spell(user):
-            return chat.ask('What kind of spell do you cast?', user=user)
+        async def ask_kind_of_spell(user):
+            return await chat.ask('What kind of spell do you cast?', user=user)
 
         @story.part()
         def switch_by_kind_of_spell(message):
@@ -325,16 +331,16 @@ def test_switch_inside_of_callable_inside_of_switch():
         @story.case(equal_to='fireball')
         def fireball():
             @story.part()
-            def power_of_spell(message):
+            async def power_of_spell(message):
                 spell_type.receive(message['data']['text']['raw'])
-                return chat.ask('What is the power of fireball?', user=message['user'])
+                return await chat.ask('What is the power of fireball?', user=message['user'])
 
         @story.case(equal_to='lightning')
         def lightning():
             @story.part()
-            def power_of_spell(message):
+            async def power_of_spell(message):
                 spell_type.receive(message['data']['text']['raw'])
-                return chat.ask('What is the power of lightning?', user=message['user'])
+                return await chat.ask('What is the power of lightning?', user=message['user'])
 
         @story.part()
         def store_power(message):
@@ -343,8 +349,8 @@ def test_switch_inside_of_callable_inside_of_switch():
     @story.on('enter')
     def dungeon():
         @story.part()
-        def ask_direction(message):
-            return chat.ask(
+        async def ask_direction(message):
+            return await chat.ask(
                 'Where do you go?',
                 user=message['user']
             )
@@ -356,8 +362,8 @@ def test_switch_inside_of_callable_inside_of_switch():
         @story.case(equal_to='left')
         def room_1():
             @story.part()
-            def meet_dragon(message):
-                return cast_the_magic(message['user'], session=session)
+            async def meet_dragon(message):
+                return await cast_the_magic(message['user'], session=session)
 
             @story.part()
             def store_end(message):
@@ -366,24 +372,25 @@ def test_switch_inside_of_callable_inside_of_switch():
         @story.case(equal_to='right')
         def room_2():
             @story.part()
-            def meet_ogr(message):
-                return cast_the_magic(message['user'], session=session)
+            async def meet_ogr(message):
+                return await cast_the_magic(message['user'], session=session)
 
             @story.part()
             def store_end(message):
                 visited_rooms.receive(visited_rooms.value + 1)
 
-    answer.pure_text('enter', session, user)
-    answer.pure_text(random.choice(['left', 'right']), session, user)
-    answer.pure_text(random.choice(['fireball', 'lightning']), session, user)
-    answer.pure_text(random.choice(['light', 'strong']), session, user)
+    await answer.pure_text('enter', session, user)
+    await answer.pure_text(random.choice(['left', 'right']), session, user)
+    await answer.pure_text(random.choice(['fireball', 'lightning']), session, user)
+    await answer.pure_text(random.choice(['light', 'strong']), session, user)
 
     assert visited_rooms.value == 1
     assert spell_type.value in ['fireball', 'lightning']
     assert spell_power.value in ['light', 'strong']
 
 
-def test_switch_without_right_case():
+@pytest.mark.asyncio
+async def test_switch_without_right_case():
     user = build_fake_user()
     session = build_fake_session()
 
@@ -393,8 +400,8 @@ def test_switch_without_right_case():
     @story.on('I do not know')
     def meet_someone():
         @story.part()
-        def ask(message):
-            return chat.ask(
+        async def ask(message):
+            return await chat.ask(
                 'Do you need a help?',
                 user=message['user'],
             )
@@ -406,17 +413,17 @@ def test_switch_without_right_case():
         @story.case(equal_to='yes')
         def yes():
             @story.part()
-            def lets_go(message):
-                chat.say('Let\'s google together!', message['user'])
+            async def lets_go(message):
+                await chat.say('Let\'s google together!', message['user'])
                 get_help.passed()
 
         @story.part()
-        def see_you(message):
-            chat.say('Nice to see you!', user=message['user'])
+        async def see_you(message):
+            await chat.say('Nice to see you!', user=message['user'])
             say_goodbay.passed()
 
-    answer.pure_text('I do not know', session, user)
-    answer.pure_text('No', session, user)
+    await answer.pure_text('I do not know', session, user)
+    await answer.pure_text('No', session, user)
 
     assert not get_help.is_triggered
     assert say_goodbay.is_triggered
