@@ -10,7 +10,7 @@ async def a_second():
 
 def build_fake_user():
     return JSDict({
-        'id': random.randint(100000000, 123456789),
+        'slack_id': random.randint(100000000, 123456789),
         'facebook_user_id': random.randint(100000000, 123456789),
     })
 

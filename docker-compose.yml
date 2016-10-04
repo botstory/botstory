@@ -1,7 +1,11 @@
 version: '2'
 services:
+  mongo:
+    image: mongo
   bot:
     build: .
     command: py.test --cov=botstory --cov-report term-missing
     volumes:
       - .:/usr/src/app
+    depends_on:
+      - mongo

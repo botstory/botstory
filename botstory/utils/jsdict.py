@@ -1,4 +1,6 @@
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 
 class JSDict:
@@ -17,3 +19,11 @@ class JSDict:
 
     def __str__(self):
         return 'JSDict({})'.format(json.dumps(self._response))
+
+    def __iter__(self):
+        logger.debug('JSDict.__iter__')
+        logger.debug(list(iter(self._response)))
+        return iter(self._response)
+
+    def items(self):
+        return self._response.items()

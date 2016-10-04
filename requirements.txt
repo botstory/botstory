@@ -1,3 +1,4 @@
+motor==0.7b0
 pytest==2.9.2
 pytest-aiohttp
 pytest-asyncio==0.4.1
