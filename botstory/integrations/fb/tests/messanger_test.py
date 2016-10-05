@@ -35,9 +35,9 @@ async def test_integration(event_loop):
     user = utils.build_fake_user()
     async with fake_fb.Server(event_loop) as server:
         async with server.session() as session:
-            interface = messenger.FBInterface(token='qwerty')
-            interface.add_storage(mockdb.MockDB())
-            chat.add_interface(interface)
+            story.use(messenger.FBInterface(token='qwerty'))
+            story.use(mockdb.MockDB())
+
             # mock http session
             chat.web_session = session
             await chat.say('hi there!', user)
@@ -60,9 +60,8 @@ async def test_options(event_loop):
     user = utils.build_fake_user()
     async with fake_fb.Server(event_loop) as server:
         async with server.session() as session:
-            interface = messenger.FBInterface(token='qwerty')
-            interface.add_storage(mockdb.MockDB())
-            chat.add_interface(interface)
+            story.use(messenger.FBInterface(token='qwerty'))
+            story.use(mockdb.MockDB())
 
             # mock web session
             chat.web_session = session
@@ -117,16 +116,13 @@ def build_fb_interface():
         user = utils.build_fake_user()
         session = utils.build_fake_session()
 
-        storage = mockdb.MockDB()
+        storage = story.use(mockdb.MockDB())
+        fb = story.use(messenger.FBInterface(token='qwerty'))
+
         await storage.set_session(session)
         await storage.set_user(user)
 
-        interface = messenger.FBInterface(token='qwerty')
-        interface.add_storage(storage)
-
-        story.story_processor_instance.add_interface(interface)
-
-        return interface
+        return fb
 
     return builder
 

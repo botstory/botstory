@@ -15,11 +15,28 @@ def teardown_function(function):
 
 
 @pytest.fixture
+def build_context():
+    async def builder(mongodb):
+        user = utils.build_fake_user()
+        await mongodb.set_user(user)
+
+        session = utils.build_fake_session(user=user)
+        await mongodb.set_session(session)
+
+        story.use(mongodb)
+        fb = story.use(messenger.FBInterface(token='qwerty'))
+
+        return fb, user
+
+    return builder
+
+
+@pytest.fixture
 @pytest.mark.asyncio
 def open_db(event_loop):
     class AsyncDBConnection:
         def __init__(self):
-            self.db_interface = db.MongodbInterface(uri= os.environ.get('TEST_MONGODB_URL', 'mongo'), db_name='test')
+            self.db_interface = db.MongodbInterface(uri=os.environ.get('TEST_MONGODB_URL', 'mongo'), db_name='test')
 
         async def __aenter__(self):
             await self.db_interface.connect(loop=event_loop)
@@ -62,18 +79,9 @@ async def test_store_restore_session(open_db):
 
 # TODO: build user and session from scratch
 @pytest.mark.asyncio
-async def test_integrate_with_facebook(open_db):
-    async with open_db() as db_interface:
-        user = utils.build_fake_user()
-        session = utils.build_fake_session(user=user)
-
-        await db_interface.set_session(session)
-        await db_interface.set_user(user)
-
-        interface = messenger.FBInterface(token='qwerty')
-        interface.add_storage(db_interface)
-
-        story.story_processor_instance.add_interface(interface)
+async def test_integrate_with_facebook(open_db, build_context):
+    async with open_db() as mongodb:
+        facebook, user = await build_context(mongodb)
 
         trigger = utils.SimpleTrigger()
 
@@ -83,28 +91,26 @@ async def test_integrate_with_facebook(open_db):
             def store_result(message):
                 trigger.receive(message)
 
-        await interface.handle([
-            {
-                'id': 'PAGE_ID',
-                'time': 1473204787206,
-                'messaging': [
-                    {
-                        'sender': {
-                            'id': user['facebook_user_id'],
-                        },
-                        'recipient': {
-                            'id': 'PAGE_ID'
-                        },
-                        'timestamp': 1458692752478,
-                        'message': {
-                            'mid': 'mid.1457764197618:41d102a3e1ae206a38',
-                            'seq': 73,
-                            'text': 'hello, world!'
-                        }
+        await facebook.handle([{
+            'id': 'PAGE_ID',
+            'time': 1473204787206,
+            'messaging': [
+                {
+                    'sender': {
+                        'id': user['facebook_user_id'],
+                    },
+                    'recipient': {
+                        'id': 'PAGE_ID'
+                    },
+                    'timestamp': 1458692752478,
+                    'message': {
+                        'mid': 'mid.1457764197618:41d102a3e1ae206a38',
+                        'seq': 73,
+                        'text': 'hello, world!'
                     }
-                ]
-            }
-        ])
+                }
+            ]
+        }])
 
         del trigger.value['session']
         assert trigger.value == {

@@ -10,14 +10,22 @@ logger = logging.getLogger(__name__)
 
 class StoryProcessor:
     def __init__(self, parser_instance, library, middlewares=[]):
-        self.parser_instance = parser_instance
+        self.interfaces = []
         self.library = library
         self.middlewares = middlewares
-        self.interfaces = []
+        self.parser_instance = parser_instance
+        self.storage = None
 
     def add_interface(self, interface):
+        if self.storage:
+            interface.add_storage(self.storage)
         self.interfaces.append(interface)
         interface.processor = self
+
+    def add_storage(self, storage):
+        self.storage = storage
+        for interface in self.interfaces:
+            interface.add_storage(storage)
 
     async def match_message(self, message):
         logger.debug('')
@@ -100,7 +108,8 @@ class StoryProcessor:
         logger.debug('  story {}'.format(compiled_story))
         logger.debug('  message {}'.format(message))
         logger.debug('  session.stack {} ({})'.format(session['stack'], len(session['stack'])))
-        logger.debug('  previous_topics: {}'.format(session['stack'][-2]['topic'] if len(session['stack']) > 1 else None))
+        logger.debug(
+            '  previous_topics: {}'.format(session['stack'][-2]['topic'] if len(session['stack']) > 1 else None))
 
         story_line = compiled_story.story_line
 

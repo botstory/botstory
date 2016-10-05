@@ -30,6 +30,10 @@ class MongodbInterface:
         self.user_collection = self.db.get_collection(self.user_collection_name)
         self.session_collection = self.db.get_collection(self.session_collection_name)
 
+    async def drop_collections(self):
+        await self.session_collection.drop()
+        await self.user_collection.drop()
+
     async def get_session(self, **kwargs):
         return await self.session_collection.find_one(kwargs)
 
