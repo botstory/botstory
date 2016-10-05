@@ -18,6 +18,7 @@ def build_fake_user():
 def build_fake_session():
     return JSDict({
         'stack': [],
+        'user_id': None,
     })
 
 

@@ -30,13 +30,22 @@ class MongodbInterface:
         self.user_collection = self.db.get_collection(self.user_collection_name)
         self.session_collection = self.db.get_collection(self.session_collection_name)
 
-    async def get_session(self, user_id):
-        # TODO: should get from extensions
-        return {}
+    async def get_session(self, **kwargs):
+        return await self.session_collection.find_one(kwargs)
 
     async def set_session(self, user_id, session):
-        # TODO: should get from extensions
-        pass
+        if not getattr(session, 'user_id', None):
+            session['user_id'] = user_id
+
+        old_session = await self.session_collection.find_one({'user_id': user_id})
+        logger.debug('old_session')
+        logger.debug(old_session)
+        if not old_session:
+            res = await self.session_collection.insert(session)
+        else:
+            res = await self.session_collection.update({'user_id': user_id}, session)
+
+        return res
 
     async def get_user(self, user_id):
         return await self.user_collection.find_one({'_id': user_id})
