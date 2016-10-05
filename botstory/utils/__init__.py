@@ -13,19 +13,20 @@ def uniq_id():
 
 
 def build_fake_user():
-    return JSDict({
+    return {
+        'name': 'Alice',
         'slack_id': uniq_id(),
         'facebook_user_id': uniq_id(),
-    })
+    }
 
 
 def build_fake_session(user=None):
     user = user or {}
-    return JSDict({
+    return {
         'stack': [],
         'facebook_user_id': user.get('facebook_user_id', uniq_id()),
         'user_id': user.get('_id', uniq_id()),
-    })
+    }
 
 
 class SimpleTrigger:

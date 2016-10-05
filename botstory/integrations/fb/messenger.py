@@ -53,7 +53,7 @@ class FBInterface:
                 },
                 data=json.dumps({
                     'recipient': {
-                        'id': recipient.facebook_user_id,
+                        'id': recipient['facebook_user_id'],
                     },
                     'message': message,
                 })) as resp:

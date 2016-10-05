@@ -49,7 +49,7 @@ async def test_should_say(mock_interface):
 
     await answer.pure_text('hi there!', session, user)
 
-    mock_interface.send_text_message.assert_called_once_with(user.id, text='Nice to see you!')
+    mock_interface.send_text_message.assert_called_once_with(user['facebook_user_id'], text='Nice to see you!')
 
 
 # TODO: move to middlewares/location/test_location.py

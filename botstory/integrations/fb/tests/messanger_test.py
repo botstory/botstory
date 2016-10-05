@@ -10,6 +10,11 @@ from ....middlewares.option import option
 logger = logging.getLogger(__name__)
 
 
+def teardown_function(function):
+    logger.debug('tear down!')
+    story.stories_library.clear()
+
+
 @pytest.mark.asyncio
 async def test_send_text_message(event_loop):
     user = utils.build_fake_user()
@@ -42,7 +47,7 @@ async def test_integration(event_loop):
             res = await server.history[-1]['request'].json()
             assert res == {
                 'recipient': {
-                    'id': user.facebook_user_id,
+                    'id': user['facebook_user_id'],
                 },
                 'message': {
                     'text': 'hi there!'
@@ -81,7 +86,7 @@ async def test_options(event_loop):
             res = await server.history[-1]['request'].json()
             assert res == {
                 'recipient': {
-                    'id': user.facebook_user_id,
+                    'id': user['facebook_user_id'],
                 },
                 'message': {
                     'text': 'Which color do you like?',
