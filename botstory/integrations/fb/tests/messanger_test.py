@@ -1,9 +1,13 @@
+import logging
 import pytest
 
 from . import fake_fb
 from .. import messenger
+from ... import mockdb
 from .... import chat, story, utils
 from ....middlewares.option import option
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.mark.asyncio
@@ -27,6 +31,7 @@ async def test_integration(event_loop):
     async with fake_fb.Server(event_loop) as server:
         async with server.session() as session:
             interface = messenger.FBInterface(token='qwerty')
+            interface.add_storage(mockdb.MockDB())
             chat.add_interface(interface)
             # mock http session
             chat.web_session = session
@@ -51,6 +56,7 @@ async def test_options(event_loop):
     async with fake_fb.Server(event_loop) as server:
         async with server.session() as session:
             interface = messenger.FBInterface(token='qwerty')
+            interface.add_storage(mockdb.MockDB())
             chat.add_interface(interface)
 
             # mock web session
@@ -100,13 +106,29 @@ async def test_options(event_loop):
             }
 
 
-@pytest.mark.asyncio
-async def test_handler_raw_text():
-    user = utils.build_fake_user()
-    session = utils.build_fake_session()
+@pytest.fixture
+def build_fb_interface():
+    async def builder():
+        user = utils.build_fake_user()
+        session = utils.build_fake_session()
 
-    interface = messenger.FBInterface(token='qwerty')
-    story.story_processor_instance.add_interface(interface)
+        storage = mockdb.MockDB()
+        await storage.set_session(session)
+        await storage.set_user(user)
+
+        interface = messenger.FBInterface(token='qwerty')
+        interface.add_storage(storage)
+
+        story.story_processor_instance.add_interface(interface)
+
+        return interface
+
+    return builder
+
+
+@pytest.mark.asyncio
+async def test_handler_raw_text(build_fb_interface):
+    fb_interface = await build_fb_interface()
 
     correct_trigger = utils.SimpleTrigger()
     incorrect_trigger = utils.SimpleTrigger()
@@ -123,10 +145,7 @@ async def test_handler_raw_text():
         def store_result(message):
             incorrect_trigger.receive(message)
 
-    interface.user = user
-    interface.session = session
-
-    await interface.handle([
+    await fb_interface.handle([
         {
             "id": "PAGE_ID",
             "time": 1473204787206,
@@ -151,8 +170,8 @@ async def test_handler_raw_text():
 
     assert incorrect_trigger.value is None
     assert correct_trigger.value == {
-        'user': user,
-        'session': session,
+        'user': fb_interface.storage.user,
+        'session': fb_interface.storage.session,
         'data': {
             'text': {
                 'raw': 'hello, world!'
@@ -162,12 +181,8 @@ async def test_handler_raw_text():
 
 
 @pytest.mark.asyncio
-async def test_handler_selected_option():
-    user = utils.build_fake_user()
-    session = utils.build_fake_session()
-
-    interface = messenger.FBInterface(token='qwerty')
-    story.story_processor_instance.add_interface(interface)
+async def test_handler_selected_option(build_fb_interface):
+    fb_interface = await build_fb_interface()
 
     correct_trigger = utils.SimpleTrigger()
     incorrect_trigger = utils.SimpleTrigger()
@@ -184,10 +199,7 @@ async def test_handler_selected_option():
         def store_result(message):
             incorrect_trigger.receive(message)
 
-    interface.user = user
-    interface.session = session
-
-    await interface.handle([
+    await fb_interface.handle([
         {
             "id": "PAGE_ID",
             "time": 1473204787206,
@@ -215,8 +227,8 @@ async def test_handler_selected_option():
 
     assert incorrect_trigger.value is None
     assert correct_trigger.value == {
-        'user': user,
-        'session': session,
+        'user': fb_interface.storage.user,
+        'session': fb_interface.storage.session,
         'data': {
             'option': 'GREEN',
             'text': {

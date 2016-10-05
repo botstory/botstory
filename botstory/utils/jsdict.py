@@ -12,10 +12,10 @@ class JSDict:
         return self.__str__()
 
     def __getattr__(self, key):
-        try:
-            return self._response[key]
-        except KeyError:
-            return None
+        return self._response.get(key, None)
+
+    def __getitem__(self, item):
+        return self._response.get(item, None)
 
     def __str__(self):
         return 'JSDict({})'.format(json.dumps(self._response))

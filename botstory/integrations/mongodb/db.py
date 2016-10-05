@@ -33,22 +33,22 @@ class MongodbInterface:
     async def get_session(self, **kwargs):
         return await self.session_collection.find_one(kwargs)
 
-    async def set_session(self, user_id, session):
-        if not getattr(session, 'user_id', None):
-            session['user_id'] = user_id
-
-        old_session = await self.session_collection.find_one({'user_id': user_id})
+    async def set_session(self, session):
+        old_session = await self.session_collection.find_one({'user_id': session['user_id']})
         logger.debug('old_session')
         logger.debug(old_session)
         if not old_session:
             res = await self.session_collection.insert(session)
         else:
-            res = await self.session_collection.update({'user_id': user_id}, session)
+            res = await self.session_collection.update({'user_id': session['user_id']}, session)
 
         return res
 
-    async def get_user(self, user_id):
-        return await self.user_collection.find_one({'_id': user_id})
+    async def get_user(self, **kwargs):
+        if 'id' in kwargs:
+            kwargs['_id'] = kwargs.get('id', None)
+            del kwargs['id']
+        return await self.user_collection.find_one(kwargs)
 
     async def set_user(self, user):
         if not getattr(user, '_id', None):

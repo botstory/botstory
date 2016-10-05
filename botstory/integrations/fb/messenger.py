@@ -17,6 +17,7 @@ class FBInterface:
         """
         self.api_uri = api_uri
         self.processor = None
+        self.storage = None
         self.token = token
 
     async def send_text_message(self, session, recipient, text, options=[]):
@@ -58,13 +59,8 @@ class FBInterface:
                 })) as resp:
             return await resp.json()
 
-    async def get_session(self, user_id):
-        # TODO: should get from extensions
-        return self.session
-
-    async def get_user(self, user_id):
-        # TODO: should get from extensions
-        return self.user
+    def add_storage(self, storage):
+        self.storage = storage
 
     async def handle(self, entry):
         logger.debug('')
@@ -80,9 +76,10 @@ class FBInterface:
 
             for m in messaging:
                 logger.debug('  m: {}'.format(m))
+                facebook_user_id = m['sender']['id']
                 message = {
-                    'session': await self.get_session(m['sender']['id']),
-                    'user': await self.get_user(m['sender']['id']),
+                    'session': await self.storage.get_session(facebook_user_id=facebook_user_id),
+                    'user': await self.storage.get_user(facebook_user_id=facebook_user_id),
                 }
                 raw_message = m.get('message', {})
 
