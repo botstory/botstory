@@ -1,4 +1,5 @@
 import logging
+import os
 import pytest
 
 from . import db
@@ -18,7 +19,7 @@ def teardown_function(function):
 def open_db(event_loop):
     class AsyncDBConnection:
         def __init__(self):
-            self.db_interface = db.MongodbInterface(uri='mongo', db_name='test')
+            self.db_interface = db.MongodbInterface(uri= os.environ.get('TEST_MONGODB_URL', 'mongo'), db_name='test')
 
         async def __aenter__(self):
             await self.db_interface.connect(loop=event_loop)
