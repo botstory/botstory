@@ -30,9 +30,11 @@ class MongodbInterface:
         self.user_collection = self.db.get_collection(self.user_collection_name)
         self.session_collection = self.db.get_collection(self.session_collection_name)
 
-    async def drop_collections(self):
+    async def clear_collections(self):
         await self.session_collection.drop()
+        self.session_collection = self.db.get_collection(self.session_collection_name)
         await self.user_collection.drop()
+        self.user_collection = self.db.get_collection(self.user_collection_name)
 
     async def get_session(self, **kwargs):
         return await self.session_collection.find_one(kwargs)
@@ -50,6 +52,7 @@ class MongodbInterface:
 
     async def new_session(self, user, **kwargs):
         kwargs['user_id'] = kwargs.get('user_id', user['_id'])
+        kwargs['stack'] = kwargs.get('stack', [])
         id = await self.session_collection.insert(kwargs)
         return await self.session_collection.find_one({'_id': id})
 

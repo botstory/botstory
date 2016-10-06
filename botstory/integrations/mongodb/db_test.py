@@ -43,6 +43,7 @@ def open_db(event_loop):
 
         async def __aenter__(self):
             await self.db_interface.connect(loop=event_loop)
+            await self.db_interface.clear_collections()
             return self.db_interface
 
         async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -86,6 +87,8 @@ async def test_create_new_session(open_db):
         user = await db_interface.new_user(facebook_user_id='1234567890')
         session = await db_interface.new_session(facebook_user_id='1234567890', user=user)
         assert session['facebook_user_id'] == '1234567890'
+        assert 'stack' in session
+        assert isinstance(session['stack'], list)
         assert session['user_id'] == user['_id']
 
 
@@ -143,10 +146,9 @@ async def test_integrate_with_facebook(open_db, build_context):
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip
 async def test_integrate_with_facebook_with_none_session(open_db, build_context):
     async with open_db() as mongodb:
-        facebook, user = await build_context(mongodb, no_session=True, no_user=True)
+        facebook, _ = await build_context(mongodb, no_session=True, no_user=True)
 
         trigger = utils.SimpleTrigger()
 
@@ -177,13 +179,6 @@ async def test_integrate_with_facebook_with_none_session(open_db, build_context)
             ]
         }])
 
-        del trigger.value['session']
-        del trigger.value['user']
-        assert trigger.value == {
-            'user': user,
-            'data': {
-                'text': {
-                    'raw': 'hello, world!'
-                }
-            }
-        }
+        assert trigger.value
+        assert trigger.value['data']['text']['raw'] == 'hello, world!'
+        assert trigger.value['user']['facebook_user_id'] == 'some-facebook-id'
