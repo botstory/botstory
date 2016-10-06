@@ -1,5 +1,6 @@
 import logging
 
+from . import chat
 from .ast import callable as callable_module, common, \
     forking, library, parser, processor
 
@@ -47,3 +48,30 @@ match_message = story_processor_instance.match_message
 EndOfStory = callable_module.EndOfStory
 Switch = forking.Switch
 SwitchOnValue = forking.SwitchOnValue
+
+
+def check_spec(spec, obj):
+    for method in [getattr(obj, s, None) for s in spec]:
+        if not method:
+            return False
+    return True
+
+
+def use(middleware):
+    """
+    attache middleware
+
+    :param middleware:
+    :return:
+    """
+
+    if check_spec(['send_text_message'], middleware):
+        chat.add_interface(middleware)
+
+    if check_spec(['handle'], middleware):
+        story_processor_instance.add_interface(middleware)
+
+    if check_spec(['get_user', 'set_user', 'get_session', 'set_session'], middleware):
+        story_processor_instance.add_storage(middleware)
+
+    return middleware

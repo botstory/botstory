@@ -7,9 +7,11 @@ python:
 
 services:
   - docker
+  - mongodb
 
 env:
   DOCKER_COMPOSE_VERSION: 1.8.0
+  TEST_MONGODB_URL: 127.0.0.1
 
 #before_install:
 #

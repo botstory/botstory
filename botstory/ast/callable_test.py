@@ -90,7 +90,7 @@ async def test_call_story_from_common_story():
         @story.part()
         async def ask_name(user):
             return await chat.ask(
-                'Hi {}. How are you?'.format(user.name),
+                'Hi {}. How are you?'.format(user['name']),
                 user=user,
             )
 

@@ -106,14 +106,14 @@ async def process_switch_on_value(compiled_story, idx, message, processor, sessi
     waiting_for = await processor.process_next_part_of_story({
         'step': idx,
         'story': compiled_story,
-        'stack_tail': [session.stack.pop()],
+        'stack_tail': [session['stack'].pop()],
     },
         waiting_for.value, session, message,
         bubble_up=False)
 
     logger.debug('  after process_next_part_of_story')
     logger.debug('      waiting_for = {}'.format(waiting_for))
-    logger.debug('      session.stack = {}'.format(session.stack))
+    logger.debug('      session.stack = {}'.format(session['stack']))
 
     return waiting_for
 

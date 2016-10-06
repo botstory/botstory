@@ -8,17 +8,25 @@ async def a_second():
     await asyncio.sleep(0.1)
 
 
+def uniq_id():
+    return random.randint(100000000, 123456789)
+
+
 def build_fake_user():
-    return JSDict({
-        'id': random.randint(100000000, 123456789),
-        'facebook_user_id': random.randint(100000000, 123456789),
-    })
+    return {
+        'name': 'Alice',
+        'slack_id': uniq_id(),
+        'facebook_user_id': uniq_id(),
+    }
 
 
-def build_fake_session():
-    return JSDict({
+def build_fake_session(user=None):
+    user = user or {}
+    return {
         'stack': [],
-    })
+        'facebook_user_id': user.get('facebook_user_id', uniq_id()),
+        'user_id': user.get('_id', uniq_id()),
+    }
 
 
 class SimpleTrigger:
