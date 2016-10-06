@@ -48,6 +48,11 @@ class MongodbInterface:
 
         return res
 
+    async def new_session(self, user, **kwargs):
+        kwargs['user_id'] = kwargs.get('user_id', user['_id'])
+        id = await self.session_collection.insert(kwargs)
+        return await self.session_collection.find_one({'_id': id})
+
     async def get_user(self, **kwargs):
         if 'id' in kwargs:
             kwargs['_id'] = kwargs.get('id', None)
@@ -60,3 +65,7 @@ class MongodbInterface:
         else:
             res = await self.user_collection.update({'_id': user._id}, user)
         return res
+
+    async def new_user(self, **kwargs):
+        id = await self.user_collection.insert(kwargs)
+        return await self.user_collection.find_one({'_id': id})

@@ -9,8 +9,14 @@ class MockDB:
     async def set_session(self, session):
         self.session = session
 
+    async def new_session(self, **kwargs):
+        return kwargs
+
     async def get_user(self, **kwargs):
         return self.user
 
     async def set_user(self, user):
         self.user = user
+
+    async def new_user(self, **kwargs):
+        return kwargs

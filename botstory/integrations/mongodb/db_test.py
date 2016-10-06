@@ -16,12 +16,15 @@ def teardown_function(function):
 
 @pytest.fixture
 def build_context():
-    async def builder(mongodb):
-        user = utils.build_fake_user()
-        await mongodb.set_user(user)
+    async def builder(mongodb, no_session=False, no_user=False):
+        user = None
+        if not no_user:
+            user = utils.build_fake_user()
+            await mongodb.set_user(user)
 
-        session = utils.build_fake_session(user=user)
-        await mongodb.set_session(session)
+        if not no_session:
+            session = utils.build_fake_session(user=user)
+            await mongodb.set_session(session)
 
         story.use(mongodb)
         fb = story.use(messenger.FBInterface(token='qwerty'))
@@ -49,17 +52,6 @@ def open_db(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_store_restore_user(open_db):
-    async with open_db() as db_interface:
-        user = utils.build_fake_user()
-
-        user_id = await db_interface.set_user(user)
-        restored_user = await db_interface.get_user(id=user_id)
-
-        assert user.items() == restored_user.items()
-
-
-@pytest.mark.asyncio
 async def test_store_restore_session(open_db):
     async with open_db() as db_interface:
         session = utils.build_fake_session()
@@ -75,6 +67,33 @@ async def test_store_restore_session(open_db):
             if key not in ['_id']:
                 logger.debug('key {} '.format(key))
                 assert session[key] == restored_session[key]
+
+
+@pytest.mark.asyncio
+async def test_store_restore_user(open_db):
+    async with open_db() as db_interface:
+        user = utils.build_fake_user()
+
+        user_id = await db_interface.set_user(user)
+        restored_user = await db_interface.get_user(id=user_id)
+
+        assert user.items() == restored_user.items()
+
+
+@pytest.mark.asyncio
+async def test_create_new_session(open_db):
+    async with open_db() as db_interface:
+        user = await db_interface.new_user(facebook_user_id='1234567890')
+        session = await db_interface.new_session(facebook_user_id='1234567890', user=user)
+        assert session['facebook_user_id'] == '1234567890'
+        assert session['user_id'] == user['_id']
+
+
+@pytest.mark.asyncio
+async def test_create_new_user(open_db):
+    async with open_db() as db_interface:
+        user = await db_interface.new_user(facebook_user_id='1234567890')
+        assert user['facebook_user_id'] == '1234567890'
 
 
 # TODO: build user and session from scratch
@@ -113,6 +132,53 @@ async def test_integrate_with_facebook(open_db, build_context):
         }])
 
         del trigger.value['session']
+        assert trigger.value == {
+            'user': user,
+            'data': {
+                'text': {
+                    'raw': 'hello, world!'
+                }
+            }
+        }
+
+
+@pytest.mark.asyncio
+@pytest.mark.skip
+async def test_integrate_with_facebook_with_none_session(open_db, build_context):
+    async with open_db() as mongodb:
+        facebook, user = await build_context(mongodb, no_session=True, no_user=True)
+
+        trigger = utils.SimpleTrigger()
+
+        @story.on('hello, world!')
+        def correct_story():
+            @story.part()
+            def store_result(message):
+                trigger.receive(message)
+
+        await facebook.handle([{
+            'id': 'PAGE_ID',
+            'time': 1473204787206,
+            'messaging': [
+                {
+                    'sender': {
+                        'id': 'some-facebook-id',
+                    },
+                    'recipient': {
+                        'id': 'PAGE_ID'
+                    },
+                    'timestamp': 1458692752478,
+                    'message': {
+                        'mid': 'mid.1457764197618:41d102a3e1ae206a38',
+                        'seq': 73,
+                        'text': 'hello, world!'
+                    }
+                }
+            ]
+        }])
+
+        del trigger.value['session']
+        del trigger.value['user']
         assert trigger.value == {
             'user': user,
             'data': {
