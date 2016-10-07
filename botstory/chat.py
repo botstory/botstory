@@ -71,6 +71,9 @@ async def send_text_message_to_all_interfaces(*args, **kwargs):
         tasks = [interface.send_text_message(*args, **kwargs) for type, interface in
                  interfaces.items()]
 
+        logger.debug('tasks')
+        logger.debug(tasks)
+
         res = [body for body in await asyncio.gather(*tasks)]
         logger.debug('  res')
         logger.debug(res)
@@ -78,5 +81,7 @@ async def send_text_message_to_all_interfaces(*args, **kwargs):
 
 
 def add_interface(interface):
+    logger.debug('add_interface')
+    logger.debug(interface)
     interfaces[interface.type] = interface
     return interface
