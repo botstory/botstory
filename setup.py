@@ -21,8 +21,7 @@ setup(
     classifiers=[
         'Development Status :: 1 - Planning',
         'Intended Audience :: Developers',
-        # TODO: Should find right topic
-        # 'Topic :: Software Development :: Bots',
+        'Topic :: Communications :: Chat',
 
         # Not early because of async/await
         'Programming Language :: Python :: 3.5',
