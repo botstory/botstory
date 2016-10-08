@@ -9,7 +9,7 @@ if os.path.exists("README.md"):
 setup(
     name='botstory',
     packages=find_packages(),
-    version='0.0.2',
+    version='0.0.3',
     description='Async framework for botsg',
     license='MIT',
     long_description=longDesc,
