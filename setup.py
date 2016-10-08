@@ -10,7 +10,7 @@ setup(
     name='botstory',
     packages=find_packages(),
     version='0.0.2',
-    description='Async framework for bot',
+    description='Async framework for botsg',
     license='MIT',
     long_description=longDesc,
     author='Eugene Krevenets',
