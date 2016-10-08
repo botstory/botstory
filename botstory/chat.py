@@ -2,9 +2,7 @@ import aiohttp
 import asyncio
 import logging
 
-from .middlewares.any import any
-from .middlewares.location import location
-from .middlewares.text import text
+from .middlewares import any, location, text
 
 logger = logging.getLogger(__name__)
 interfaces = {}

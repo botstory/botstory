@@ -3,9 +3,8 @@ import logging
 import pytest
 
 from . import chat, story
+from .middlewares import location, text
 from .utils import answer, build_fake_session, build_fake_user, SimpleTrigger
-from .middlewares.text import text
-from .middlewares.location import location
 
 logger = logging.getLogger(__name__)
 

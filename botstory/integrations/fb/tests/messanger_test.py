@@ -5,7 +5,7 @@ from . import fake_fb
 from .. import messenger
 from ... import mockdb
 from .... import chat, story, utils
-from ....middlewares.option import option
+from ....middlewares import option
 
 logger = logging.getLogger(__name__)
 
