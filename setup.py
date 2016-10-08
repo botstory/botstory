@@ -10,7 +10,7 @@ setup(
     name='botstory',
     packages=find_packages(),
     version='0.0.3',
-    description='Async framework for botsg',
+    description='Async framework for bots',
     license='MIT',
     long_description=longDesc,
     author='Eugene Krevenets',
@@ -25,6 +25,5 @@ setup(
 
         # Not early because of async/await
         'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
     ],
 )
