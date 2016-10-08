@@ -24,7 +24,7 @@ setup(
         # TODO: Should find right topic
         # 'Topic :: Software Development :: Bots',
 
-        # Not later because of async/await
+        # Not early because of async/await
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
