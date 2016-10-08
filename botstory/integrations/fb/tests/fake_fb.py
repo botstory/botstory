@@ -77,6 +77,9 @@ class FakeResolver:
         else:
             return await self._resolver.resolve(host, port, family)
 
+ROOT_URI = 'graph.facebook.com'
+URI = 'https://graph.facebook.com{}'
+
 
 class FakeFacebook:
     def __init__(self, loop):
@@ -105,7 +108,7 @@ class FakeFacebook:
         self.server = await self.loop.create_server(self.handler,
                                                     '127.0.0.1', port,
                                                     ssl=self.ssl_context)
-        return {'graph.facebook.com': port}
+        return {ROOT_URI: port}
 
     async def stop(self):
         self.server.close()

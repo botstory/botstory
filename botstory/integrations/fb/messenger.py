@@ -1,6 +1,5 @@
 import json
 import logging
-from ... import utils
 
 logger = logging.getLogger(__file__)
 
