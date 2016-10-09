@@ -15,11 +15,13 @@ class FBInterface:
         :param token: should take from os.environ['FB_ACCESS_TOKEN']
         """
         self.api_uri = api_uri
-        self.processor = None
-        self.storage = None
         self.token = token
 
-    async def send_text_message(self, session, recipient, text, options=[]):
+        self.http = None
+        self.processor = None
+        self.storage = None
+
+    async def send_text_message(self, recipient, text, options=[]):
         """
         async send message to the facebook user (recipient)
 
@@ -42,23 +44,26 @@ class FBInterface:
         if len(quick_replies) > 0:
             message['quick_replies'] = quick_replies
 
-        async with session.post(
-                        self.api_uri + '/me/messages/',
-                params={
-                    'access_token': self.token,
+        return await self.http.post(
+            self.api_uri + '/me/messages/',
+            params={
+                'access_token': self.token,
+            },
+            json=json.dumps({
+                'recipient': {
+                    'id': recipient['facebook_user_id'],
                 },
-                headers={
-                    'Content-Type': 'application/json'
-                },
-                data=json.dumps({
-                    'recipient': {
-                        'id': recipient['facebook_user_id'],
-                    },
-                    'message': message,
-                })) as resp:
-            return await resp.json()
+                'message': message,
+            }))
+
+    def add_http(self, http):
+        logger.debug('add_http')
+        logger.debug(http)
+        self.http = http
 
     def add_storage(self, storage):
+        logger.debug('add_storage')
+        logger.debug(storage)
         self.storage = storage
 
     async def handle(self, entry):

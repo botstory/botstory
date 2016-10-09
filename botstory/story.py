@@ -65,6 +65,11 @@ def use(middleware):
     :return:
     """
 
+    logger.debug('use')
+    logger.debug(middleware)
+
+    # TODO: maybe it is good time to start using DI (dependency injection)
+
     if check_spec(['send_text_message'], middleware):
         chat.add_interface(middleware)
 
@@ -73,5 +78,8 @@ def use(middleware):
 
     if check_spec(['get_user', 'set_user', 'get_session', 'set_session'], middleware):
         story_processor_instance.add_storage(middleware)
+
+    if check_spec(['post', 'listen_webhook'], middleware):
+        chat.add_http(middleware)
 
     return middleware

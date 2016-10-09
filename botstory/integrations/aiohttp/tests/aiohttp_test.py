@@ -33,6 +33,7 @@ async def test_listen_webhook(event_loop):
     finally:
         await http.stop()
 
+
 @pytest.mark.asyncio
 async def test_should_not_create_server_if_there_wasnt_any_webhooks(event_loop):
     try:

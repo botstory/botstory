@@ -1,4 +1,3 @@
-import aiohttp
 import asyncio
 import logging
 
@@ -7,8 +6,6 @@ from .middlewares import any, location, text
 logger = logging.getLogger(__name__)
 interfaces = {}
 
-# temporal hack to be able hack web session from unit tests
-web_session = None
 
 async def ask(body, options=None, user=None):
     """
@@ -21,7 +18,7 @@ async def ask(body, options=None, user=None):
     :return:
     """
     await send_text_message_to_all_interfaces(
-        recipient=user, text=body, options=options, session=web_session)
+        recipient=user, text=body, options=options)
     return any.Any()
 
 
@@ -47,7 +44,7 @@ async def say(body, user):
     :return:
     """
     return await send_text_message_to_all_interfaces(
-        recipient=user, text=body, session=web_session)
+        recipient=user, text=body)
 
 
 async def send_text_message_to_all_interfaces(*args, **kwargs):
@@ -61,21 +58,23 @@ async def send_text_message_to_all_interfaces(*args, **kwargs):
     :return:
     """
     logger.debug('async_send_text_message_to_all_interfaces')
-    loop = asyncio.get_event_loop()
-    with aiohttp.ClientSession(loop=loop) as session:
-        # TODO: temporal hack to mock session
-        kwargs = {'session': session, **kwargs,}
-        # tasks = [interface.send_text_message(session=session, *args, **kwargs) for type, interface in
-        tasks = [interface.send_text_message(*args, **kwargs) for type, interface in
-                 interfaces.items()]
+    tasks = [interface.send_text_message(*args, **kwargs)
+             for type, interface in interfaces.items()]
 
-        logger.debug('tasks')
-        logger.debug(tasks)
+    logger.debug('  tasks')
+    logger.debug(tasks)
 
-        res = [body for body in await asyncio.gather(*tasks)]
-        logger.debug('  res')
-        logger.debug(res)
-        return res
+    res = [body for body in await asyncio.gather(*tasks)]
+    logger.debug('  res')
+    logger.debug(res)
+    return res
+
+
+def add_http(http):
+    logger.debug('add_http')
+    logger.debug(http)
+    for _, interface in interfaces.items():
+        interface.add_http(http)
 
 
 def add_interface(interface):

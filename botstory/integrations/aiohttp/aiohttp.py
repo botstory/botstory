@@ -52,7 +52,8 @@ class AioHttpInterface:
             resp = await session.post(url,
                                       params=params,
                                       headers=headers,
-                                      data=_json.dumps(json)
+                                      data=json
+                                      # data=_json.dumps(json)
                                       )
             return await resp.json()
 
@@ -71,6 +72,7 @@ class AioHttpInterface:
         self.get_app().router.add_post(uri, WebhookHandler(handler).handle)
 
     async def start(self):
+        logger.debug('start')
         if not self.has_app():
             return
         app = self.get_app()
@@ -93,8 +95,6 @@ class AioHttpInterface:
         logger.debug('======== Running on {} ========\n'
                      '(Press CTRL+C to quit)'.format(url))
 
-        logger.debug('srv')
-        logger.debug(srv)
         self.server = srv
         self.handler = handler
 
