@@ -1,3 +1,4 @@
+from aiohttp import test_utils
 import pytest
 from .. import AioHttpInterface
 from ...fb.tests import fake_fb
@@ -15,3 +16,19 @@ async def test_post(event_loop):
             req = server.history[-1]['request']
             assert req.content_type == 'application/json'
             assert await req.json() == {'message': 'hello world!'}
+
+
+@pytest.mark.asyncio
+async def test_listen_webhook(event_loop):
+    handler = test_utils.make_mocked_coro(return_value={
+        'result': 'ok',
+    })
+    http = AioHttpInterface(loop=event_loop, port=9876)
+    http.listen_webhook(uri='/webhook', handler=handler)
+    try:
+        await http.start()
+        res = await http.post('http://localhost:9876/webhook', json={'message': 'Is there anybody in there?'})
+        handler.assert_called_once_with({'message': 'Is there anybody in there?'})
+        assert res == {'result': 'ok'}
+    finally:
+        await http.stop()
