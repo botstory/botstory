@@ -37,12 +37,9 @@ class AioHttpInterface:
 
         self.ssl_context = ssl_context
 
-        self.app = aiohttp.web.Application(
-            loop=self.loop,
-        )
-
+        self.app = None
         self.session = None
-        self.srv = None
+        self.server = None
         self.handler = None
 
     async def post(self, url, params=None, headers=None, json=None):
@@ -59,11 +56,25 @@ class AioHttpInterface:
                                       )
             return await resp.json()
 
+    def get_app(self):
+        if not self.has_app():
+            self.app = aiohttp.web.Application(
+                loop=self.loop,
+            )
+        return self.app
+
+    def has_app(self):
+        return self.app is not None
+
     def listen_webhook(self, uri, handler):
-        self.app.router.add_post(uri, WebhookHandler(handler).handle)
+        logger.debug('listen_webhook {}'.format(uri))
+        self.get_app().router.add_post(uri, WebhookHandler(handler).handle)
 
     async def start(self):
-        handler = self.app.make_handler()
+        if not self.has_app():
+            return
+        app = self.get_app()
+        handler = app.make_handler()
         server = self.loop.create_server(
             handler,
             self.host,
@@ -73,7 +84,7 @@ class AioHttpInterface:
         )
 
         srv, startup_res = await asyncio.gather(
-            server, self.app.startup(),
+            server, app.startup(),
             loop=self.loop)
 
         scheme = 'https' if self.ssl_context else 'http'
@@ -81,12 +92,17 @@ class AioHttpInterface:
         url = url.with_host(self.host).with_port(self.port)
         logger.debug('======== Running on {} ========\n'
                      '(Press CTRL+C to quit)'.format(url))
-        self.srv = srv
+
+        logger.debug('srv')
+        logger.debug(srv)
+        self.server = srv
         self.handler = handler
 
     async def stop(self):
-        self.srv.close()
-        await self.srv.wait_closed()
+        if not self.has_app():
+            return
+        self.server.close()
+        await self.server.wait_closed()
         await self.app.shutdown()
         await self.handler.finish_connections(self.shutdown_timeout)
         await self.app.cleanup()

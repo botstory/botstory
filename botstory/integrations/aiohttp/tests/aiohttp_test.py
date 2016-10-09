@@ -32,3 +32,12 @@ async def test_listen_webhook(event_loop):
         assert res == {'result': 'ok'}
     finally:
         await http.stop()
+
+@pytest.mark.asyncio
+async def test_should_not_create_server_if_there_wasnt_any_webhooks(event_loop):
+    try:
+        http = AioHttpInterface(loop=event_loop, port=9876)
+        await http.start()
+        assert not http.server
+    finally:
+        await http.stop()
