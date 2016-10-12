@@ -1,4 +1,3 @@
-import json
 import logging
 
 logger = logging.getLogger(__file__)
@@ -49,12 +48,12 @@ class FBInterface:
             params={
                 'access_token': self.token,
             },
-            json=json.dumps({
+            json={
                 'recipient': {
                     'id': recipient['facebook_user_id'],
                 },
                 'message': message,
-            }))
+            })
 
     def add_http(self, http):
         logger.debug('add_http')
@@ -85,6 +84,7 @@ class FBInterface:
 
                 user = await self.storage.get_user(facebook_user_id=facebook_user_id)
                 if not user:
+                    logger.debug('  should create new user {}'.format(facebook_user_id))
                     user = await self.storage.new_user(
                         facebook_user_id=facebook_user_id,
                     )
@@ -110,6 +110,7 @@ class FBInterface:
 
                 session = await self.storage.get_session(facebook_user_id=facebook_user_id)
                 if not session:
+                    logger.debug('  should create new session for user {}'.format(facebook_user_id))
                     session = await self.storage.new_session(
                         facebook_user_id=facebook_user_id,
                         user=user,

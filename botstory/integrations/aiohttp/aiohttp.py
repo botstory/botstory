@@ -49,12 +49,12 @@ class AioHttpInterface:
         with aiohttp.ClientSession(loop=self.loop) as session:
             # be able to mock session from outside
             session = self.session or session
-            resp = await session.post(url,
-                                      params=params,
-                                      headers=headers,
-                                      data=json
-                                      # data=_json.dumps(json)
-                                      )
+            resp = await session.post(
+                url,
+                params=params,
+                headers=headers,
+                data=_json.dumps(json),
+            )
             return await resp.json()
 
     def get_app(self):

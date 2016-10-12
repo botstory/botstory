@@ -1,9 +1,10 @@
 import logging
+import json
 import pytest
 
 from . import fake_fb
 from .. import messenger
-from ... import mockdb
+from ... import mockdb, mockhttp
 from .... import chat, story, utils
 from ....middlewares import option
 
@@ -13,101 +14,115 @@ logger = logging.getLogger(__name__)
 def teardown_function(function):
     logger.debug('tear down!')
     story.stories_library.clear()
+    chat.interfaces = {}
 
 
 @pytest.mark.asyncio
 async def test_send_text_message(event_loop):
     user = utils.build_fake_user()
-    async with fake_fb.Server(event_loop) as server:
-        async with server.session() as session:
-            interface = messenger.FBInterface(token='qwerty')
-            interface.session = session
-            res = await interface.send_text_message(
-                session=session,
-                recipient=user, text='hi!', options=None)
-            assert res == {
-                'status': 'ok',
-            }
+
+    interface = story.use(messenger.FBInterface(token='qwerty'))
+    mock_http = story.use(mockhttp.MockHttpInterface())
+
+    await interface.send_text_message(
+        recipient=user, text='hi!', options=None
+    )
+
+    mock_http.post.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/messages/',
+        params={
+            'access_token': 'qwerty',
+        },
+        json={
+            'message': {
+                'text': 'hi!',
+            },
+            'recipient': {
+                'id': user['facebook_user_id'],
+            },
+        }
+    )
 
 
 @pytest.mark.asyncio
-async def test_integration(event_loop):
+async def test_integration():
     user = utils.build_fake_user()
-    async with fake_fb.Server(event_loop) as server:
-        async with server.session() as session:
-            story.use(messenger.FBInterface(token='qwerty'))
-            story.use(mockdb.MockDB())
 
-            # mock http session
-            chat.web_session = session
-            await chat.say('hi there!', user)
+    story.use(messenger.FBInterface(token='qwerty'))
+    story.use(mockdb.MockDB())
+    mock_http = story.use(mockhttp.MockHttpInterface())
 
-            assert len(server.history) > 0
-            assert server.history[-1]['request'].content_type == 'application/json'
-            res = await server.history[-1]['request'].json()
-            assert res == {
-                'recipient': {
-                    'id': user['facebook_user_id'],
-                },
-                'message': {
-                    'text': 'hi there!'
-                }
-            }
+    await chat.say('hi there!', user=user)
+
+    mock_http.post.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/messages/',
+        params={
+            'access_token': 'qwerty',
+        },
+        json={
+            'message': {
+                'text': 'hi there!',
+            },
+            'recipient': {
+                'id': user['facebook_user_id'],
+            },
+        }
+    )
 
 
 @pytest.mark.asyncio
-async def test_options(event_loop):
+async def test_options():
     user = utils.build_fake_user()
-    async with fake_fb.Server(event_loop) as server:
-        async with server.session() as session:
-            story.use(messenger.FBInterface(token='qwerty'))
-            story.use(mockdb.MockDB())
 
-            # mock web session
-            chat.web_session = session
+    story.use(messenger.FBInterface(token='qwerty'))
+    story.use(mockdb.MockDB())
+    mock_http = story.use(mockhttp.MockHttpInterface())
 
-            await chat.ask(
-                'Which color do you like?',
-                options=[{
-                    'title': 'Red',
-                    'payload': 0xff0000,
-                }, {
-                    'title': 'Green',
-                    'payload': 0x00ff00,
-                }, {
-                    'title': 'Blue',
-                    'payload': 0x0000ff,
-                }],
-                user=user)
+    await chat.ask(
+        'Which color do you like?',
+        options=[{
+            'title': 'Red',
+            'payload': 0xff0000,
+        }, {
+            'title': 'Green',
+            'payload': 0x00ff00,
+        }, {
+            'title': 'Blue',
+            'payload': 0x0000ff,
+        }],
+        user=user)
 
-            assert len(server.history) > 0
-            assert server.history[-1]['request'].content_type == 'application/json'
-            res = await server.history[-1]['request'].json()
-            assert res == {
-                'recipient': {
-                    'id': user['facebook_user_id'],
-                },
-                'message': {
-                    'text': 'Which color do you like?',
-                    'quick_replies': [
-                        {
-                            'content_type': 'text',
-                            'title': 'Red',
-                            'payload': 0xff0000,
-                        },
-                        {
-                            'content_type': 'text',
-                            'title': 'Green',
-                            'payload': 0x00ff00,
-                        },
-                        {
-                            'content_type': 'text',
-                            'title': 'Blue',
-                            'payload': 0x0000ff,
-                        },
-                    ],
-                },
-            }
+    mock_http.post.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/messages/',
+        params={
+            'access_token': 'qwerty',
+        },
+        json={
+            'message': {
+                'text': 'Which color do you like?',
+                'quick_replies': [
+                    {
+                        'content_type': 'text',
+                        'title': 'Red',
+                        'payload': 0xff0000,
+                    },
+                    {
+                        'content_type': 'text',
+                        'title': 'Green',
+                        'payload': 0x00ff00,
+                    },
+                    {
+                        'content_type': 'text',
+                        'title': 'Blue',
+                        'payload': 0x0000ff,
+                    },
+                ],
+            },
+            'recipient': {
+                'id': user['facebook_user_id'],
+            },
+        }
+    )
 
 
 @pytest.fixture

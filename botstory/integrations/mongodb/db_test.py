@@ -47,6 +47,7 @@ def open_db(event_loop):
             return self.db_interface
 
         async def __aexit__(self, exc_type, exc_val, exc_tb):
+            await self.db_interface.clear_collections()
             self.db_interface = None
 
     return AsyncDBConnection
@@ -97,88 +98,3 @@ async def test_create_new_user(open_db):
     async with open_db() as db_interface:
         user = await db_interface.new_user(facebook_user_id='1234567890')
         assert user['facebook_user_id'] == '1234567890'
-
-
-# TODO: build user and session from scratch
-@pytest.mark.asyncio
-async def test_integrate_with_facebook(open_db, build_context):
-    async with open_db() as mongodb:
-        facebook, user = await build_context(mongodb)
-
-        trigger = utils.SimpleTrigger()
-
-        @story.on('hello, world!')
-        def correct_story():
-            @story.part()
-            def store_result(message):
-                trigger.receive(message)
-
-        await facebook.handle([{
-            'id': 'PAGE_ID',
-            'time': 1473204787206,
-            'messaging': [
-                {
-                    'sender': {
-                        'id': user['facebook_user_id'],
-                    },
-                    'recipient': {
-                        'id': 'PAGE_ID'
-                    },
-                    'timestamp': 1458692752478,
-                    'message': {
-                        'mid': 'mid.1457764197618:41d102a3e1ae206a38',
-                        'seq': 73,
-                        'text': 'hello, world!'
-                    }
-                }
-            ]
-        }])
-
-        del trigger.value['session']
-        assert trigger.value == {
-            'user': user,
-            'data': {
-                'text': {
-                    'raw': 'hello, world!'
-                }
-            }
-        }
-
-
-@pytest.mark.asyncio
-async def test_integrate_with_facebook_with_none_session(open_db, build_context):
-    async with open_db() as mongodb:
-        facebook, _ = await build_context(mongodb, no_session=True, no_user=True)
-
-        trigger = utils.SimpleTrigger()
-
-        @story.on('hello, world!')
-        def correct_story():
-            @story.part()
-            def store_result(message):
-                trigger.receive(message)
-
-        await facebook.handle([{
-            'id': 'PAGE_ID',
-            'time': 1473204787206,
-            'messaging': [
-                {
-                    'sender': {
-                        'id': 'some-facebook-id',
-                    },
-                    'recipient': {
-                        'id': 'PAGE_ID'
-                    },
-                    'timestamp': 1458692752478,
-                    'message': {
-                        'mid': 'mid.1457764197618:41d102a3e1ae206a38',
-                        'seq': 73,
-                        'text': 'hello, world!'
-                    }
-                }
-            ]
-        }])
-
-        assert trigger.value
-        assert trigger.value['data']['text']['raw'] == 'hello, world!'
-        assert trigger.value['user']['facebook_user_id'] == 'some-facebook-id'
