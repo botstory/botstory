@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from . import chat
@@ -57,6 +58,8 @@ def check_spec(spec, obj):
     return True
 
 
+middlewares = []
+
 def use(middleware):
     """
     attache middleware
@@ -67,6 +70,8 @@ def use(middleware):
 
     logger.debug('use')
     logger.debug(middleware)
+
+    middlewares.append(middleware)
 
     # TODO: maybe it is good time to start using DI (dependency injection)
 
@@ -83,3 +88,9 @@ def use(middleware):
         chat.add_http(middleware)
 
     return middleware
+
+
+async def start():
+    await asyncio.gather(
+        *[m.start() for m in middlewares if hasattr(m, 'start')]
+    )

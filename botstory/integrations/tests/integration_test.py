@@ -65,9 +65,7 @@ async def test_facebook_interface_should_use_aiohttp_to_post_message(event_loop)
                     loop=event_loop,
                 ))
 
-                # TODO: should be story.start()
-
-                await http_integration.start()
+                await story.start()
 
                 # 2) and test it
 
