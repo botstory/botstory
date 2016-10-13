@@ -105,11 +105,12 @@ async def test_integrate_mongodb_with_facebook(open_db, build_context):
             def store_result(message):
                 trigger.receive(message)
 
-        await facebook.handle([{
-            'id': 'PAGE_ID',
-            'time': 1473204787206,
-            'messaging': [
-                {
+        await facebook.handle({
+            "object": "page",
+            "entry": [{
+                'id': 'PAGE_ID',
+                'time': 1473204787206,
+                'messaging': [{
                     'sender': {
                         'id': user['facebook_user_id'],
                     },
@@ -123,8 +124,9 @@ async def test_integrate_mongodb_with_facebook(open_db, build_context):
                         'text': 'hello, world!'
                     }
                 }
-            ]
-        }])
+                ]
+            }]
+        })
 
         del trigger.value['session']
         assert trigger.value == {
@@ -150,11 +152,12 @@ async def test_integrate_mongodb_with_facebook_with_none_session(open_db, build_
             def store_result_for_new_user(message):
                 trigger.receive(message)
 
-        await facebook.handle([{
-            'id': 'PAGE_ID',
-            'time': 1473204787206,
-            'messaging': [
-                {
+        await facebook.handle({
+            "object": "page",
+            "entry": [{
+                'id': 'PAGE_ID',
+                'time': 1473204787206,
+                'messaging': [{
                     'sender': {
                         'id': 'some-facebook-id',
                     },
@@ -167,9 +170,9 @@ async def test_integrate_mongodb_with_facebook_with_none_session(open_db, build_
                         'seq': 73,
                         'text': 'hello, world!'
                     }
-                }
-            ]
-        }])
+                }]
+            }]
+        })
 
         assert trigger.value
         assert trigger.value['data']['text']['raw'] == 'hello, world!'

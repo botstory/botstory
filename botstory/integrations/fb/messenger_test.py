@@ -1,12 +1,10 @@
 import logging
-import json
 import pytest
 
-from . import fake_fb
-from .. import messenger
-from ... import mockdb, mockhttp
-from .... import chat, story, utils
-from ....middlewares import option
+from . import messenger
+from .. import mockdb, mockhttp
+from ... import chat, story, utils
+from ...middlewares import option
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +123,19 @@ async def test_options():
     )
 
 
+@pytest.mark.asyncio
+async def test_setup_webhook():
+    fb_interface = story.use(messenger.FBInterface(webhook='/webhook'))
+    mock_http = story.use(mockhttp.MockHttpInterface())
+
+    mock_http.webhook.assert_called_with(
+        '/webhook',
+        fb_interface.handle,
+    )
+
+
+# integration
+
 @pytest.fixture
 def build_fb_interface():
     async def builder():
@@ -161,8 +172,9 @@ async def test_handler_raw_text(build_fb_interface):
         def store_result(message):
             incorrect_trigger.receive(message)
 
-    await fb_interface.handle([
-        {
+    await fb_interface.handle({
+        "object": "page",
+        "entry": [{
             "id": "PAGE_ID",
             "time": 1473204787206,
             "messaging": [
@@ -181,8 +193,8 @@ async def test_handler_raw_text(build_fb_interface):
                     }
                 }
             ]
-        }
-    ])
+        }]
+    })
 
     assert incorrect_trigger.value is None
     assert correct_trigger.value == {
@@ -215,31 +227,30 @@ async def test_handler_selected_option(build_fb_interface):
         def store_result(message):
             incorrect_trigger.receive(message)
 
-    await fb_interface.handle([
-        {
+    await fb_interface.handle({
+        "object": "page",
+        "entry": [{
             "id": "PAGE_ID",
             "time": 1473204787206,
-            "messaging": [
-                {
-                    "sender": {
-                        "id": "USER_ID"
-                    },
-                    "recipient": {
-                        "id": "PAGE_ID"
-                    },
-                    "timestamp": 1458692752478,
-                    "message": {
-                        "mid": "mid.1457764197618:41d102a3e1ae206a38",
-                        "seq": 73,
-                        "text": "Green!",
-                        "quick_reply": {
-                            "payload": "GREEN"
-                        }
+            "messaging": [{
+                "sender": {
+                    "id": "USER_ID"
+                },
+                "recipient": {
+                    "id": "PAGE_ID"
+                },
+                "timestamp": 1458692752478,
+                "message": {
+                    "mid": "mid.1457764197618:41d102a3e1ae206a38",
+                    "seq": 73,
+                    "text": "Green!",
+                    "quick_reply": {
+                        "payload": "GREEN"
                     }
                 }
-            ]
-        }
-    ])
+            }]
+        }]
+    })
 
     assert incorrect_trigger.value is None
     assert correct_trigger.value == {

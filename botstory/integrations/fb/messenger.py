@@ -8,19 +8,22 @@ class FBInterface:
 
     def __init__(self,
                  api_uri='https://graph.facebook.com/v2.6',
-                 token=None):
+                 token=None,
+                 webhook=None,
+                 ):
         """
 
         :param token: should take from os.environ['FB_ACCESS_TOKEN']
         """
         self.api_uri = api_uri
         self.token = token
+        self.webhook = webhook
 
         self.http = None
         self.processor = None
         self.storage = None
 
-    async def send_text_message(self, recipient, text, options=[]):
+    async def send_text_message(self, recipient, text, options=None):
         """
         async send message to the facebook user (recipient)
 
@@ -59,18 +62,20 @@ class FBInterface:
         logger.debug('add_http')
         logger.debug(http)
         self.http = http
+        if self.webhook:
+            http.webhook(self.webhook, self.handle)
 
     def add_storage(self, storage):
         logger.debug('add_storage')
         logger.debug(storage)
         self.storage = storage
 
-    async def handle(self, entry):
+    async def handle(self, data):
         logger.debug('')
         logger.debug('> handle <')
         logger.debug('')
-        logger.debug('  entry: {}'.format(entry))
-        for e in entry:
+        logger.debug('  entry: {}'.format(data))
+        for e in data.get('entry', []):
             messaging = e.get('messaging', [])
             logger.debug('  messaging: {}'.format(messaging))
 

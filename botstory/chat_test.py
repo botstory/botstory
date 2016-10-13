@@ -1,7 +1,6 @@
 import aiohttp
 import logging
 import pytest
-from unittest import mock
 
 import botstory.integrations.fb.messenger
 from . import story
