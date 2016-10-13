@@ -18,15 +18,3 @@ class MockHttpInterface:
     listen_webhook = aiohttp.test_utils.make_mocked_coro(return_value=True)
     start = aiohttp.test_utils.make_mocked_coro(return_value=True)
     stop = aiohttp.test_utils.make_mocked_coro(return_value=True)
-
-    # async def post(self, *args, **kwargs):
-    #     stub('post')(*args, **kwargs)
-    #
-    # def listen_webhook(self, *args, **kwargs):
-    #     stub('post')(*args, **kwargs)
-    #
-    # async def start(self, *args, **kwargs):
-    #     stub('start')(*args, **kwargs)
-    #
-    # async def stop(self, *args, **kwargs):
-    #     stub('stop')(*args, **kwargs)
