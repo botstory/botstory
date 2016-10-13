@@ -79,7 +79,7 @@ def use(middleware):
     if check_spec(['get_user', 'set_user', 'get_session', 'set_session'], middleware):
         story_processor_instance.add_storage(middleware)
 
-    if check_spec(['post', 'listen_webhook'], middleware):
+    if check_spec(['post', 'webhook'], middleware):
         chat.add_http(middleware)
 
     return middleware

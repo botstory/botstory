@@ -24,7 +24,7 @@ async def test_listen_webhook(event_loop):
         'result': 'ok',
     })
     http = AioHttpInterface(loop=event_loop, port=9876)
-    http.listen_webhook(uri='/webhook', handler=handler)
+    http.webhook(uri='/webhook', handler=handler)
     try:
         await http.start()
         res = await http.post('http://localhost:9876/webhook', json={'message': 'Is there anybody in there?'})

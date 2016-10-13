@@ -15,6 +15,6 @@ def stub(name=None):
 
 class MockHttpInterface:
     post = aiohttp.test_utils.make_mocked_coro(return_value=True)
-    listen_webhook = aiohttp.test_utils.make_mocked_coro(return_value=True)
+    webhook = gstub('webhook')
     start = aiohttp.test_utils.make_mocked_coro(return_value=True)
     stop = aiohttp.test_utils.make_mocked_coro(return_value=True)

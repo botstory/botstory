@@ -67,8 +67,8 @@ class AioHttpInterface:
     def has_app(self):
         return self.app is not None
 
-    def listen_webhook(self, uri, handler):
-        logger.debug('listen_webhook {}'.format(uri))
+    def webhook(self, uri, handler):
+        logger.debug('webhook {}'.format(uri))
         self.get_app().router.add_post(uri, WebhookHandler(handler).handle)
 
     async def start(self):
