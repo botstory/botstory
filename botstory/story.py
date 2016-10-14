@@ -95,3 +95,18 @@ async def start():
     await asyncio.gather(
         *[m.start() for m in middlewares if hasattr(m, 'start')]
     )
+
+
+async def stop():
+    await asyncio.gather(
+        *[m.stop() for m in middlewares if hasattr(m, 'stop')]
+    )
+
+
+def forever(loop):
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:  # pragma: no cover
+        pass
+    finally:
+        loop.run_until_complete(stop())

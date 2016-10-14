@@ -1,7 +1,7 @@
 from aiohttp import test_utils
 import pytest
-from .. import AioHttpInterface
-from ...fb.tests import fake_fb
+from . import AioHttpInterface
+from ..fb.tests import fake_fb
 
 
 @pytest.mark.asyncio
@@ -36,8 +36,8 @@ async def test_listen_webhook(event_loop):
 
 @pytest.mark.asyncio
 async def test_should_not_create_server_if_there_wasnt_any_webhooks(event_loop):
+    http = AioHttpInterface(loop=event_loop, port=9876)
     try:
-        http = AioHttpInterface(loop=event_loop, port=9876)
         await http.start()
         assert not http.server
     finally:

@@ -1,3 +1,4 @@
+aiohttp==1.0.5
 motor==0.7b0
 pytest==3.0.3
 pytest-aiohttp==0.1.2
