@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 import logging
 import json as _json
+from aiohttp import web
 from yarl import URL
 
 logger = logging.getLogger(__name__)
@@ -13,7 +14,7 @@ class WebhookHandler:
 
     async def handle(self, request):
         res = await self.handler(await request.json())
-        return aiohttp.web.Response(text=_json.dumps(res))
+        return web.Response(text=_json.dumps(res))
 
 
 class AioHttpInterface:
@@ -59,7 +60,8 @@ class AioHttpInterface:
 
     def get_app(self):
         if not self.has_app():
-            self.app = aiohttp.web.Application(
+            logger.debug('create web app')
+            self.app = web.Application(
                 loop=self.loop,
             )
         return self.app
@@ -72,9 +74,9 @@ class AioHttpInterface:
         self.get_app().router.add_post(uri, WebhookHandler(handler).handle)
 
     async def start(self):
-        logger.debug('start')
         if not self.has_app():
             return
+        logger.debug('start')
         app = self.get_app()
         handler = app.make_handler()
         server = self.loop.create_server(
