@@ -22,7 +22,7 @@ class AioHttpInterface:
 
     def __init__(self, host='0.0.0.0', port=None,
                  shutdown_timeout=60.0, ssl_context=None,
-                 backlog=128,
+                 backlog=128, auto_start=True,
                  ):
         if port is None:
             if not ssl_context:
@@ -36,6 +36,7 @@ class AioHttpInterface:
         self.shutdown_timeout = shutdown_timeout
 
         self.ssl_context = ssl_context
+        self.auto_start = auto_start
 
         self.app = None
         self.session = None
@@ -75,7 +76,7 @@ class AioHttpInterface:
         self.get_app().router.add_post(uri, WebhookHandler(handler).handle)
 
     async def start(self):
-        if not self.has_app():
+        if not self.has_app() or not self.auto_start:
             return
         logger.debug('start')
         app = self.get_app()

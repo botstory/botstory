@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import os
 import pytest
@@ -37,7 +36,7 @@ def build_context():
 
 @pytest.fixture
 @pytest.mark.asyncio
-def open_db(event_loop):
+def open_db():
     class AsyncDBConnection:
         def __init__(self):
             self.db_interface = db.MongodbInterface(uri=os.environ.get('TEST_MONGODB_URL', 'mongo'), db_name='test')
