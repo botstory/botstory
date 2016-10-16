@@ -62,9 +62,7 @@ async def test_facebook_interface_should_use_aiohttp_to_post_message(event_loop)
 
             try:
                 story.use(fb.FBInterface())
-                http_integration = story.use(aiohttp.AioHttpInterface(
-                    loop=event_loop,
-                ))
+                http_integration = story.use(aiohttp.AioHttpInterface())
 
                 await story.start()
 

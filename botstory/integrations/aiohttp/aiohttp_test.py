@@ -19,11 +19,11 @@ async def test_post(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_listen_webhook(event_loop):
+async def test_listen_webhook():
     handler = test_utils.make_mocked_coro(return_value={
         'result': 'ok',
     })
-    http = AioHttpInterface(loop=event_loop, port=9876)
+    http = AioHttpInterface(port=9876)
     http.webhook(uri='/webhook', handler=handler)
     try:
         await http.start()
@@ -35,8 +35,8 @@ async def test_listen_webhook(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_should_not_create_server_if_there_wasnt_any_webhooks(event_loop):
-    http = AioHttpInterface(loop=event_loop, port=9876)
+async def test_should_not_create_server_if_there_wasnt_any_webhooks():
+    http = AioHttpInterface(port=9876)
     try:
         await http.start()
         assert not http.server

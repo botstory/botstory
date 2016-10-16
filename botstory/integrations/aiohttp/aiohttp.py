@@ -20,7 +20,7 @@ class WebhookHandler:
 class AioHttpInterface:
     type = 'interface.aiohttp'
 
-    def __init__(self, loop=None, host='0.0.0.0', port=None,
+    def __init__(self, host='0.0.0.0', port=None,
                  shutdown_timeout=60.0, ssl_context=None,
                  backlog=128,
                  ):
@@ -31,7 +31,6 @@ class AioHttpInterface:
                 port = 8443
 
         self.backlog = backlog
-        self.loop = loop or asyncio.get_event_loop()
         self.host = host
         self.port = port
         self.shutdown_timeout = shutdown_timeout
@@ -47,7 +46,8 @@ class AioHttpInterface:
         logger.debug('post url={}'.format(url))
         headers = headers or {}
         headers['Content-Type'] = headers.get('Content-Type', 'application/json')
-        with aiohttp.ClientSession(loop=self.loop) as session:
+        loop = asyncio.get_event_loop()
+        with aiohttp.ClientSession(loop=loop) as session:
             # be able to mock session from outside
             session = self.session or session
             resp = await session.post(
@@ -60,9 +60,10 @@ class AioHttpInterface:
 
     def get_app(self):
         if not self.has_app():
+            loop = asyncio.get_event_loop()
             logger.debug('create web app')
             self.app = web.Application(
-                loop=self.loop,
+                loop=loop,
             )
         return self.app
 
@@ -79,7 +80,8 @@ class AioHttpInterface:
         logger.debug('start')
         app = self.get_app()
         handler = app.make_handler()
-        server = self.loop.create_server(
+        loop = asyncio.get_event_loop()
+        server = loop.create_server(
             handler,
             self.host,
             self.port,
@@ -89,7 +91,8 @@ class AioHttpInterface:
 
         srv, startup_res = await asyncio.gather(
             server, app.startup(),
-            loop=self.loop)
+            loop=loop,
+        )
 
         scheme = 'https' if self.ssl_context else 'http'
         url = URL('{}://localhost'.format(scheme))
