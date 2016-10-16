@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from motor import motor_asyncio
 
@@ -27,8 +28,18 @@ class MongodbInterface:
     async def connect(self, loop):
         self.cx = motor_asyncio.AsyncIOMotorClient(self.uri, io_loop=loop)
         self.db = self.cx.get_database(self.db_name)
-        self.user_collection = self.db.get_collection(self.user_collection_name)
         self.session_collection = self.db.get_collection(self.session_collection_name)
+        self.user_collection = self.db.get_collection(self.user_collection_name)
+
+    async def start(self):
+        loop = asyncio.get_event_loop()
+        await self.connect(loop)
+
+    async def stop(self):
+        self.cx = None
+        self.db = None
+        self.session_collection = None
+        self.user_collection = None
 
     async def clear_collections(self):
         await self.session_collection.drop()

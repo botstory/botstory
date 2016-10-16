@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import pytest
@@ -98,3 +99,22 @@ async def test_create_new_user(open_db):
     async with open_db() as db_interface:
         user = await db_interface.new_user(facebook_user_id='1234567890')
         assert user['facebook_user_id'] == '1234567890'
+
+@pytest.mark.asyncio
+async def test_start_should_open_connection_and_close_on_stop():
+    db_interface = db.MongodbInterface(uri=os.environ.get('TEST_MONGODB_URL', 'mongo'), db_name='test')
+    assert not db_interface.session_collection
+    assert not db_interface.user_collection
+    assert not db_interface.db
+
+    await db_interface.start()
+
+    assert db_interface.session_collection
+    assert db_interface.user_collection
+    assert db_interface.db
+
+    await db_interface.stop()
+
+    assert not db_interface.session_collection
+    assert not db_interface.user_collection
+    assert not db_interface.db
