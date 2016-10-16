@@ -2,6 +2,7 @@ import logging
 import os
 import pytest
 
+from . import fake_server
 from .. import fb, aiohttp, mongodb
 from ... import story, chat, utils
 
@@ -55,7 +56,7 @@ def open_db(event_loop):
 
 @pytest.mark.asyncio
 async def test_facebook_interface_should_use_aiohttp_to_post_message(event_loop):
-    async with fb.tests.fake_fb.Server(event_loop) as server:
+    async with fake_server.fake_fb.Server(event_loop) as server:
         async with server.session() as server_session:
             # 1) setup app
 

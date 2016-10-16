@@ -16,7 +16,7 @@ def teardown_function(function):
 
 
 @pytest.mark.asyncio
-async def test_send_text_message(event_loop):
+async def test_send_text_message():
     user = utils.build_fake_user()
 
     interface = story.use(messenger.FBInterface(token='qwerty'))

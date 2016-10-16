@@ -1,7 +1,7 @@
 from aiohttp import test_utils
 import pytest
 from . import AioHttpInterface
-from ..fb.tests import fake_fb
+from ..tests.fake_server import fake_fb
 
 
 @pytest.mark.asyncio
