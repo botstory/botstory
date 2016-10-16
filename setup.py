@@ -31,4 +31,7 @@ setup(
         'motor==0.7b0',
         'yarl==0.4.3',
     ],
+    package_data={
+        '': ['*.crt', '*.key']
+    },
 )
