@@ -36,18 +36,19 @@ def build_context():
 
 @pytest.fixture
 @pytest.mark.asyncio
-def open_db(event_loop):
+def open_db():
     class AsyncDBConnection:
         def __init__(self):
             self.db_interface = mongodb.MongodbInterface(uri=os.environ.get('TEST_MONGODB_URL', 'mongo'),
                                                          db_name='test')
 
         async def __aenter__(self):
-            await self.db_interface.connect(loop=event_loop)
+            await self.db_interface.start()
             await self.db_interface.clear_collections()
             return self.db_interface
 
         async def __aexit__(self, exc_type, exc_val, exc_tb):
+            self.db_interface.stop()
             await self.db_interface.clear_collections()
             self.db_interface = None
 

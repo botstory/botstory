@@ -43,11 +43,12 @@ def open_db(event_loop):
             self.db_interface = db.MongodbInterface(uri=os.environ.get('TEST_MONGODB_URL', 'mongo'), db_name='test')
 
         async def __aenter__(self):
-            await self.db_interface.connect(loop=event_loop)
+            await self.db_interface.start()
             await self.db_interface.clear_collections()
             return self.db_interface
 
         async def __aexit__(self, exc_type, exc_val, exc_tb):
+            self.db_interface.stop()
             await self.db_interface.clear_collections()
             self.db_interface = None
 
