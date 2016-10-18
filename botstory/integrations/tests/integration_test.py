@@ -27,7 +27,7 @@ def build_context():
             await db.set_session(session)
 
         story.use(db)
-        interface = story.use(fb.FBInterface(token='qwerty'))
+        interface = story.use(fb.FBInterface(page_access_token='qwerty'))
 
         return interface, user
 
@@ -62,7 +62,9 @@ async def test_facebook_interface_should_use_aiohttp_to_post_message(event_loop)
             # 1) setup app
 
             try:
-                story.use(fb.FBInterface())
+                story.use(fb.FBInterface(
+                    webhook_url='/webhook',
+                ))
                 http_integration = story.use(aiohttp.AioHttpInterface())
 
                 await story.start()
@@ -89,7 +91,7 @@ async def test_facebook_interface_should_use_aiohttp_to_post_message(event_loop)
                     }
                 }
             finally:
-                await http_integration.stop()
+                await story.stop()
 
 
 @pytest.mark.asyncio

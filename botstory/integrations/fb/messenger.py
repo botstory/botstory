@@ -8,16 +8,21 @@ class FBInterface:
 
     def __init__(self,
                  api_uri='https://graph.facebook.com/v2.6',
-                 token=None,
-                 webhook=None,
+                 page_access_token=None,
+                 webhook_url=None,
+                 webhook_token=None,
                  ):
         """
 
-        :param token: should take from os.environ['FB_ACCESS_TOKEN']
+        :param api_uri:
+        :param page_access_token:
+        :param webhook_url:
+        :param webhook_token:
         """
         self.api_uri = api_uri
-        self.token = token
-        self.webhook = webhook
+        self.token = page_access_token
+        self.webhook = webhook_url
+        self.webhook_token = webhook_token
 
         self.http = None
         self.processor = None
@@ -63,7 +68,7 @@ class FBInterface:
         logger.debug(http)
         self.http = http
         if self.webhook:
-            http.webhook(self.webhook, self.handle)
+            http.webhook(self.webhook, self.handle, self.webhook_token)
 
     def add_storage(self, storage):
         logger.debug('add_storage')

@@ -19,7 +19,7 @@ def teardown_function(function):
 async def test_send_text_message():
     user = utils.build_fake_user()
 
-    interface = story.use(messenger.FBInterface(token='qwerty'))
+    interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
     mock_http = story.use(mockhttp.MockHttpInterface())
 
     await interface.send_text_message(
@@ -46,7 +46,7 @@ async def test_send_text_message():
 async def test_integration():
     user = utils.build_fake_user()
 
-    story.use(messenger.FBInterface(token='qwerty'))
+    story.use(messenger.FBInterface(page_access_token='qwerty'))
     story.use(mockdb.MockDB())
     mock_http = story.use(mockhttp.MockHttpInterface())
 
@@ -72,7 +72,7 @@ async def test_integration():
 async def test_options():
     user = utils.build_fake_user()
 
-    story.use(messenger.FBInterface(token='qwerty'))
+    story.use(messenger.FBInterface(page_access_token='qwerty'))
     story.use(mockdb.MockDB())
     mock_http = story.use(mockhttp.MockHttpInterface())
 
@@ -125,12 +125,16 @@ async def test_options():
 
 @pytest.mark.asyncio
 async def test_setup_webhook():
-    fb_interface = story.use(messenger.FBInterface(webhook='/webhook'))
+    fb_interface = story.use(messenger.FBInterface(
+        webhook_url='/webhook',
+        webhook_token='some-token',
+    ))
     mock_http = story.use(mockhttp.MockHttpInterface())
 
     mock_http.webhook.assert_called_with(
         '/webhook',
         fb_interface.handle,
+        'some-token',
     )
 
 
@@ -143,7 +147,7 @@ def build_fb_interface():
         session = utils.build_fake_session()
 
         storage = story.use(mockdb.MockDB())
-        fb = story.use(messenger.FBInterface(token='qwerty'))
+        fb = story.use(messenger.FBInterface(page_access_token='qwerty'))
 
         await storage.set_session(session)
         await storage.set_user(user)

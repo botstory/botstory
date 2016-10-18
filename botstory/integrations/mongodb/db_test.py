@@ -27,7 +27,7 @@ def build_context():
             await mongodb.set_session(session)
 
         story.use(mongodb)
-        fb = story.use(messenger.FBInterface(token='qwerty'))
+        fb = story.use(messenger.FBInterface(page_access_token='qwerty'))
 
         return fb, user
 
