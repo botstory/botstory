@@ -24,12 +24,41 @@ async def test_listen_webhook():
         'result': 'ok',
     })
     http = AioHttpInterface(port=9876)
-    http.webhook(uri='/webhook', handler=handler)
+    http.webhook(uri='/webhook', handler=handler, token='qwerty')
     try:
         await http.start()
         res = await http.post('http://localhost:9876/webhook', json={'message': 'Is there anybody in there?'})
         handler.assert_called_once_with({'message': 'Is there anybody in there?'})
         assert res == {'result': 'ok'}
+    finally:
+        await http.stop()
+
+
+@pytest.mark.asyncio
+async def test_pass_validation_for_correct_request():
+    http = AioHttpInterface(port=9876)
+    http.webhook(uri='/webhook', handler=None, token='token-value')
+    try:
+        await http.start()
+        res = await http.get('http://localhost:9876/webhook', params={
+            'hub.challenge': 'some-challenge',
+            'hub.mode': 'subscribe',
+            'hub.verify_token': 'token-value',
+        })
+        assert res == 'some-challenge'
+    finally:
+        await http.stop()
+
+@pytest.mark.asyncio
+async def test_reject_validation_for_incorrect_request():
+    http = AioHttpInterface(port=9876)
+    http.webhook(uri='/webhook', handler=None, token='token-value')
+    try:
+        await http.start()
+        res = await http.get('http://localhost:9876/webhook', params={
+            'something': 'incorrect',
+        })
+        assert res == 'Error, wrong validation token'
     finally:
         await http.stop()
 

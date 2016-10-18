@@ -1,11 +1,14 @@
 import aiohttp
+from aiohttp import web
 import asyncio
 import logging
 import json as _json
-from aiohttp import web
+import urllib
 from yarl import URL
 
 logger = logging.getLogger(__name__)
+
+HTTP_422_UNPROCESSABLE_ENTITY = 422
 
 
 class WebhookHandler:
@@ -42,6 +45,20 @@ class AioHttpInterface:
         self.session = None
         self.server = None
         self.handler = None
+        self.webhook_token = None
+
+    async def get(self, url, params=None, headers=None):
+        logger.debug('get url={}'.format(url))
+        loop = asyncio.get_event_loop()
+        with aiohttp.ClientSession(loop=loop) as session:
+            # be able to mock session from outside
+            session = self.session or session
+            resp = await session.get(
+                url,
+                params=params,
+                headers=headers,
+            )
+            return await resp.text()
 
     async def post(self, url, params=None, headers=None, json=None):
         logger.debug('post url={}'.format(url))
@@ -71,9 +88,20 @@ class AioHttpInterface:
     def has_app(self):
         return self.app is not None
 
-    def webhook(self, uri, handler):
-        logger.debug('webhook {}'.format(uri))
+    def webhook(self, uri, handler, token):
+        logger.debug('register webhook {}'.format(uri))
+        self.webhook_token = token
+        self.get_app().router.add_get(uri, self.handle_webhook_validation)
         self.get_app().router.add_post(uri, WebhookHandler(handler).handle)
+
+    def handle_webhook_validation(self, request):
+        params = {name: value[0] for name, value in urllib.parse.parse_qs(request.query_string).items()}
+        logger.debug('try to validate webhook with {}'.format(params))
+        if params.get('hub.verify_token', None) == self.webhook_token and \
+           params.get('hub.mode', None) == 'subscribe':
+            return web.Response(text=params.get('hub.challenge'))
+        else:
+            return web.Response(text='Error, wrong validation token', status=HTTP_422_UNPROCESSABLE_ENTITY)
 
     async def start(self):
         if not self.has_app() or not self.auto_start:
