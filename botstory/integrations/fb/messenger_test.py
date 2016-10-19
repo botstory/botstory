@@ -1,3 +1,4 @@
+import aiohttp
 import logging
 import pytest
 
@@ -138,6 +139,55 @@ async def test_setup_webhook():
     )
 
 
+@pytest.mark.asyncio
+async def test_should_request_user_data_once_we_do_not_know_current_user():
+    fb_interface = story.use(messenger.FBInterface(
+        page_access_token='qwerty',
+        webhook_url='/webhook',
+        webhook_token='some-token',
+    ))
+    http = story.use(mockhttp.MockHttpInterface(get={
+        'first_name': 'Peter',
+        'last_name': 'Chang',
+        'profile_pic': 'https://fbcdn-profile-a.akamaihd.net/hprofile-ak-xpf1/v/t1.0-1/p200x200/13055603_10105219398495383_8237637584159975445_n.jpg?oh=1d241d4b6d4dac50eaf9bb73288ea192&oe=57AF5C03&__gda__=1470213755_ab17c8c8e3a0a447fed3f272fa2179ce',
+        'locale': 'en_US',
+        'timezone': -7,
+        'gender': 'male'
+    }))
+    story.use(mockdb.MockDB())
+
+    await fb_interface.handle({
+        'object': 'page',
+        'entry': [{
+            'id': 'PAGE_ID',
+            'time': 1473204787206,
+            'messaging': [
+                {
+                    'sender': {
+                        'id': 'USER_ID'
+                    },
+                    'recipient': {
+                        'id': 'PAGE_ID'
+                    },
+                    'timestamp': 1458692752478,
+                    'message': {
+                        'mid': 'mid.1457764197618:41d102a3e1ae206a38',
+                        'seq': 73,
+                        'text': 'hello, world!'
+                    }
+                }
+            ]
+        }]
+    })
+
+    http.get.assert_called_with(
+        'https://graph.facebook.com/v2.6/USER_ID',
+        params={
+            'access_token': 'qwerty',
+        },
+    )
+
+
 # integration
 
 @pytest.fixture
@@ -177,23 +227,23 @@ async def test_handler_raw_text(build_fb_interface):
             incorrect_trigger.receive(message)
 
     await fb_interface.handle({
-        "object": "page",
-        "entry": [{
-            "id": "PAGE_ID",
-            "time": 1473204787206,
-            "messaging": [
+        'object': 'page',
+        'entry': [{
+            'id': 'PAGE_ID',
+            'time': 1473204787206,
+            'messaging': [
                 {
-                    "sender": {
-                        "id": "USER_ID"
+                    'sender': {
+                        'id': 'USER_ID'
                     },
-                    "recipient": {
-                        "id": "PAGE_ID"
+                    'recipient': {
+                        'id': 'PAGE_ID'
                     },
-                    "timestamp": 1458692752478,
-                    "message": {
-                        "mid": "mid.1457764197618:41d102a3e1ae206a38",
-                        "seq": 73,
-                        "text": "hello, world!"
+                    'timestamp': 1458692752478,
+                    'message': {
+                        'mid': 'mid.1457764197618:41d102a3e1ae206a38',
+                        'seq': 73,
+                        'text': 'hello, world!'
                     }
                 }
             ]
@@ -232,24 +282,24 @@ async def test_handler_selected_option(build_fb_interface):
             incorrect_trigger.receive(message)
 
     await fb_interface.handle({
-        "object": "page",
-        "entry": [{
-            "id": "PAGE_ID",
-            "time": 1473204787206,
-            "messaging": [{
-                "sender": {
-                    "id": "USER_ID"
+        'object': 'page',
+        'entry': [{
+            'id': 'PAGE_ID',
+            'time': 1473204787206,
+            'messaging': [{
+                'sender': {
+                    'id': 'USER_ID'
                 },
-                "recipient": {
-                    "id": "PAGE_ID"
+                'recipient': {
+                    'id': 'PAGE_ID'
                 },
-                "timestamp": 1458692752478,
-                "message": {
-                    "mid": "mid.1457764197618:41d102a3e1ae206a38",
-                    "seq": 73,
-                    "text": "Green!",
-                    "quick_reply": {
-                        "payload": "GREEN"
+                'timestamp': 1458692752478,
+                'message': {
+                    'mid': 'mid.1457764197618:41d102a3e1ae206a38',
+                    'seq': 73,
+                    'text': 'Green!',
+                    'quick_reply': {
+                        'payload': 'GREEN'
                     }
                 }
             }]

@@ -3,7 +3,7 @@ import os
 import pytest
 
 from . import fake_server
-from .. import fb, aiohttp, mongodb
+from .. import fb, aiohttp, mongodb, mockhttp
 from ... import story, chat, utils
 
 logger = logging.getLogger(__name__)
@@ -28,6 +28,7 @@ def build_context():
 
         story.use(db)
         interface = story.use(fb.FBInterface(page_access_token='qwerty'))
+        story.use(mockhttp.MockHttpInterface())
 
         return interface, user
 
