@@ -9,7 +9,7 @@ if os.path.exists("README.md"):
 setup(
     name='botstory',
     packages=find_packages(),
-    version='0.0.5',
+    version='0.0.16',
     description='Async framework for bots',
     license='MIT',
     long_description=longDesc,
@@ -26,4 +26,12 @@ setup(
         # Not early because of async/await
         'Programming Language :: Python :: 3.5',
     ],
+    install_requires=[
+        'aiohttp==1.0.5',
+        'motor==0.7b0',
+        'yarl==0.4.3',
+    ],
+    package_data={
+        '': ['*.crt', '*.key']
+    },
 )

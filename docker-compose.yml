@@ -4,7 +4,7 @@ services:
     image: mongo
   bot:
     build: .
-    command: py.test --cov=botstory --cov-report term-missing
+    command: ./scripts/test-cov.sh
     volumes:
       - .:/usr/src/app
     depends_on:

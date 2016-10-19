@@ -7,8 +7,7 @@ logger = logging.getLogger(__name__)
 
 from . import forking
 from .. import chat, story, matchers
-from ..middlewares.location import location
-from ..middlewares.text import text
+from ..middlewares import location, text
 from ..utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
 

@@ -3,9 +3,9 @@ import logging
 import pytest
 
 from . import chat, story
+from .integrations import mockdb, mockhttp
+from .middlewares import location, text
 from .utils import answer, build_fake_session, build_fake_user, SimpleTrigger
-from .middlewares.text import text
-from .middlewares.location import location
 
 logger = logging.getLogger(__name__)
 
@@ -191,3 +191,11 @@ async def test_can_combine_async_with_sync_parts():
     await answer.pure_text('yo!', session, user)
     assert async_trigger.is_triggered
     assert sync_trigger.is_triggered
+
+
+@pytest.mark.asyncio
+async def test_should_start_middlewares():
+    story.use(mockdb.MockDB())
+    http = story.use(mockhttp.MockHttpInterface())
+    await story.start()
+    http.start.assert_called_once_with()

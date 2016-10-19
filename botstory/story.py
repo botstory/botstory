@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from . import chat
@@ -57,6 +58,9 @@ def check_spec(spec, obj):
     return True
 
 
+middlewares = []
+
+
 def use(middleware):
     """
     attache middleware
@@ -64,6 +68,13 @@ def use(middleware):
     :param middleware:
     :return:
     """
+
+    logger.debug('use')
+    logger.debug(middleware)
+
+    middlewares.append(middleware)
+
+    # TODO: maybe it is good time to start using DI (dependency injection)
 
     if check_spec(['send_text_message'], middleware):
         chat.add_interface(middleware)
@@ -74,4 +85,28 @@ def use(middleware):
     if check_spec(['get_user', 'set_user', 'get_session', 'set_session'], middleware):
         story_processor_instance.add_storage(middleware)
 
+    if check_spec(['post', 'webhook'], middleware):
+        chat.add_http(middleware)
+
     return middleware
+
+
+async def start():
+    await asyncio.gather(
+        *[m.start() for m in middlewares if hasattr(m, 'start')]
+    )
+
+
+async def stop():
+    await asyncio.gather(
+        *[m.stop() for m in middlewares if hasattr(m, 'stop')]
+    )
+
+
+def forever(loop):
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:  # pragma: no cover
+        pass
+    finally:
+        loop.run_until_complete(stop())

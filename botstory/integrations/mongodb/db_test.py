@@ -27,7 +27,7 @@ def build_context():
             await mongodb.set_session(session)
 
         story.use(mongodb)
-        fb = story.use(messenger.FBInterface(token='qwerty'))
+        fb = story.use(messenger.FBInterface(page_access_token='qwerty'))
 
         return fb, user
 
@@ -36,17 +36,19 @@ def build_context():
 
 @pytest.fixture
 @pytest.mark.asyncio
-def open_db(event_loop):
+def open_db():
     class AsyncDBConnection:
         def __init__(self):
             self.db_interface = db.MongodbInterface(uri=os.environ.get('TEST_MONGODB_URL', 'mongo'), db_name='test')
 
         async def __aenter__(self):
-            await self.db_interface.connect(loop=event_loop)
+            await self.db_interface.start()
             await self.db_interface.clear_collections()
             return self.db_interface
 
         async def __aexit__(self, exc_type, exc_val, exc_tb):
+            self.db_interface.stop()
+            await self.db_interface.clear_collections()
             self.db_interface = None
 
     return AsyncDBConnection
@@ -98,87 +100,21 @@ async def test_create_new_user(open_db):
         user = await db_interface.new_user(facebook_user_id='1234567890')
         assert user['facebook_user_id'] == '1234567890'
 
-
-# TODO: build user and session from scratch
 @pytest.mark.asyncio
-async def test_integrate_with_facebook(open_db, build_context):
-    async with open_db() as mongodb:
-        facebook, user = await build_context(mongodb)
+async def test_start_should_open_connection_and_close_on_stop():
+    db_interface = db.MongodbInterface(uri=os.environ.get('TEST_MONGODB_URL', 'mongo'), db_name='test')
+    assert not db_interface.session_collection
+    assert not db_interface.user_collection
+    assert not db_interface.db
 
-        trigger = utils.SimpleTrigger()
+    await db_interface.start()
 
-        @story.on('hello, world!')
-        def correct_story():
-            @story.part()
-            def store_result(message):
-                trigger.receive(message)
+    assert db_interface.session_collection
+    assert db_interface.user_collection
+    assert db_interface.db
 
-        await facebook.handle([{
-            'id': 'PAGE_ID',
-            'time': 1473204787206,
-            'messaging': [
-                {
-                    'sender': {
-                        'id': user['facebook_user_id'],
-                    },
-                    'recipient': {
-                        'id': 'PAGE_ID'
-                    },
-                    'timestamp': 1458692752478,
-                    'message': {
-                        'mid': 'mid.1457764197618:41d102a3e1ae206a38',
-                        'seq': 73,
-                        'text': 'hello, world!'
-                    }
-                }
-            ]
-        }])
+    await db_interface.stop()
 
-        del trigger.value['session']
-        assert trigger.value == {
-            'user': user,
-            'data': {
-                'text': {
-                    'raw': 'hello, world!'
-                }
-            }
-        }
-
-
-@pytest.mark.asyncio
-async def test_integrate_with_facebook_with_none_session(open_db, build_context):
-    async with open_db() as mongodb:
-        facebook, _ = await build_context(mongodb, no_session=True, no_user=True)
-
-        trigger = utils.SimpleTrigger()
-
-        @story.on('hello, world!')
-        def correct_story():
-            @story.part()
-            def store_result(message):
-                trigger.receive(message)
-
-        await facebook.handle([{
-            'id': 'PAGE_ID',
-            'time': 1473204787206,
-            'messaging': [
-                {
-                    'sender': {
-                        'id': 'some-facebook-id',
-                    },
-                    'recipient': {
-                        'id': 'PAGE_ID'
-                    },
-                    'timestamp': 1458692752478,
-                    'message': {
-                        'mid': 'mid.1457764197618:41d102a3e1ae206a38',
-                        'seq': 73,
-                        'text': 'hello, world!'
-                    }
-                }
-            ]
-        }])
-
-        assert trigger.value
-        assert trigger.value['data']['text']['raw'] == 'hello, world!'
-        assert trigger.value['user']['facebook_user_id'] == 'some-facebook-id'
+    assert not db_interface.session_collection
+    assert not db_interface.user_collection
+    assert not db_interface.db
