@@ -1,5 +1,5 @@
 import aiohttp
-from aiohttp import web
+from aiohttp import errors, web, web_exceptions
 import asyncio
 import logging
 import json as _json
@@ -18,6 +18,10 @@ class WebhookHandler:
     async def handle(self, request):
         res = await self.handler(await request.json())
         return web.Response(text=_json.dumps(res))
+
+
+def is_ok(status):
+    return 200 <= status < 400
 
 
 class AioHttpInterface:
@@ -53,12 +57,20 @@ class AioHttpInterface:
         with aiohttp.ClientSession(loop=loop) as session:
             # be able to mock session from outside
             session = self.session or session
-            resp = await session.get(
-                url,
-                params=params,
-                headers=headers,
-            )
-            return await resp.text()
+            try:
+                resp = await session.get(
+                    url,
+                    params=params,
+                    headers=headers,
+                )
+            except errors.ClientOSError as err:
+                err.status = 404
+                raise err
+        if not is_ok(resp.status):
+            web_exceptions.HTTPError.status_code = resp.status
+            err = web_exceptions.HTTPError(text=await resp.text())
+            raise err
+        return await resp.text()
 
     async def post(self, url, params=None, headers=None, json=None):
         logger.debug('post url={}'.format(url))
@@ -98,7 +110,7 @@ class AioHttpInterface:
         params = {name: value[0] for name, value in urllib.parse.parse_qs(request.query_string).items()}
         logger.debug('try to validate webhook with {}'.format(params))
         if params.get('hub.verify_token', None) == self.webhook_token and \
-           params.get('hub.mode', None) == 'subscribe':
+                        params.get('hub.mode', None) == 'subscribe':
             return web.Response(text=params.get('hub.challenge'))
         else:
             return web.Response(text='Error, wrong validation token', status=HTTP_422_UNPROCESSABLE_ENTITY)

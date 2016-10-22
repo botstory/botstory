@@ -49,6 +49,7 @@ async def test_pass_validation_for_correct_request():
     finally:
         await http.stop()
 
+
 @pytest.mark.asyncio
 async def test_reject_validation_for_incorrect_request():
     http = AioHttpInterface(port=9876)
@@ -71,3 +72,21 @@ async def test_should_not_create_server_if_there_wasnt_any_webhooks():
         assert not http.server
     finally:
         await http.stop()
+
+
+@pytest.mark.asyncio
+async def test_get_404_from_wrong_domain():
+    http = AioHttpInterface()
+    try:
+        await http.get('http://wrong-url')
+    except Exception as err:
+        assert err.status == 404
+
+
+@pytest.mark.asyncio
+async def test_get_404_from_wrong_path():
+    http = AioHttpInterface()
+    try:
+        await http.get('http://localhost:9876/webhook')
+    except Exception as err:
+        assert err.status == 404
