@@ -98,9 +98,6 @@ class AioHttpInterface:
                 headers=resp.headers,
                 message=await resp.text(),
             )
-            # web_exceptions.HTTPError.status_code = resp.status
-            # err = web_exceptions.HTTPError(text=await resp.text())
-            # raise err
         return resp
 
     def get_app(self):
