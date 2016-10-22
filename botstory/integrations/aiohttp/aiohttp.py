@@ -80,12 +80,20 @@ class AioHttpInterface:
         with aiohttp.ClientSession(loop=loop) as session:
             # be able to mock session from outside
             session = self.session or session
-            resp = await session.post(
-                url,
-                params=params,
-                headers=headers,
-                data=_json.dumps(json),
-            )
+            try:
+                resp = await session.post(
+                    url,
+                    params=params,
+                    headers=headers,
+                    data=_json.dumps(json),
+                )
+            except errors.ClientOSError as err:
+                err.status = 404
+                raise err
+            if not is_ok(resp.status):
+                web_exceptions.HTTPError.status_code = resp.status
+                err = web_exceptions.HTTPError(text=await resp.text())
+                raise err
             return await resp.json()
 
     def get_app(self):
