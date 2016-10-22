@@ -55,22 +55,13 @@ class AioHttpInterface:
         logger.debug('get url={}'.format(url))
         loop = asyncio.get_event_loop()
         with aiohttp.ClientSession(loop=loop) as session:
-            # be able to mock session from outside
-            session = self.session or session
-            try:
-                resp = await session.get(
-                    url,
-                    params=params,
-                    headers=headers,
-                )
-            except errors.ClientOSError as err:
-                err.status = 404
-                raise err
-        if not is_ok(resp.status):
-            web_exceptions.HTTPError.status_code = resp.status
-            err = web_exceptions.HTTPError(text=await resp.text())
-            raise err
-        return await resp.text()
+            return await(await self.method(
+                method_type='get',
+                session=session,
+                url=url,
+                params=params,
+                headers=headers,
+            )).text()
 
     async def post(self, url, params=None, headers=None, json=None):
         logger.debug('post url={}'.format(url))
@@ -78,23 +69,32 @@ class AioHttpInterface:
         headers['Content-Type'] = headers.get('Content-Type', 'application/json')
         loop = asyncio.get_event_loop()
         with aiohttp.ClientSession(loop=loop) as session:
-            # be able to mock session from outside
-            session = self.session or session
-            try:
-                resp = await session.post(
-                    url,
-                    params=params,
-                    headers=headers,
-                    data=_json.dumps(json),
-                )
-            except errors.ClientOSError as err:
-                err.status = 404
-                raise err
-            if not is_ok(resp.status):
-                web_exceptions.HTTPError.status_code = resp.status
-                err = web_exceptions.HTTPError(text=await resp.text())
-                raise err
-            return await resp.json()
+            return await(await self.method(
+                method_type='post',
+                session=session,
+                url=url,
+                params=params,
+                headers=headers,
+                data=_json.dumps(json),
+            )).json()
+
+    async def method(self, method_type, session, url, **kwargs):
+        # be able to mock session from outside
+        session = self.session or session
+        try:
+            method = getattr(session, method_type)
+            resp = await method(
+                url,
+                **kwargs,
+            )
+        except errors.ClientOSError as err:
+            err.status = 404
+            raise err
+        if not is_ok(resp.status):
+            web_exceptions.HTTPError.status_code = resp.status
+            err = web_exceptions.HTTPError(text=await resp.text())
+            raise err
+        return resp
 
     def get_app(self):
         if not self.has_app():
