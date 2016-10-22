@@ -188,6 +188,11 @@ async def test_should_request_user_data_once_we_do_not_know_current_user():
     )
 
 
+@pytest.mark.asyncio
+async def test_():
+    pass
+
+
 # integration
 
 @pytest.fixture

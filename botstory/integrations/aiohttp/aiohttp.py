@@ -82,22 +82,33 @@ class AioHttpInterface:
         # be able to mock session from outside
         session = self.session or session
         try:
-            method = getattr(session, method_type)
-            resp = await method(
-                url,
-                **kwargs,
-            )
-        except errors.ClientOSError as err:
-            raise errors.HttpProcessingError(
-                code=400,
-                message='{} {}'.format(err.errno, err.strerror),
-            )
-        if not is_ok(resp.status):
-            raise errors.HttpProcessingError(
-                code=resp.status,
-                headers=resp.headers,
-                message=await resp.text(),
-            )
+            try:
+                method = getattr(session, method_type)
+                resp = await method(
+                    url,
+                    **kwargs,
+                )
+            except errors.ClientOSError as err:
+                raise errors.HttpProcessingError(
+                    code=400,
+                    message='{} {}'.format(err.errno, err.strerror),
+                )
+            if not is_ok(resp.status):
+                raise errors.HttpProcessingError(
+                    code=resp.status,
+                    headers=resp.headers,
+                    message=await resp.text(),
+                )
+        except Exception as err:
+            logger.warn('Exception: status: {status}, message: {message}, method: {method}, url: {url}, {kwargs}'
+                        .format(status=err.code,
+                                message=err.message,
+                                method=method,
+                                url=url,
+                                kwargs=kwargs,
+                                )
+                        )
+            raise err
         return resp
 
     def get_app(self):
