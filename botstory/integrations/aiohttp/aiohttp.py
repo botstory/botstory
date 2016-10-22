@@ -88,12 +88,19 @@ class AioHttpInterface:
                 **kwargs,
             )
         except errors.ClientOSError as err:
-            err.status = 404
-            raise err
+            raise errors.HttpProcessingError(
+                code=400,
+                message='{} {}'.format(err.errno, err.strerror),
+            )
         if not is_ok(resp.status):
-            web_exceptions.HTTPError.status_code = resp.status
-            err = web_exceptions.HTTPError(text=await resp.text())
-            raise err
+            raise errors.HttpProcessingError(
+                code=resp.status,
+                headers=resp.headers,
+                message=await resp.text(),
+            )
+            # web_exceptions.HTTPError.status_code = resp.status
+            # err = web_exceptions.HTTPError(text=await resp.text())
+            # raise err
         return resp
 
     def get_app(self):
