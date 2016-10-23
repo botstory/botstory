@@ -45,12 +45,12 @@ async def test_pass_validation_for_correct_request():
     http.webhook(uri='/webhook', handler=None, token='token-value')
     try:
         await http.start()
-        res = await http.get('http://localhost:9876/webhook', params={
+        res = await http.get_raw('http://localhost:9876/webhook', params={
             'hub.challenge': 'some-challenge',
             'hub.mode': 'subscribe',
             'hub.verify_token': 'token-value',
         })
-        assert res == 'some-challenge'
+        assert res['text'] == 'some-challenge'
     finally:
         await http.stop()
 

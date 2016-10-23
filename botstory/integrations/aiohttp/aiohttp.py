@@ -61,21 +61,18 @@ class AioHttpInterface:
                 url=url,
                 params=params,
                 headers=headers,
-            )).text()
+            )).json()
 
-    async def post_raw(self, url, params=None, headers=None, json=None):
-        logger.debug('post url={}'.format(url))
-        headers = headers or {}
-        headers['Content-Type'] = headers.get('Content-Type', 'application/json')
+    async def get_raw(self, url, params=None, headers=None):
+        logger.debug('get url={}'.format(url))
         loop = asyncio.get_event_loop()
         with aiohttp.ClientSession(loop=loop) as session:
             res = await self.method(
-                method_type='post',
+                method_type='get',
                 session=session,
                 url=url,
                 params=params,
                 headers=headers,
-                data=_json.dumps(json),
             )
             return {
                 'status': res.status,
@@ -97,6 +94,26 @@ class AioHttpInterface:
                 headers=headers,
                 data=_json.dumps(json),
             )).json()
+
+    async def post_raw(self, url, params=None, headers=None, json=None):
+        logger.debug('post url={}'.format(url))
+        headers = headers or {}
+        headers['Content-Type'] = headers.get('Content-Type', 'application/json')
+        loop = asyncio.get_event_loop()
+        with aiohttp.ClientSession(loop=loop) as session:
+            res = await self.method(
+                method_type='post',
+                session=session,
+                url=url,
+                params=params,
+                headers=headers,
+                data=_json.dumps(json),
+            )
+            return {
+                'status': res.status,
+                'headers': res.headers,
+                'text': await res.text(),
+            }
 
     async def method(self, method_type, session, url, **kwargs):
         # be able to mock session from outside
