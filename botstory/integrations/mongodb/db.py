@@ -83,5 +83,6 @@ class MongodbInterface:
         return res
 
     async def new_user(self, **kwargs):
+        logger.debug('store new user {}'.format(kwargs))
         id = await self.user_collection.insert(kwargs)
         return await self.user_collection.find_one({'_id': id})

@@ -117,7 +117,9 @@ class FBInterface:
 
                         try:
                             messenger_profile_data = await self.request_profile(facebook_user_id)
+                            logger.debug('receive fb profile {}'.format(messenger_profile_data))
                         except commonhttp.errors.HttpRequestError as err:
+                            logger.debug('fail on request fb profile of {}'.format(facebook_user_id))
                             messenger_profile_data = {
                                 'no_fb_profile': True,
                             }
