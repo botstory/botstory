@@ -77,6 +77,15 @@ class FBInterface:
         self.storage = storage
 
     async def request_profile(self, facebook_user_id):
+        """
+        Make request to facebook
+        to receive more information about user
+
+        More: https://developers.facebook.com/docs/messenger-platform/user-profile
+
+        :param facebook_user_id:
+        :return:
+        """
         return await self.http.get(
             '{}/{}'.format(self.api_uri, facebook_user_id),
             params={
@@ -105,12 +114,6 @@ class FBInterface:
                 if not user:
                     logger.debug('  should create new user {}'.format(facebook_user_id))
 
-                    """
-                    Make request to facebook
-                    to receive more information about user
-
-                    More: https://developers.facebook.com/docs/messenger-platform/user-profile
-                    """
                     try:
                         messager_profile_data = await self.request_profile(facebook_user_id)
                     except commonhttp.errors.HttpRequestError as err:
