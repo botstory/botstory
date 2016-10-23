@@ -4,6 +4,8 @@ class HttpRequestError(Exception):
     :param int code: HTTP Error code.
     :param str message: (optional) Error message.
     :param list of [tuple] headers: (optional) Headers to be sent in response.
+
+    based on https://github.com/KeepSafe/aiohttp/blob/v1.0.5/aiohttp/errors.py#L72
     """
 
     code = 0
