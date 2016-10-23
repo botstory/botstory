@@ -1,14 +1,14 @@
 import aiohttp
-from aiohttp import errors, web, web_exceptions
+from aiohttp import errors, web
 import asyncio
 import logging
 import json as _json
 import urllib
 from yarl import URL
 
-logger = logging.getLogger(__name__)
+from ..commonhttp import errors as common_errors, statuses
 
-HTTP_422_UNPROCESSABLE_ENTITY = 422
+logger = logging.getLogger(__name__)
 
 
 class WebhookHandler:
@@ -89,17 +89,17 @@ class AioHttpInterface:
                     **kwargs,
                 )
             except errors.ClientOSError as err:
-                raise errors.HttpProcessingError(
+                raise common_errors.HttpRequestError(
                     code=400,
                     message='{} {}'.format(err.errno, err.strerror),
                 )
             if not is_ok(resp.status):
-                raise errors.HttpProcessingError(
+                raise common_errors.HttpRequestError(
                     code=resp.status,
                     headers=resp.headers,
                     message=await resp.text(),
                 )
-        except Exception as err:
+        except BaseException as err:
             logger.warn('Exception: status: {status}, message: {message}, method: {method}, url: {url}, {kwargs}'
                         .format(status=err.code,
                                 message=err.message,
@@ -136,7 +136,8 @@ class AioHttpInterface:
                         params.get('hub.mode', None) == 'subscribe':
             return web.Response(text=params.get('hub.challenge'))
         else:
-            return web.Response(text='Error, wrong validation token', status=HTTP_422_UNPROCESSABLE_ENTITY)
+            return web.Response(text='Error, wrong validation token',
+                                status=statuses.HTTP_422_UNPROCESSABLE_ENTITY)
 
     async def start(self):
         if not self.has_app() or not self.auto_start:

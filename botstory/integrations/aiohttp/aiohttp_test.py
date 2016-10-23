@@ -1,7 +1,8 @@
-from aiohttp import errors, test_utils
+from aiohttp import test_utils
 import pytest
 from . import AioHttpInterface
 from ..tests.fake_server import fake_fb
+from ..commonhttp import errors
 
 
 @pytest.mark.asyncio
@@ -59,7 +60,7 @@ async def test_reject_validation_for_incorrect_request():
         await http.get('http://localhost:9876/webhook', params={
             'something': 'incorrect',
         })
-    except errors.HttpProcessingError as err:
+    except errors.HttpRequestError as err:
         assert err.code == 422
         assert err.message == 'Error, wrong validation token'
     finally:
@@ -82,7 +83,7 @@ async def test_get_400_from_wrong_domain():
     http = AioHttpInterface()
     try:
         await http.get('http://wrong-url')
-    except errors.HttpProcessingError as err:
+    except errors.HttpRequestError as err:
         assert err.code == 400
 
 
@@ -91,7 +92,7 @@ async def test_get_400_from_wrong_path():
     http = AioHttpInterface()
     try:
         await http.get('http://localhost:9876/webhook')
-    except errors.HttpProcessingError as err:
+    except errors.HttpRequestError as err:
         assert err.code == 400
 
 
@@ -104,7 +105,7 @@ async def test_post_to_wrong_path_get_400(event_loop):
 
             try:
                 await http.post(fake_fb.URI.format('/v2.6/me/messages/mistake'), json={'message': 'hello world!'})
-            except errors.HttpProcessingError as err:
+            except errors.HttpRequestError as err:
                 assert err.code == 404
 
 
@@ -114,7 +115,7 @@ async def test_post_400_from_wrong_domain():
     http = AioHttpInterface()
     try:
         await http.post('http://wrong-url')
-    except errors.HttpProcessingError as err:
+    except errors.HttpRequestError as err:
         assert err.code == 400
 
 
@@ -123,5 +124,5 @@ async def test_post_400_from_wrong_path():
     http = AioHttpInterface()
     try:
         await http.post('http://localhost:9876/webhook')
-    except errors.HttpProcessingError as err:
+    except errors.HttpRequestError as err:
         assert err.code == 400

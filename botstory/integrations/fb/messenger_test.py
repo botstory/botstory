@@ -1,9 +1,8 @@
-import aiohttp
 import logging
 import pytest
 
 from . import messenger
-from .. import mockdb, mockhttp
+from .. import commonhttp, mockdb, mockhttp
 from ... import chat, story, utils
 from ...middlewares import option
 
@@ -186,6 +185,44 @@ async def test_should_request_user_data_once_we_do_not_know_current_user():
             'access_token': 'qwerty',
         },
     )
+
+
+@pytest.mark.asyncio
+async def test_should_request_user_data_and_fail():
+    fb_interface = story.use(messenger.FBInterface(
+        page_access_token='qwerty',
+        webhook_url='/webhook',
+        webhook_token='some-token',
+    ))
+    story.use(mockhttp.MockHttpInterface(
+        get_raise=commonhttp.errors.HttpRequestError()))
+    db = story.use(mockdb.MockDB())
+
+    await fb_interface.handle({
+        'object': 'page',
+        'entry': [{
+            'id': 'PAGE_ID',
+            'time': 1473204787206,
+            'messaging': [
+                {
+                    'sender': {
+                        'id': 'USER_ID'
+                    },
+                    'recipient': {
+                        'id': 'PAGE_ID'
+                    },
+                    'timestamp': 1458692752478,
+                    'message': {
+                        'mid': 'mid.1457764197618:41d102a3e1ae206a38',
+                        'seq': 73,
+                        'text': 'hello, world!'
+                    }
+                }
+            ]
+        }]
+    })
+
+    assert (await db.get_user(facebook_user_id='USER_ID')).no_fb_profile is True
 
 
 @pytest.mark.asyncio

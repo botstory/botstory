@@ -1,4 +1,5 @@
 import logging
+from .. import commonhttp
 
 logger = logging.getLogger(__name__)
 
@@ -110,10 +111,16 @@ class FBInterface:
 
                     More: https://developers.facebook.com/docs/messenger-platform/user-profile
                     """
-                    messager_profile_data = await self.request_profile(facebook_user_id)
+                    try:
+                        messager_profile_data = await self.request_profile(facebook_user_id)
+                    except commonhttp.errors.HttpRequestError as err:
+                        messager_profile_data = {
+                            'no_fb_profile': True,
+                        }
 
                     user = await self.storage.new_user(
                         facebook_user_id=facebook_user_id,
+                        no_fb_profile=messager_profile_data.get('no_fb_profile', None),
                         first_name=messager_profile_data.get('first_name', None),
                         last_name=messager_profile_data.get('last_name', None),
                         profile_pic=messager_profile_data.get('profile_pic', None),
