@@ -30,5 +30,5 @@ ${DIR}/deploy.sh
 
 git commit -am "bump to ${next_version}"
 git tag ${next_version}
-#git push
-#git push --tag
+git push
+git push --tag
