@@ -29,13 +29,13 @@ class MongodbInterface:
         loop = asyncio.get_event_loop()
         logger.debug('start')
         self.cx = motor_asyncio.AsyncIOMotorClient(self.uri, io_loop=loop)
-        logger.debug(' create client of {}'.format(self.uri))
+        logger.debug(' create client for: {}'.format(self.uri))
         self.db = self.cx.get_database(self.db_name)
-        logger.debug(' get db {}'.format(self.db_name))
+        logger.debug(' get db: {}'.format(self.db_name))
         self.session_collection = self.db.get_collection(self.session_collection_name)
-        logger.debug(' get session collection {}'.format(self.session_collection_name))
+        logger.debug(' get session collection: {}'.format(self.session_collection_name))
         self.user_collection = self.db.get_collection(self.user_collection_name)
-        logger.debug(' get user collection {}'.format(self.user_collection_name))
+        logger.debug(' get user collection: {}'.format(self.user_collection_name))
 
     async def stop(self):
         self.cx = None
