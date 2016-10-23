@@ -111,6 +111,7 @@ class FBInterface:
 
                     facebook_user_id = m['sender']['id']
 
+                    logger.debug('before get user with facebook_user_id={}'.format(facebook_user_id))
                     user = await self.storage.get_user(facebook_user_id=facebook_user_id)
                     if not user:
                         logger.debug('  should create new user {}'.format(facebook_user_id))
@@ -119,11 +120,12 @@ class FBInterface:
                             messenger_profile_data = await self.request_profile(facebook_user_id)
                             logger.debug('receive fb profile {}'.format(messenger_profile_data))
                         except commonhttp.errors.HttpRequestError as err:
-                            logger.debug('fail on request fb profile of {}'.format(facebook_user_id))
+                            logger.debug('fail on request fb profile of {}. with {}'.format(facebook_user_id, err))
                             messenger_profile_data = {
                                 'no_fb_profile': True,
                             }
 
+                        logger.debug('before creating new user')
                         user = await self.storage.new_user(
                             facebook_user_id=facebook_user_id,
                             no_fb_profile=messenger_profile_data.get('no_fb_profile', None),
@@ -172,8 +174,7 @@ class FBInterface:
 
                     await self.processor.match_message(message)
         except BaseException as err:
-            # logger.exception(err)
-            pass
+            logger.exception(err)
 
         return {
             'status': 200,
