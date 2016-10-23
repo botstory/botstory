@@ -177,6 +177,7 @@ class FakeFacebook:
 class Server:
     def __init__(self, loop):
         self.loop = loop
+        self.port = None
 
     @property
     def history(self):
@@ -189,6 +190,7 @@ class Server:
         self.connector = aiohttp.TCPConnector(loop=self.loop,
                                               resolver=resolver,
                                               verify_ssl=False)
+        self.port = info[ROOT_URI]
         return self
 
     def session(self):

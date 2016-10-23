@@ -1,3 +1,6 @@
+from ... import utils
+
+
 class MockDB:
     def __init__(self):
         self.session = None
@@ -19,4 +22,5 @@ class MockDB:
         self.user = user
 
     async def new_user(self, **kwargs):
-        return kwargs
+        self.user = utils.JSDict({**kwargs})
+        return self.user

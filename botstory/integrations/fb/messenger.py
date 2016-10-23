@@ -1,4 +1,5 @@
 import logging
+from .. import commonhttp
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +77,15 @@ class FBInterface:
         self.storage = storage
 
     async def request_profile(self, facebook_user_id):
+        """
+        Make request to facebook
+        to receive more information about user
+
+        More: https://developers.facebook.com/docs/messenger-platform/user-profile
+
+        :param facebook_user_id:
+        :return:
+        """
         return await self.http.get(
             '{}/{}'.format(self.api_uri, facebook_user_id),
             params={
@@ -88,73 +98,85 @@ class FBInterface:
         logger.debug('> handle <')
         logger.debug('')
         logger.debug('  entry: {}'.format(data))
-        for e in data.get('entry', []):
-            messaging = e.get('messaging', [])
-            logger.debug('  messaging: {}'.format(messaging))
+        try:
+            for e in data.get('entry', []):
+                messaging = e.get('messaging', [])
+                logger.debug('  messaging: {}'.format(messaging))
 
-            if len(messaging) == 0:
-                logger.warning('  entry {} list lack of "messaging" field'.format(e))
+                if len(messaging) == 0:
+                    logger.warning('  entry {} list lack of "messaging" field'.format(e))
 
-            for m in messaging:
-                logger.debug('  m: {}'.format(m))
+                for m in messaging:
+                    logger.debug('  m: {}'.format(m))
 
-                facebook_user_id = m['sender']['id']
+                    facebook_user_id = m['sender']['id']
 
-                user = await self.storage.get_user(facebook_user_id=facebook_user_id)
-                if not user:
-                    logger.debug('  should create new user {}'.format(facebook_user_id))
+                    logger.debug('before get user with facebook_user_id={}'.format(facebook_user_id))
+                    user = await self.storage.get_user(facebook_user_id=facebook_user_id)
+                    if not user:
+                        logger.debug('  should create new user {}'.format(facebook_user_id))
 
-                    """
-                    Make request to facebook
-                    to receive more information about user
+                        try:
+                            messenger_profile_data = await self.request_profile(facebook_user_id)
+                            logger.debug('receive fb profile {}'.format(messenger_profile_data))
+                        except commonhttp.errors.HttpRequestError as err:
+                            logger.debug('fail on request fb profile of {}. with {}'.format(facebook_user_id, err))
+                            messenger_profile_data = {
+                                'no_fb_profile': True,
+                            }
 
-                    More: https://developers.facebook.com/docs/messenger-platform/user-profile
-                    """
-                    messager_profile_data = await self.request_profile(facebook_user_id)
+                        logger.debug('before creating new user')
+                        user = await self.storage.new_user(
+                            facebook_user_id=facebook_user_id,
+                            no_fb_profile=messenger_profile_data.get('no_fb_profile', None),
+                            first_name=messenger_profile_data.get('first_name', None),
+                            last_name=messenger_profile_data.get('last_name', None),
+                            profile_pic=messenger_profile_data.get('profile_pic', None),
+                            locale=messenger_profile_data.get('locale', None),
+                            timezone=messenger_profile_data.get('timezone', None),
+                            gender=messenger_profile_data.get('gender', None),
+                        )
 
-                    user = await self.storage.new_user(
-                        facebook_user_id=facebook_user_id,
-                        first_name=messager_profile_data.get('first_name', None),
-                        last_name=messager_profile_data.get('last_name', None),
-                        profile_pic=messager_profile_data.get('profile_pic', None),
-                        locale=messager_profile_data.get('locale', None),
-                        timezone=messager_profile_data.get('timezone', None),
-                        gender=messager_profile_data.get('gender', None),
-                    )
+                    session = await self.storage.get_session(facebook_user_id=facebook_user_id)
+                    if not session:
+                        logger.debug('  should create new session for user {}'.format(facebook_user_id))
+                        session = await self.storage.new_session(
+                            facebook_user_id=facebook_user_id,
+                            stack=[],
+                            user=user,
+                        )
 
-                session = await self.storage.get_session(facebook_user_id=facebook_user_id)
-                if not session:
-                    logger.debug('  should create new session for user {}'.format(facebook_user_id))
-                    session = await self.storage.new_session(
-                        facebook_user_id=facebook_user_id,
-                        stack=[],
-                        user=user,
-                    )
-
-                message = {
-                    'session': session,
-                    'user': user,
-                }
-                raw_message = m.get('message', {})
-
-                if raw_message == {}:
-                    logger.warning('  entry {} "message" field is empty'.format(e))
-
-                logger.debug('  raw_message: {}'.format(raw_message))
-
-                data = {}
-                text = raw_message.get('text', None)
-                if text is not None:
-                    data['text'] = {
-                        'raw': text,
+                    message = {
+                        'session': session,
+                        'user': user,
                     }
-                else:
-                    logger.warning('  entry {} "text"'.format(e))
+                    raw_message = m.get('message', {})
 
-                quick_reply = raw_message.get('quick_reply', None)
-                if quick_reply is not None:
-                    data['option'] = quick_reply['payload']
+                    if raw_message == {}:
+                        logger.warning('  entry {} "message" field is empty'.format(e))
 
-                message['data'] = data
+                    logger.debug('  raw_message: {}'.format(raw_message))
 
-                await self.processor.match_message(message)
+                    data = {}
+                    text = raw_message.get('text', None)
+                    if text is not None:
+                        data['text'] = {
+                            'raw': text,
+                        }
+                    else:
+                        logger.warning('  entry {} "text"'.format(e))
+
+                    quick_reply = raw_message.get('quick_reply', None)
+                    if quick_reply is not None:
+                        data['option'] = quick_reply['payload']
+
+                    message['data'] = data
+
+                    await self.processor.match_message(message)
+        except BaseException as err:
+            logger.exception(err)
+
+        return {
+            'status': 200,
+            'text': 'Ok!',
+        }

@@ -1,14 +1,14 @@
 import aiohttp
-from aiohttp import web
+from aiohttp import errors, web
 import asyncio
 import logging
 import json as _json
 import urllib
 from yarl import URL
 
-logger = logging.getLogger(__name__)
+from ..commonhttp import errors as common_errors, statuses
 
-HTTP_422_UNPROCESSABLE_ENTITY = 422
+logger = logging.getLogger(__name__)
 
 
 class WebhookHandler:
@@ -17,7 +17,11 @@ class WebhookHandler:
 
     async def handle(self, request):
         res = await self.handler(await request.json())
-        return web.Response(text=_json.dumps(res))
+        return web.Response(**res)
+
+
+def is_ok(status):
+    return 200 <= status < 400
 
 
 class AioHttpInterface:
@@ -51,14 +55,30 @@ class AioHttpInterface:
         logger.debug('get url={}'.format(url))
         loop = asyncio.get_event_loop()
         with aiohttp.ClientSession(loop=loop) as session:
-            # be able to mock session from outside
-            session = self.session or session
-            resp = await session.get(
-                url,
+            return await(await self.method(
+                method_type='get',
+                session=session,
+                url=url,
+                params=params,
+                headers=headers,
+            )).json()
+
+    async def get_raw(self, url, params=None, headers=None):
+        logger.debug('get url={}'.format(url))
+        loop = asyncio.get_event_loop()
+        with aiohttp.ClientSession(loop=loop) as session:
+            res = await self.method(
+                method_type='get',
+                session=session,
+                url=url,
                 params=params,
                 headers=headers,
             )
-            return await resp.text()
+            return {
+                'status': res.status,
+                'headers': res.headers,
+                'text': await res.text(),
+            }
 
     async def post(self, url, params=None, headers=None, json=None):
         logger.debug('post url={}'.format(url))
@@ -66,15 +86,67 @@ class AioHttpInterface:
         headers['Content-Type'] = headers.get('Content-Type', 'application/json')
         loop = asyncio.get_event_loop()
         with aiohttp.ClientSession(loop=loop) as session:
-            # be able to mock session from outside
-            session = self.session or session
-            resp = await session.post(
-                url,
+            return await(await self.method(
+                method_type='post',
+                session=session,
+                url=url,
+                params=params,
+                headers=headers,
+                data=_json.dumps(json),
+            )).json()
+
+    async def post_raw(self, url, params=None, headers=None, json=None):
+        logger.debug('post url={}'.format(url))
+        headers = headers or {}
+        headers['Content-Type'] = headers.get('Content-Type', 'application/json')
+        loop = asyncio.get_event_loop()
+        with aiohttp.ClientSession(loop=loop) as session:
+            res = await self.method(
+                method_type='post',
+                session=session,
+                url=url,
                 params=params,
                 headers=headers,
                 data=_json.dumps(json),
             )
-            return await resp.json()
+            return {
+                'status': res.status,
+                'headers': res.headers,
+                'text': await res.text(),
+            }
+
+    async def method(self, method_type, session, url, **kwargs):
+        # be able to mock session from outside
+        session = self.session or session
+        try:
+            try:
+                method = getattr(session, method_type)
+                resp = await method(
+                    url,
+                    **kwargs,
+                )
+            except errors.ClientOSError as err:
+                raise common_errors.HttpRequestError(
+                    code=400,
+                    message='{} {}'.format(err.errno, err.strerror),
+                )
+            if not is_ok(resp.status):
+                raise common_errors.HttpRequestError(
+                    code=resp.status,
+                    headers=resp.headers,
+                    message=await resp.text(),
+                )
+        except BaseException as err:
+            logger.warn('Exception: status: {status}, message: {message}, method: {method}, url: {url}, {kwargs}'
+                        .format(status=err.code,
+                                message=err.message,
+                                method=method,
+                                url=url,
+                                kwargs=kwargs,
+                                )
+                        )
+            raise err
+        return resp
 
     def get_app(self):
         if not self.has_app():
@@ -98,10 +170,11 @@ class AioHttpInterface:
         params = {name: value[0] for name, value in urllib.parse.parse_qs(request.query_string).items()}
         logger.debug('try to validate webhook with {}'.format(params))
         if params.get('hub.verify_token', None) == self.webhook_token and \
-           params.get('hub.mode', None) == 'subscribe':
+                        params.get('hub.mode', None) == 'subscribe':
             return web.Response(text=params.get('hub.challenge'))
         else:
-            return web.Response(text='Error, wrong validation token', status=HTTP_422_UNPROCESSABLE_ENTITY)
+            return web.Response(text='Error, wrong validation token',
+                                status=statuses.HTTP_422_UNPROCESSABLE_ENTITY)
 
     async def start(self):
         if not self.has_app() or not self.auto_start:

@@ -2,14 +2,18 @@ import os
 
 from setuptools import setup, find_packages
 
-longDesc = ""
-if os.path.exists("README.md"):
-    longDesc = open("README.md").read().strip()
+longDesc = ''
+if os.path.exists('README.md'):
+    longDesc = open('README.md').read().strip()
+
+version = ''
+if os.path.exists('version.txt'):
+    version = open('version.txt').read().strip()
 
 setup(
     name='botstory',
     packages=find_packages(),
-    version='0.0.17',
+    version=version,
     description='Async framework for bots',
     license='MIT',
     long_description=longDesc,
