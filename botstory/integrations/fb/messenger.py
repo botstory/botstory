@@ -168,3 +168,8 @@ class FBInterface:
                 message['data'] = data
 
                 await self.processor.match_message(message)
+
+        return {
+            'status': 200,
+            'text': 'Ok!',
+        }

@@ -17,7 +17,7 @@ class WebhookHandler:
 
     async def handle(self, request):
         res = await self.handler(await request.json())
-        return web.Response(text=_json.dumps(res))
+        return web.Response(**res)
 
 
 def is_ok(status):
@@ -62,6 +62,26 @@ class AioHttpInterface:
                 params=params,
                 headers=headers,
             )).text()
+
+    async def post_raw(self, url, params=None, headers=None, json=None):
+        logger.debug('post url={}'.format(url))
+        headers = headers or {}
+        headers['Content-Type'] = headers.get('Content-Type', 'application/json')
+        loop = asyncio.get_event_loop()
+        with aiohttp.ClientSession(loop=loop) as session:
+            res = await self.method(
+                method_type='post',
+                session=session,
+                url=url,
+                params=params,
+                headers=headers,
+                data=_json.dumps(json),
+            )
+            return {
+                'status': res.status,
+                'headers': res.headers,
+                'text': await res.text(),
+            }
 
     async def post(self, url, params=None, headers=None, json=None):
         logger.debug('post url={}'.format(url))

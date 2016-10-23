@@ -226,8 +226,40 @@ async def test_should_request_user_data_and_fail():
 
 
 @pytest.mark.asyncio
-async def test_():
-    pass
+async def test_webhook_handler_should_return_ok_status_in_any_case():
+    fb_interface = story.use(messenger.FBInterface(
+        page_access_token='qwerty',
+        webhook_url='/webhook',
+        webhook_token='some-token',
+    ))
+    story.use(mockhttp.MockHttpInterface(get_raise=commonhttp.errors.HttpRequestError()))
+    story.use(mockdb.MockDB())
+
+    res = await fb_interface.handle({
+        'object': 'page',
+        'entry': [{
+            'id': 'PAGE_ID',
+            'time': 1473204787206,
+            'messaging': [
+                {
+                    'sender': {
+                        'id': 'USER_ID'
+                    },
+                    'recipient': {
+                        'id': 'PAGE_ID'
+                    },
+                    'timestamp': 1458692752478,
+                    'message': {
+                        'mid': 'mid.1457764197618:41d102a3e1ae206a38',
+                        'seq': 73,
+                        'text': 'hello, world!'
+                    }
+                }
+            ]
+        }]
+    })
+
+    assert res['status'] == 200
 
 
 # integration

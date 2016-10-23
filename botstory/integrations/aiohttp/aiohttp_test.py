@@ -1,4 +1,5 @@
 from aiohttp import test_utils
+import json
 import pytest
 from . import AioHttpInterface
 from ..tests.fake_server import fake_fb
@@ -22,15 +23,18 @@ async def test_post(event_loop):
 @pytest.mark.asyncio
 async def test_listen_webhook():
     handler = test_utils.make_mocked_coro(return_value={
-        'result': 'ok',
+        'status': 200,
+        'content_type': 'application/json',
+        'text': json.dumps({'message': 'Ok!'}),
     })
     http = AioHttpInterface(port=9876)
     http.webhook(uri='/webhook', handler=handler, token='qwerty')
     try:
         await http.start()
-        res = await http.post('http://localhost:9876/webhook', json={'message': 'Is there anybody in there?'})
+        res = await http.post_raw('http://localhost:9876/webhook', json={'message': 'Is there anybody in there?'})
         handler.assert_called_once_with({'message': 'Is there anybody in there?'})
-        assert res == {'result': 'ok'}
+        assert res['status'] == 200
+        assert res['text'] == json.dumps({'message': 'Ok!'})
     finally:
         await http.stop()
 
