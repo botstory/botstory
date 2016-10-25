@@ -172,7 +172,16 @@ class FBInterface:
 
                     message['data'] = data
 
-                    await self.processor.match_message(message)
+                    if raw_message.get('is_echo', False):
+                        # TODO: should react somehow.
+                        # for example storing for debug purpose
+                        logger.debug('just echo message')
+                    elif 'delivery' in m:
+                        logger.debug('delivery notification')
+                    elif 'read' in m:
+                        logger.debug('read notification')
+                    else:
+                        await self.processor.match_message(message)
         except BaseException as err:
             logger.exception(err)
 
