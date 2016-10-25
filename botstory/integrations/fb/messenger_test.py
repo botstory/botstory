@@ -1,12 +1,11 @@
 import logging
-import json
 from unittest import mock
 import pytest
 
 from . import messenger
 from .. import commonhttp, mockdb, mockhttp
 from ... import chat, story, utils
-from ...middlewares import option
+from ...middlewares import any, option
 
 logger = logging.getLogger(__name__)
 
@@ -296,6 +295,7 @@ async def test_webhook_handler_should_return_ok_status_in_any_case():
 
     assert res['status'] == 200
 
+
 # integration
 
 @pytest.fixture
@@ -425,3 +425,46 @@ async def test_handler_selected_option(build_fb_interface):
             }
         }
     }
+
+
+@pytest.mark.asyncio
+async def test_should_not_process_echo_message_as_regular(build_fb_interface):
+    fb_interface = await build_fb_interface()
+
+    echo_trigger = utils.SimpleTrigger()
+
+    @story.on(receive=any.Any())
+    def one_story():
+        @story.part()
+        def sync_part(message):
+            echo_trigger.passed()
+
+    await fb_interface.handle({
+        'entry': [
+            {
+                'id': '329188380752158',
+                'messaging': [
+                    {
+                        'message': {
+                            'app_id': 345865645763384,
+                            'is_echo': 'True',
+                            'mid': 'mid.1477350590023:38b1efd593',
+                            'seq': 323,
+                            'text': 'Hm I dont know what is it'
+                        },
+                        'recipient': {
+                            'id': '1034692249977067'
+                        },
+                        'sender': {
+                            'id': '329188380752158'
+                        },
+                        'timestamp': 1477350590023
+                    }
+                ],
+                'time': 1477350590772
+            }
+        ],
+        'object': 'page'
+    })
+
+    assert not echo_trigger.is_triggered

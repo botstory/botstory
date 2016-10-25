@@ -4,7 +4,7 @@ import pytest
 
 from . import chat, story
 from .integrations import mockdb, mockhttp
-from .middlewares import location, text
+from .middlewares import any, location, text
 from .utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
 logger = logging.getLogger(__name__)
