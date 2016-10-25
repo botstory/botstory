@@ -428,7 +428,7 @@ async def test_handler_selected_option(build_fb_interface):
 
 
 @pytest.mark.asyncio
-async def test_should_not_process_echo_message_as_regular(build_fb_interface):
+async def test_should_not_process_echo_delivery_and_read_messages_as_regular(build_fb_interface):
     fb_interface = await build_fb_interface()
 
     echo_trigger = utils.SimpleTrigger()
@@ -443,24 +443,49 @@ async def test_should_not_process_echo_message_as_regular(build_fb_interface):
         'entry': [
             {
                 'id': '329188380752158',
-                'messaging': [
-                    {
-                        'message': {
-                            'app_id': 345865645763384,
-                            'is_echo': 'True',
-                            'mid': 'mid.1477350590023:38b1efd593',
-                            'seq': 323,
-                            'text': 'Hm I dont know what is it'
-                        },
-                        'recipient': {
-                            'id': '1034692249977067'
-                        },
-                        'sender': {
-                            'id': '329188380752158'
-                        },
-                        'timestamp': 1477350590023
-                    }
-                ],
+                'messaging': [{
+                    'message': {
+                        'app_id': 345865645763384,
+                        'is_echo': 'True',
+                        'mid': 'mid.1477350590023:38b1efd593',
+                        'seq': 323,
+                        'text': 'Hm I dont know what is it'
+                    },
+                    'recipient': {
+                        'id': '1034692249977067'
+                    },
+                    'sender': {
+                        'id': '329188380752158'
+                    },
+                    'timestamp': 1477350590023
+                }, {
+                    'read': {
+                        'seq': 2697,
+                        'watermark': 1477354670744
+                    },
+                    'recipient': {
+                        'id': '329188380752158'
+                    },
+                    'sender': {
+                        'id': '1034692249977067'
+                    },
+                    'timestamp': 1477354672037
+                }, {
+                    'delivery': {
+                        'mids': [
+                            'mid.1477354667117:8fedc43d37'
+                        ],
+                        'seq': 2679,
+                        'watermark': 1477354668538
+                    },
+                    'recipient': {
+                        'id': '329188380752158'
+                    },
+                    'sender': {
+                        'id': '1034692249977067'
+                    },
+                    'timestamp': 0
+                }],
                 'time': 1477350590772
             }
         ],
