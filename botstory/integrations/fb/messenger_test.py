@@ -553,6 +553,7 @@ async def test_set_greeting_call_to_action_payload():
         }
     )
 
+
 @pytest.mark.asyncio
 async def test_remove_greeting_call_to_action_payload():
     fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
@@ -568,5 +569,60 @@ async def test_remove_greeting_call_to_action_payload():
         json={
             'setting_type': 'call_to_actions',
             'thread_state': 'new_thread',
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_set_persistent_menu():
+    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
+    mock_http = story.use(mockhttp.MockHttpInterface())
+
+    await fb_interface.set_persistent_menu([{
+        'type': 'postback',
+        'title': 'Help',
+        'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP'
+    }, {
+        'type': 'web_url',
+        'title': 'View Website',
+        'url': 'http://petersapparel.parseapp.com/'
+    }])
+
+    mock_http.post.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/messages/',
+        params={
+            'access_token': 'qwerty',
+        },
+        json={
+            'setting_type': 'call_to_actions',
+            'thread_state': 'new_thread',
+            'call_to_actions': [{
+                'type': 'postback',
+                'title': 'Help',
+                'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP'
+            }, {
+                'type': 'web_url',
+                'title': 'View Website',
+                'url': 'http://petersapparel.parseapp.com/'
+            }]
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_remove_persistent_menu():
+    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
+    mock_http = story.use(mockhttp.MockHttpInterface())
+
+    await fb_interface.remove_persistent_menu()
+
+    mock_http.delete.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/messages/',
+        params={
+            'access_token': 'qwerty',
+        },
+        json={
+            'setting_type': 'call_to_actions',
+            'thread_state': 'new_thread'
         }
     )

@@ -249,3 +249,37 @@ class FBInterface:
                 'thread_state': 'new_thread',
             }
         )
+
+    async def set_persistent_menu(self, menu):
+        """
+        Limits:
+        - call_to_actions is limited to 5
+        - title has a 30 character limit
+        - payload has a 1000 character limit
+
+        :param menu:
+        :return:
+        """
+        await self.http.post(
+            'https://graph.facebook.com/v2.6/me/messages/',
+            params={
+                'access_token': 'qwerty',
+            },
+            json={
+                'setting_type': 'call_to_actions',
+                'thread_state': 'new_thread',
+                'call_to_actions': menu
+            }
+        )
+
+    async def remove_persistent_menu(self):
+        await self.http.delete(
+            'https://graph.facebook.com/v2.6/me/messages/',
+            params={
+                'access_token': 'qwerty',
+            },
+            json={
+                'setting_type': 'call_to_actions',
+                'thread_state': 'new_thread',
+            }
+        )
