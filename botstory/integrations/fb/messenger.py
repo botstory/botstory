@@ -191,6 +191,16 @@ class FBInterface:
         }
 
     async def set_greeting_text(self, message):
+        """
+        set a greeting for new conversations
+
+        can use for personalizing
+            {{user_first_name}}
+            {{user_last_name}}
+            {{user_full_name}}
+        :param message:
+        :return:
+        """
         await self.http.post(
             'https://graph.facebook.com/v2.6/me/messages/',
             params={
@@ -212,5 +222,30 @@ class FBInterface:
             },
             json={
                 'setting_type': 'greeting',
+            }
+        )
+
+    async def set_greeting_call_to_action_payload(self, payload):
+        await self.http.post(
+            'https://graph.facebook.com/v2.6/me/messages/',
+            params={
+                'access_token': 'qwerty',
+            },
+            json={
+                'setting_type': 'call_to_actions',
+                'thread_state': 'new_thread',
+                'call_to_actions': [{'payload': payload}]
+            }
+        )
+
+    async def remove_greeting_call_to_action_payload(self):
+        await self.http.delete(
+            'https://graph.facebook.com/v2.6/me/messages/',
+            params={
+                'access_token': 'qwerty',
+            },
+            json={
+                'setting_type': 'call_to_actions',
+                'thread_state': 'new_thread',
             }
         )
