@@ -493,3 +493,42 @@ async def test_should_not_process_echo_delivery_and_read_messages_as_regular(bui
     })
 
     assert not echo_trigger.is_triggered
+
+
+@pytest.mark.asyncio
+async def test_set_greeting_text():
+    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
+    mock_http = story.use(mockhttp.MockHttpInterface())
+
+    await fb_interface.set_greeting_text('Hi there {{user_first_name}}!')
+
+    mock_http.post.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/messages/',
+        params={
+            'access_token': 'qwerty',
+        },
+        json={
+            'setting_type': 'greeting',
+            'greeting': {
+                'text': 'Hi there {{user_first_name}}!',
+            },
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_remove_greeting_text():
+    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
+    mock_http = story.use(mockhttp.MockHttpInterface())
+
+    await fb_interface.remove_greeting_text()
+
+    mock_http.delete.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/messages/',
+        params={
+            'access_token': 'qwerty',
+        },
+        json={
+            'setting_type': 'greeting',
+        }
+    )

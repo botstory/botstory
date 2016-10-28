@@ -189,3 +189,28 @@ class FBInterface:
             'status': 200,
             'text': 'Ok!',
         }
+
+    async def set_greeting_text(self, message):
+        await self.http.post(
+            'https://graph.facebook.com/v2.6/me/messages/',
+            params={
+                'access_token': 'qwerty',
+            },
+            json={
+                'setting_type': 'greeting',
+                'greeting': {
+                    'text': message,
+                },
+            }
+        )
+
+    async def remove_greeting_text(self):
+        await self.http.delete(
+            'https://graph.facebook.com/v2.6/me/messages/',
+            params={
+                'access_token': 'qwerty',
+            },
+            json={
+                'setting_type': 'greeting',
+            }
+        )
