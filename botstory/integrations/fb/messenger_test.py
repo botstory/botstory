@@ -503,7 +503,7 @@ async def test_set_greeting_text():
     await fb_interface.set_greeting_text('Hi there {{user_first_name}}!')
 
     mock_http.post.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/messages/',
+        'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
             'access_token': 'qwerty',
         },
@@ -524,7 +524,7 @@ async def test_remove_greeting_text():
     await fb_interface.remove_greeting_text()
 
     mock_http.delete.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/messages/',
+        'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
             'access_token': 'qwerty',
         },
@@ -542,7 +542,7 @@ async def test_set_greeting_call_to_action_payload():
     await fb_interface.set_greeting_call_to_action_payload('SOME_PAYLOAD')
 
     mock_http.post.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/messages/',
+        'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
             'access_token': 'qwerty',
         },
@@ -562,7 +562,7 @@ async def test_remove_greeting_call_to_action_payload():
     await fb_interface.remove_greeting_call_to_action_payload()
 
     mock_http.delete.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/messages/',
+        'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
             'access_token': 'qwerty',
         },
@@ -589,7 +589,7 @@ async def test_set_persistent_menu():
     }])
 
     mock_http.post.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/messages/',
+        'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
             'access_token': 'qwerty',
         },
@@ -617,7 +617,7 @@ async def test_remove_persistent_menu():
     await fb_interface.remove_persistent_menu()
 
     mock_http.delete.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/messages/',
+        'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
             'access_token': 'qwerty',
         },

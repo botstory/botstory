@@ -38,6 +38,7 @@ forking_api = forking.ForkingStoriesAPI(
 callable = callable_stories_instance.callable
 case = forking_api.case
 on = common_stories_instance.on
+on_start = common_stories_instance.on_start
 part = common_stories_instance.part
 
 # expose message handler API:
@@ -89,6 +90,20 @@ def use(middleware):
         chat.add_http(middleware)
 
     return middleware
+
+
+def clear():
+    """
+    Clear all deps
+    TODO: replace with DI
+    :return:
+    """
+    story_processor_instance.clear()
+    stories_library.clear()
+    chat.clear()
+
+    global middlewares
+    middlewares = []
 
 
 async def start():

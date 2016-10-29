@@ -136,7 +136,7 @@ class AioHttpInterface:
                     headers=resp.headers,
                     message=await resp.text(),
                 )
-        except BaseException as err:
+        except Exception as err:
             logger.warn('Exception: status: {status}, message: {message}, method: {method}, url: {url}, {kwargs}'
                         .format(status=err.code,
                                 message=err.message,

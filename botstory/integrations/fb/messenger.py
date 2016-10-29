@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 class FBInterface:
     type = 'interface.facebook'
+    PUSH_GET_STARTED_BUTTON = 'BOT_STORY.PUSH_GET_STARTED_BUTTON'
 
     def __init__(self,
                  api_uri='https://graph.facebook.com/v2.6',
@@ -190,6 +191,12 @@ class FBInterface:
             'text': 'Ok!',
         }
 
+    async def start(self):
+        logger.debug('start')
+        logger.debug('http')
+        logger.debug(self.http)
+        await self.set_greeting_call_to_action_payload(self.PUSH_GET_STARTED_BUTTON)
+
     async def set_greeting_text(self, message):
         """
         set a greeting for new conversations
@@ -202,7 +209,7 @@ class FBInterface:
         :return:
         """
         await self.http.post(
-            'https://graph.facebook.com/v2.6/me/messages/',
+            self.api_uri + '/me/thread_settings',
             params={
                 'access_token': 'qwerty',
             },
@@ -216,7 +223,7 @@ class FBInterface:
 
     async def remove_greeting_text(self):
         await self.http.delete(
-            'https://graph.facebook.com/v2.6/me/messages/',
+            self.api_uri + '/me/thread_settings',
             params={
                 'access_token': 'qwerty',
             },
@@ -227,7 +234,7 @@ class FBInterface:
 
     async def set_greeting_call_to_action_payload(self, payload):
         await self.http.post(
-            'https://graph.facebook.com/v2.6/me/messages/',
+            self.api_uri + '/me/thread_settings',
             params={
                 'access_token': 'qwerty',
             },
@@ -240,7 +247,7 @@ class FBInterface:
 
     async def remove_greeting_call_to_action_payload(self):
         await self.http.delete(
-            'https://graph.facebook.com/v2.6/me/messages/',
+            self.api_uri + '/me/thread_settings',
             params={
                 'access_token': 'qwerty',
             },
@@ -261,7 +268,7 @@ class FBInterface:
         :return:
         """
         await self.http.post(
-            'https://graph.facebook.com/v2.6/me/messages/',
+            self.api_uri + '/me/thread_settings',
             params={
                 'access_token': 'qwerty',
             },
@@ -274,7 +281,7 @@ class FBInterface:
 
     async def remove_persistent_menu(self):
         await self.http.delete(
-            'https://graph.facebook.com/v2.6/me/messages/',
+            self.api_uri + '/me/thread_settings',
             params={
                 'access_token': 'qwerty',
             },

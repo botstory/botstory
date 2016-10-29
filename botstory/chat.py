@@ -82,3 +82,8 @@ def add_interface(interface):
     logger.debug(interface)
     interfaces[interface.type] = interface
     return interface
+
+
+def clear():
+    global interfaces
+    interfaces = {}

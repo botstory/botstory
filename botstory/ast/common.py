@@ -18,6 +18,14 @@ class CommonStoriesAPI:
 
         return fn
 
+    def on_start(self):
+        def fn(one_story):
+            # TODO: listen payload:
+            # "payload": "BOT_STORY.PUSH_GET_STARTED_BUTTON"
+            return one_story
+
+        return fn
+
     def part(self):
         def fn(part_of_story):
             self.parser_instance.part(part_of_story)
