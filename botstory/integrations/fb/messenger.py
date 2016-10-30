@@ -280,6 +280,11 @@ class FBInterface:
         :param menu:
         :return:
         """
+        try:
+            validate_limits.validate_persistent_menu(menu)
+        except validate_limits.Invalid as i:
+            logger.warn(str(i))
+
         await self.http.post(
             self.api_uri + '/me/thread_settings',
             params={
