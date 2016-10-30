@@ -1,4 +1,5 @@
 import logging
+from . import validate_limits
 from .. import commonhttp
 
 logger = logging.getLogger(__name__)
@@ -215,6 +216,11 @@ class FBInterface:
         :param message:
         :return:
         """
+        try:
+            validate_limits.validate_greeting_text(message)
+        except validate_limits.Invalid as i:
+            logger.warn(str(i))
+
         await self.http.post(
             self.api_uri + '/me/thread_settings',
             params={

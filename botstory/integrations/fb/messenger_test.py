@@ -459,7 +459,7 @@ async def test_handler_postback(build_fb_interface):
                     'id': 'PAGE_ID'
                 },
                 'timestamp': 1458692752478,
-                "postback": {
+                'postback': {
                     'payload': 'GREEN'
                 },
             }]
@@ -675,3 +675,20 @@ async def test_remove_persistent_menu():
             'thread_state': 'new_thread'
         }
     )
+
+
+@pytest.mark.parametrize('greeting_text,valid', [
+    ('very-long-message ' * 100, False),
+    ('short-message.', True),
+])
+@pytest.mark.asyncio
+async def test_validate_greeting_text(mocker, greeting_text, valid):
+    fb = messenger.FBInterface()
+    log_mock = mocker.patch('botstory.integrations.fb.messenger.logger')
+    fb.http = mockhttp.MockHttpInterface()
+    await fb.set_greeting_text(greeting_text)
+    if valid:
+        assert not log_mock.warn.called, 'should be valid'
+    else:
+        log_mock.warn.assert_called_with('greeting text should not exceed 160 length in characters')
+
