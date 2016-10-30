@@ -1,5 +1,5 @@
 import logging
-from . import validate_limits
+from . import validate
 from .. import commonhttp
 
 logger = logging.getLogger(__name__)
@@ -42,6 +42,11 @@ class FBInterface:
 
         :return:
         """
+
+        try:
+            validate.send_text_message(text, options)
+        except validate.Invalid as i:
+            logger.warn(str(i))
 
         if not options:
             options = []
@@ -213,12 +218,15 @@ class FBInterface:
             {{user_first_name}}
             {{user_last_name}}
             {{user_full_name}}
+
+        more: https://developers.facebook.com/docs/messenger-platform/thread-settings/greeting-text
+
         :param message:
         :return:
         """
         try:
-            validate_limits.validate_greeting_text(message)
-        except validate_limits.Invalid as i:
+            validate.greeting_text(message)
+        except validate.Invalid as i:
             logger.warn(str(i))
 
         await self.http.post(
@@ -246,6 +254,13 @@ class FBInterface:
         )
 
     async def set_greeting_call_to_action_payload(self, payload):
+        """
+
+        more: https://developers.facebook.com/docs/messenger-platform/thread-settings/get-started-button
+
+        :param payload:
+        :return:
+        """
         await self.http.post(
             self.api_uri + '/me/thread_settings',
             params={
@@ -272,17 +287,14 @@ class FBInterface:
 
     async def set_persistent_menu(self, menu):
         """
-        Limits:
-        - call_to_actions is limited to 5
-        - title has a 30 character limit
-        - payload has a 1000 character limit
+        more: https://developers.facebook.com/docs/messenger-platform/thread-settings/persistent-menu
 
         :param menu:
         :return:
         """
         try:
-            validate_limits.validate_persistent_menu(menu)
-        except validate_limits.Invalid as i:
+            validate.persistent_menu(menu)
+        except validate.Invalid as i:
             logger.warn(str(i))
 
         await self.http.post(
