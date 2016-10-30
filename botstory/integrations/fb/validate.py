@@ -32,6 +32,16 @@ def persistent_menu(menu):
 
 
 def send_text_message(text, options):
+    """
+    more:
+    https://developers.facebook.com/docs/messenger-platform/send-api-reference/text-message
+     and
+    https://developers.facebook.com/docs/messenger-platform/send-api-reference/quick-replies
+
+    :param text:
+    :param options:
+    :return:
+    """
     if len(text) > 320:
         raise Invalid('send message text should not exceed 320 character limit')
 
