@@ -23,7 +23,7 @@ class CommonStoriesAPI:
             compiled_story = self.parser_instance.compile(
                 one_story,
             )
-            compiled_story.extensions['validator'] = middlewares.option.Match('BOT_STORY.PUSH_GET_STARTED_BUTTON')
+            compiled_story.extensions['validator'] = middlewares.option.OnStart()
             self.library.add_message_handler(compiled_story)
 
             return one_story

@@ -1,13 +1,14 @@
 import logging
 from . import validate
 from .. import commonhttp
+from ... import ast
+from ...middlewares import option
 
 logger = logging.getLogger(__name__)
 
 
 class FBInterface:
     type = 'interface.facebook'
-    PUSH_GET_STARTED_BUTTON = 'BOT_STORY.PUSH_GET_STARTED_BUTTON'
 
     def __init__(self,
                  api_uri='https://graph.facebook.com/v2.6',
@@ -27,6 +28,7 @@ class FBInterface:
         self.webhook = webhook_url
         self.webhook_token = webhook_token
 
+        self.library = None
         self.http = None
         self.processor = None
         self.storage = None
@@ -206,9 +208,13 @@ class FBInterface:
 
     async def start(self):
         logger.debug('start')
-        logger.debug('http')
-        logger.debug(self.http)
-        await self.set_greeting_call_to_action_payload(self.PUSH_GET_STARTED_BUTTON)
+
+        # check whether we have `On Start Story`
+        have_on_start_story = not not self.library.get_right_story({
+            'data': {'option': option.OnStart.DEFAULT_OPTION_PAYLOAD}
+        })
+        if have_on_start_story:
+            await self.set_greeting_call_to_action_payload(option.OnStart.DEFAULT_OPTION_PAYLOAD)
 
     async def set_greeting_text(self, message):
         """

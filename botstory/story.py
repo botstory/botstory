@@ -79,6 +79,9 @@ def use(middleware):
 
     if check_spec(['send_text_message'], middleware):
         chat.add_interface(middleware)
+        # TODO: should find more elegant way to inject library to fb interface
+        # or information whether we have On Start story
+        middleware.library = stories_library
 
     if check_spec(['handle'], middleware):
         story_processor_instance.add_interface(middleware)

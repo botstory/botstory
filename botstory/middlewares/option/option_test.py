@@ -106,3 +106,9 @@ async def test_validate_only_option():
 
     await answer.option('green', session, user)
     assert trigger.is_triggered
+
+
+def test_serialize_on_start_option():
+    m_old = option.OnStart()
+    m_new = matchers.deserialize(matchers.serialize(m_old))
+    assert isinstance(m_new, option.OnStart)

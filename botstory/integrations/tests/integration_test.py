@@ -184,7 +184,7 @@ async def test_integrate_mongodb_with_facebook_with_none_session(open_db, build_
 
 
 @pytest.mark.asyncio
-async def test_first_time(open_db, build_context):
+async def test_story_on_start(open_db, build_context):
     async with open_db() as mongodb:
         facebook, http, _ = await build_context(mongodb)
 
@@ -237,3 +237,21 @@ async def test_first_time(open_db, build_context):
         })
 
         assert trigger.is_triggered
+
+
+@pytest.mark.asyncio
+async def test_should_not_setup_call_to_action_for_new_thread_if_we_dont_have_on_start(open_db, build_context):
+    async with open_db() as mongodb:
+        facebook, http, _ = await build_context(mongodb)
+
+        @story.on('hi')
+        def one_story():
+            @story.part()
+            def greeting(message):
+                pass
+
+        await story.start()
+
+        # TODO: check whether we've told to fb that start button generate
+        # `BOT_STORY.PUSH_GET_STARTED_BUTTON` payload
+        assert not http.post.called, 'setup thread'
