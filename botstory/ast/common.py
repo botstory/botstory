@@ -1,4 +1,4 @@
-from .. import matchers
+from .. import matchers, middlewares
 
 
 class CommonStoriesAPI:
@@ -20,8 +20,12 @@ class CommonStoriesAPI:
 
     def on_start(self):
         def fn(one_story):
-            # TODO: listen payload:
-            # "payload": "BOT_STORY.PUSH_GET_STARTED_BUTTON"
+            compiled_story = self.parser_instance.compile(
+                one_story,
+            )
+            compiled_story.extensions['validator'] = middlewares.option.Match('BOT_STORY.PUSH_GET_STARTED_BUTTON')
+            self.library.add_message_handler(compiled_story)
+
             return one_story
 
         return fn

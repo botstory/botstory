@@ -183,7 +183,6 @@ async def test_integrate_mongodb_with_facebook_with_none_session(open_db, build_
         assert trigger.value['user']['facebook_user_id'] == 'some-facebook-id'
 
 
-@pytest.mark.skip('should implement postback first')
 @pytest.mark.asyncio
 async def test_first_time(open_db, build_context):
     async with open_db() as mongodb:
