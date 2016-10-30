@@ -151,38 +151,45 @@ class FBInterface:
                         'session': session,
                         'user': user,
                     }
-                    raw_message = m.get('message', {})
 
-                    if raw_message == {}:
-                        logger.warning('  entry {} "message" field is empty'.format(e))
+                    if 'message' in m:
+                        logger.debug('message notification')
+                        raw_message = m.get('message', {})
 
-                    logger.debug('  raw_message: {}'.format(raw_message))
+                        data = {}
+                        text = raw_message.get('text', None)
+                        if text is not None:
+                            data['text'] = {
+                                'raw': text,
+                            }
+                        else:
+                            logger.warning('  entry {} "text"'.format(e))
 
-                    data = {}
-                    text = raw_message.get('text', None)
-                    if text is not None:
-                        data['text'] = {
-                            'raw': text,
+                        quick_reply = raw_message.get('quick_reply', None)
+                        if quick_reply is not None:
+                            data['option'] = quick_reply['payload']
+
+                        message['data'] = data
+
+                        if raw_message.get('is_echo', False):
+                            # TODO: should react somehow.
+                            # for example storing for debug purpose
+                            logger.debug('just echo message')
+                        else:
+                            await self.processor.match_message(message)
+
+                    elif 'postback' in m:
+                        message['data'] = {
+                            'option': m['postback']['payload'],
                         }
-                    else:
-                        logger.warning('  entry {} "text"'.format(e))
-
-                    quick_reply = raw_message.get('quick_reply', None)
-                    if quick_reply is not None:
-                        data['option'] = quick_reply['payload']
-
-                    message['data'] = data
-
-                    if raw_message.get('is_echo', False):
-                        # TODO: should react somehow.
-                        # for example storing for debug purpose
-                        logger.debug('just echo message')
+                        await self.processor.match_message(message)
                     elif 'delivery' in m:
                         logger.debug('delivery notification')
                     elif 'read' in m:
                         logger.debug('read notification')
                     else:
-                        await self.processor.match_message(message)
+                        logger.warning('(!) unknown case {}'.format(e))
+
         except BaseException as err:
             logger.exception(err)
 

@@ -428,6 +428,55 @@ async def test_handler_selected_option(build_fb_interface):
 
 
 @pytest.mark.asyncio
+async def test_handler_postback(build_fb_interface):
+    fb_interface = await build_fb_interface()
+
+    correct_trigger = utils.SimpleTrigger()
+    incorrect_trigger = utils.SimpleTrigger()
+
+    @story.on(receive=option.Match('GREEN'))
+    def correct_story():
+        @story.part()
+        def store_result(message):
+            correct_trigger.receive(message)
+
+    @story.on(receive=option.Match('BLUE'))
+    def incorrect_story():
+        @story.part()
+        def store_result(message):
+            incorrect_trigger.receive(message)
+
+    await fb_interface.handle({
+        'object': 'page',
+        'entry': [{
+            'id': 'PAGE_ID',
+            'time': 1473204787206,
+            'messaging': [{
+                'sender': {
+                    'id': 'USER_ID'
+                },
+                'recipient': {
+                    'id': 'PAGE_ID'
+                },
+                'timestamp': 1458692752478,
+                "postback": {
+                    'payload': 'GREEN'
+                },
+            }]
+        }]
+    })
+
+    assert incorrect_trigger.value is None
+    assert correct_trigger.value == {
+        'user': fb_interface.storage.user,
+        'session': fb_interface.storage.session,
+        'data': {
+            'option': 'GREEN',
+        }
+    }
+
+
+@pytest.mark.asyncio
 async def test_should_not_process_echo_delivery_and_read_messages_as_regular(build_fb_interface):
     fb_interface = await build_fb_interface()
 
