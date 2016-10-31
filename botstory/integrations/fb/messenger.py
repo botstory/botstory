@@ -14,25 +14,28 @@ class FBInterface:
                  api_uri='https://graph.facebook.com/v2.6',
                  greeting_text=None,
                  page_access_token=None,
+                 persistent_menu=None,
                  webhook_url=None,
                  webhook_token=None,
                  ):
         """
-
+        
         :param api_uri:
+        :param greeting_text:
         :param page_access_token:
+        :param persistent_menu:
         :param webhook_url:
         :param webhook_token:
         """
         self.api_uri = api_uri
         self.greeting_text = greeting_text
+        self.persistent_menu = persistent_menu
         self.token = page_access_token
         self.webhook = webhook_url
         self.webhook_token = webhook_token
 
         self.library = None
         self.http = None
-        self.persistent_menu = None
         self.processor = None
         self.storage = None
 
