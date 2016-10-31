@@ -259,7 +259,7 @@ class FBInterface:
         await self.http.post(
             self.api_uri + '/me/thread_settings',
             params={
-                'access_token': 'qwerty',
+                'access_token': self.token,
             },
             json={
                 'setting_type': 'greeting',
@@ -273,7 +273,7 @@ class FBInterface:
         await self.http.delete(
             self.api_uri + '/me/thread_settings',
             params={
-                'access_token': 'qwerty',
+                'access_token': self.token,
             },
             json={
                 'setting_type': 'greeting',
@@ -291,7 +291,7 @@ class FBInterface:
         await self.http.post(
             self.api_uri + '/me/thread_settings',
             params={
-                'access_token': 'qwerty',
+                'access_token': self.token,
             },
             json={
                 'setting_type': 'call_to_actions',
@@ -304,7 +304,7 @@ class FBInterface:
         await self.http.delete(
             self.api_uri + '/me/thread_settings',
             params={
-                'access_token': 'qwerty',
+                'access_token': self.token,
             },
             json={
                 'setting_type': 'call_to_actions',
@@ -333,7 +333,7 @@ class FBInterface:
         await self.http.post(
             self.api_uri + '/me/thread_settings',
             params={
-                'access_token': 'qwerty',
+                'access_token': self.token,
             },
             json={
                 'setting_type': 'call_to_actions',
@@ -346,7 +346,7 @@ class FBInterface:
         await self.http.delete(
             self.api_uri + '/me/thread_settings',
             params={
-                'access_token': 'qwerty',
+                'access_token': self.token,
             },
             json={
                 'setting_type': 'call_to_actions',

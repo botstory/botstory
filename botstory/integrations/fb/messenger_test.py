@@ -21,7 +21,7 @@ def teardown_function(function):
 async def test_send_text_message():
     user = utils.build_fake_user()
 
-    interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
+    interface = story.use(messenger.FBInterface(page_access_token='qwerty1'))
     mock_http = story.use(mockhttp.MockHttpInterface())
 
     await interface.send_text_message(
@@ -31,7 +31,7 @@ async def test_send_text_message():
     mock_http.post.assert_called_with(
         'https://graph.facebook.com/v2.6/me/messages/',
         params={
-            'access_token': 'qwerty',
+            'access_token': 'qwerty1',
         },
         json={
             'message': {
@@ -48,7 +48,7 @@ async def test_send_text_message():
 async def test_integration():
     user = utils.build_fake_user()
 
-    story.use(messenger.FBInterface(page_access_token='qwerty'))
+    story.use(messenger.FBInterface(page_access_token='qwerty2'))
     story.use(mockdb.MockDB())
     mock_http = story.use(mockhttp.MockHttpInterface())
 
@@ -57,7 +57,7 @@ async def test_integration():
     mock_http.post.assert_called_with(
         'https://graph.facebook.com/v2.6/me/messages/',
         params={
-            'access_token': 'qwerty',
+            'access_token': 'qwerty2',
         },
         json={
             'message': {
@@ -74,7 +74,7 @@ async def test_integration():
 async def test_options():
     user = utils.build_fake_user()
 
-    story.use(messenger.FBInterface(page_access_token='qwerty'))
+    story.use(messenger.FBInterface(page_access_token='qwerty3'))
     story.use(mockdb.MockDB())
     mock_http = story.use(mockhttp.MockHttpInterface())
 
@@ -95,7 +95,7 @@ async def test_options():
     mock_http.post.assert_called_with(
         'https://graph.facebook.com/v2.6/me/messages/',
         params={
-            'access_token': 'qwerty',
+            'access_token': 'qwerty3',
         },
         json={
             'message': {
@@ -143,7 +143,7 @@ async def test_setup_webhook():
 @pytest.mark.asyncio
 async def test_should_request_user_data_once_we_do_not_know_current_user():
     fb_interface = story.use(messenger.FBInterface(
-        page_access_token='qwerty',
+        page_access_token='qwerty4',
         webhook_url='/webhook',
         webhook_token='some-token',
     ))
@@ -184,7 +184,7 @@ async def test_should_request_user_data_once_we_do_not_know_current_user():
     http.get.assert_called_with(
         'https://graph.facebook.com/v2.6/USER_ID',
         params={
-            'access_token': 'qwerty',
+            'access_token': 'qwerty4',
         },
     )
 
@@ -192,7 +192,7 @@ async def test_should_request_user_data_once_we_do_not_know_current_user():
 @pytest.mark.asyncio
 async def test_should_request_user_data_and_fail():
     fb_interface = story.use(messenger.FBInterface(
-        page_access_token='qwerty',
+        page_access_token='qwerty5',
         webhook_url='/webhook',
         webhook_token='some-token',
     ))
@@ -230,7 +230,7 @@ async def test_should_request_user_data_and_fail():
 @pytest.mark.asyncio
 async def test_webhook_handler_should_return_ok_status_if_http_fail():
     fb_interface = story.use(messenger.FBInterface(
-        page_access_token='qwerty',
+        page_access_token='qwerty6',
         webhook_url='/webhook',
         webhook_token='some-token',
     ))
@@ -547,7 +547,7 @@ async def test_should_not_process_echo_delivery_and_read_messages_as_regular(bui
 
 @pytest.mark.asyncio
 async def test_set_greeting_text():
-    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
+    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty7'))
     mock_http = story.use(mockhttp.MockHttpInterface())
 
     await fb_interface.set_greeting_text('Hi there {{user_first_name}}!')
@@ -555,7 +555,7 @@ async def test_set_greeting_text():
     mock_http.post.assert_called_with(
         'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
-            'access_token': 'qwerty',
+            'access_token': 'qwerty7',
         },
         json={
             'setting_type': 'greeting',
@@ -568,7 +568,7 @@ async def test_set_greeting_text():
 
 @pytest.mark.asyncio
 async def test_can_set_greeting_text_before_inject_http():
-    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
+    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty8'))
     await fb_interface.set_greeting_text('Hi there {{user_first_name}}!')
 
     mock_http = story.use(mockhttp.MockHttpInterface())
@@ -579,7 +579,7 @@ async def test_can_set_greeting_text_before_inject_http():
     mock_http.post.assert_called_with(
         'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
-            'access_token': 'qwerty',
+            'access_token': 'qwerty8',
         },
         json={
             'setting_type': 'greeting',
@@ -594,7 +594,7 @@ async def test_can_set_greeting_text_before_inject_http():
 async def test_can_set_greeting_text_in_constructor():
     story.use(messenger.FBInterface(
         greeting_text='Hi there {{user_first_name}}!',
-        page_access_token='qwerty',
+        page_access_token='qwerty9',
     ))
 
     mock_http = story.use(mockhttp.MockHttpInterface())
@@ -605,7 +605,7 @@ async def test_can_set_greeting_text_in_constructor():
     mock_http.post.assert_called_with(
         'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
-            'access_token': 'qwerty',
+            'access_token': 'qwerty9',
         },
         json={
             'setting_type': 'greeting',
@@ -618,7 +618,7 @@ async def test_can_set_greeting_text_in_constructor():
 
 @pytest.mark.asyncio
 async def test_remove_greeting_text():
-    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
+    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty10'))
     mock_http = story.use(mockhttp.MockHttpInterface())
 
     await fb_interface.remove_greeting_text()
@@ -626,7 +626,7 @@ async def test_remove_greeting_text():
     mock_http.delete.assert_called_with(
         'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
-            'access_token': 'qwerty',
+            'access_token': 'qwerty10',
         },
         json={
             'setting_type': 'greeting',
@@ -636,7 +636,7 @@ async def test_remove_greeting_text():
 
 @pytest.mark.asyncio
 async def test_set_greeting_call_to_action_payload():
-    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
+    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty11'))
     mock_http = story.use(mockhttp.MockHttpInterface())
 
     await fb_interface.set_greeting_call_to_action_payload('SOME_PAYLOAD')
@@ -644,7 +644,7 @@ async def test_set_greeting_call_to_action_payload():
     mock_http.post.assert_called_with(
         'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
-            'access_token': 'qwerty',
+            'access_token': 'qwerty11',
         },
         json={
             'setting_type': 'call_to_actions',
@@ -656,7 +656,7 @@ async def test_set_greeting_call_to_action_payload():
 
 @pytest.mark.asyncio
 async def test_remove_greeting_call_to_action_payload():
-    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
+    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty12'))
     mock_http = story.use(mockhttp.MockHttpInterface())
 
     await fb_interface.remove_greeting_call_to_action_payload()
@@ -664,7 +664,7 @@ async def test_remove_greeting_call_to_action_payload():
     mock_http.delete.assert_called_with(
         'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
-            'access_token': 'qwerty',
+            'access_token': 'qwerty12',
         },
         json={
             'setting_type': 'call_to_actions',
@@ -675,7 +675,7 @@ async def test_remove_greeting_call_to_action_payload():
 
 @pytest.mark.asyncio
 async def test_set_persistent_menu():
-    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
+    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty13'))
     mock_http = story.use(mockhttp.MockHttpInterface())
 
     await fb_interface.set_persistent_menu([{
@@ -691,7 +691,7 @@ async def test_set_persistent_menu():
     mock_http.post.assert_called_with(
         'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
-            'access_token': 'qwerty',
+            'access_token': 'qwerty13',
         },
         json={
             'setting_type': 'call_to_actions',
@@ -711,7 +711,7 @@ async def test_set_persistent_menu():
 
 @pytest.mark.asyncio
 async def test_can_set_persistent_menu_before_http():
-    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
+    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty14'))
     await fb_interface.set_persistent_menu([{
         'type': 'postback',
         'title': 'Help',
@@ -730,7 +730,7 @@ async def test_can_set_persistent_menu_before_http():
     mock_http.post.assert_called_with(
         'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
-            'access_token': 'qwerty',
+            'access_token': 'qwerty14',
         },
         json={
             'setting_type': 'call_to_actions',
@@ -751,7 +751,7 @@ async def test_can_set_persistent_menu_before_http():
 @pytest.mark.asyncio
 async def test_can_set_persistent_menu_inside_of_constructor():
     story.use(messenger.FBInterface(
-        page_access_token='qwerty',
+        page_access_token='qwerty15',
         persistent_menu=[{
             'type': 'postback',
             'title': 'Help',
@@ -771,7 +771,7 @@ async def test_can_set_persistent_menu_inside_of_constructor():
     mock_http.post.assert_called_with(
         'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
-            'access_token': 'qwerty',
+            'access_token': 'qwerty15',
         },
         json={
             'setting_type': 'call_to_actions',
@@ -791,7 +791,7 @@ async def test_can_set_persistent_menu_inside_of_constructor():
 
 @pytest.mark.asyncio
 async def test_remove_persistent_menu():
-    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
+    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty16'))
     mock_http = story.use(mockhttp.MockHttpInterface())
 
     await fb_interface.remove_persistent_menu()
@@ -799,7 +799,7 @@ async def test_remove_persistent_menu():
     mock_http.delete.assert_called_with(
         'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
-            'access_token': 'qwerty',
+            'access_token': 'qwerty16',
         },
         json={
             'setting_type': 'call_to_actions',
