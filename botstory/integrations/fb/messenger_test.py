@@ -591,6 +591,32 @@ async def test_can_set_greeting_text_before_inject_http():
 
 
 @pytest.mark.asyncio
+async def test_can_set_greeting_text_in_constructor():
+    story.use(messenger.FBInterface(
+        greeting_text='Hi there {{user_first_name}}!',
+        page_access_token='qwerty',
+    ))
+
+    mock_http = story.use(mockhttp.MockHttpInterface())
+
+    # give few a moment for lazy initialization of greeting text
+    await asyncio.sleep(0.1)
+
+    mock_http.post.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/thread_settings',
+        params={
+            'access_token': 'qwerty',
+        },
+        json={
+            'setting_type': 'greeting',
+            'greeting': {
+                'text': 'Hi there {{user_first_name}}!',
+            },
+        }
+    )
+
+
+@pytest.mark.asyncio
 async def test_remove_greeting_text():
     fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
     mock_http = story.use(mockhttp.MockHttpInterface())

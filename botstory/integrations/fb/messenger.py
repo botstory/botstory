@@ -2,7 +2,6 @@ import asyncio
 import logging
 from . import validate
 from .. import commonhttp
-from ... import ast
 from ...middlewares import option
 
 logger = logging.getLogger(__name__)
@@ -13,6 +12,7 @@ class FBInterface:
 
     def __init__(self,
                  api_uri='https://graph.facebook.com/v2.6',
+                 greeting_text=None,
                  page_access_token=None,
                  webhook_url=None,
                  webhook_token=None,
@@ -29,7 +29,7 @@ class FBInterface:
         self.webhook = webhook_url
         self.webhook_token = webhook_token
 
-        self.greeting_text = None
+        self.greeting_text = greeting_text
         self.library = None
         self.http = None
         self.processor = None
@@ -86,10 +86,6 @@ class FBInterface:
             asyncio.ensure_future(
                 self.set_greeting_text(self.greeting_text)
             )
-            # loop = asyncio.get_event_loop()
-            # loop.create_task(
-            #     self.set_greeting_text(self.greeting_text)
-            # )
 
     def add_storage(self, storage):
         logger.debug('add_storage')
