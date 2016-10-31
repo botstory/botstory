@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from . import validate
 from .. import commonhttp
@@ -28,6 +29,7 @@ class FBInterface:
         self.webhook = webhook_url
         self.webhook_token = webhook_token
 
+        self.greeting_text = None
         self.library = None
         self.http = None
         self.processor = None
@@ -79,6 +81,15 @@ class FBInterface:
         self.http = http
         if self.webhook:
             http.webhook(self.webhook, self.handle, self.webhook_token)
+
+        if self.greeting_text:
+            asyncio.ensure_future(
+                self.set_greeting_text(self.greeting_text)
+            )
+            # loop = asyncio.get_event_loop()
+            # loop.create_task(
+            #     self.set_greeting_text(self.greeting_text)
+            # )
 
     def add_storage(self, storage):
         logger.debug('add_storage')
@@ -230,10 +241,19 @@ class FBInterface:
         :param message:
         :return:
         """
+        if not message:
+            return
+
         try:
             validate.greeting_text(message)
         except validate.Invalid as i:
             logger.warn(str(i))
+
+        self.greeting_text = message
+
+        if not self.http:
+            # should wait until receive http
+            return
 
         await self.http.post(
             self.api_uri + '/me/thread_settings',
