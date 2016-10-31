@@ -25,13 +25,14 @@ class FBInterface:
         :param webhook_token:
         """
         self.api_uri = api_uri
+        self.greeting_text = greeting_text
         self.token = page_access_token
         self.webhook = webhook_url
         self.webhook_token = webhook_token
 
-        self.greeting_text = greeting_text
         self.library = None
         self.http = None
+        self.persistent_menu = None
         self.processor = None
         self.storage = None
 
@@ -85,6 +86,11 @@ class FBInterface:
         if self.greeting_text:
             asyncio.ensure_future(
                 self.set_greeting_text(self.greeting_text)
+            )
+
+        if self.persistent_menu:
+            asyncio.ensure_future(
+                self.set_persistent_menu(self.persistent_menu)
             )
 
     def add_storage(self, storage):
@@ -237,9 +243,6 @@ class FBInterface:
         :param message:
         :return:
         """
-        if not message:
-            return
-
         try:
             validate.greeting_text(message)
         except validate.Invalid as i:
@@ -318,6 +321,12 @@ class FBInterface:
             validate.persistent_menu(menu)
         except validate.Invalid as i:
             logger.warn(str(i))
+
+        self.persistent_menu = menu
+
+        if not self.http:
+            # should wait until receive http
+            return
 
         await self.http.post(
             self.api_uri + '/me/thread_settings',

@@ -710,6 +710,45 @@ async def test_set_persistent_menu():
 
 
 @pytest.mark.asyncio
+async def test_can_set_persistent_menu_before_http():
+    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
+    await fb_interface.set_persistent_menu([{
+        'type': 'postback',
+        'title': 'Help',
+        'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP'
+    }, {
+        'type': 'web_url',
+        'title': 'View Website',
+        'url': 'http://petersapparel.parseapp.com/'
+    }])
+
+    mock_http = story.use(mockhttp.MockHttpInterface())
+
+    # give few a moment for lazy initialization of greeting text
+    await asyncio.sleep(0.1)
+
+    mock_http.post.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/thread_settings',
+        params={
+            'access_token': 'qwerty',
+        },
+        json={
+            'setting_type': 'call_to_actions',
+            'thread_state': 'new_thread',
+            'call_to_actions': [{
+                'type': 'postback',
+                'title': 'Help',
+                'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP'
+            }, {
+                'type': 'web_url',
+                'title': 'View Website',
+                'url': 'http://petersapparel.parseapp.com/'
+            }]
+        }
+    )
+
+
+@pytest.mark.asyncio
 async def test_remove_persistent_menu():
     fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty'))
     mock_http = story.use(mockhttp.MockHttpInterface())
