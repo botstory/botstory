@@ -95,14 +95,18 @@ def use(middleware):
     return middleware
 
 
-def clear():
+def clear(clear_library=True):
     """
     Clear all deps
     TODO: replace with DI
+
+    :param clear_library:
     :return:
     """
+
     story_processor_instance.clear()
-    stories_library.clear()
+    if clear_library:
+        stories_library.clear()
     chat.clear()
 
     global middlewares
