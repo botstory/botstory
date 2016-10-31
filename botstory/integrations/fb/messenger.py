@@ -19,7 +19,7 @@ class FBInterface:
                  webhook_token=None,
                  ):
         """
-        
+
         :param api_uri:
         :param greeting_text:
         :param page_access_token:
@@ -179,27 +179,26 @@ class FBInterface:
                     if 'message' in m:
                         logger.debug('message notification')
                         raw_message = m.get('message', {})
-
-                        data = {}
-                        text = raw_message.get('text', None)
-                        if text is not None:
-                            data['text'] = {
-                                'raw': text,
-                            }
-                        else:
-                            logger.warning('  entry {} "text"'.format(e))
-
-                        quick_reply = raw_message.get('quick_reply', None)
-                        if quick_reply is not None:
-                            data['option'] = quick_reply['payload']
-
-                        message['data'] = data
-
-                        if raw_message.get('is_echo', False):
+                        if 'is_echo' in raw_message:
                             # TODO: should react somehow.
                             # for example storing for debug purpose
                             logger.debug('just echo message')
                         else:
+                            data = {}
+                            text = raw_message.get('text', None)
+                            if text is not None:
+                                data['text'] = {
+                                    'raw': text,
+                                }
+                            else:
+                                logger.warning('  entry {} "text"'.format(e))
+
+                            quick_reply = raw_message.get('quick_reply', None)
+                            if quick_reply is not None:
+                                data['option'] = quick_reply['payload']
+
+                            message['data'] = data
+
                             await self.processor.match_message(message)
 
                     elif 'postback' in m:
