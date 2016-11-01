@@ -337,8 +337,8 @@ class FBInterface:
             },
             json={
                 'setting_type': 'call_to_actions',
-                'thread_state': 'new_thread',
-                'call_to_actions': menu
+                'thread_state': 'existing_thread',
+                'call_to_actions': menu,
             }
         )
 
@@ -350,6 +350,6 @@ class FBInterface:
             },
             json={
                 'setting_type': 'call_to_actions',
-                'thread_state': 'new_thread',
+                'thread_state': 'existing_thread',
             }
         )

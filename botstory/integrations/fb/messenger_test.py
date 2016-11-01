@@ -695,7 +695,7 @@ async def test_set_persistent_menu():
         },
         json={
             'setting_type': 'call_to_actions',
-            'thread_state': 'new_thread',
+            'thread_state': 'existing_thread',
             'call_to_actions': [{
                 'type': 'postback',
                 'title': 'Help',
@@ -734,7 +734,7 @@ async def test_can_set_persistent_menu_before_http():
         },
         json={
             'setting_type': 'call_to_actions',
-            'thread_state': 'new_thread',
+            'thread_state': 'existing_thread',
             'call_to_actions': [{
                 'type': 'postback',
                 'title': 'Help',
@@ -775,7 +775,7 @@ async def test_can_set_persistent_menu_inside_of_constructor():
         },
         json={
             'setting_type': 'call_to_actions',
-            'thread_state': 'new_thread',
+            'thread_state': 'existing_thread',
             'call_to_actions': [{
                 'type': 'postback',
                 'title': 'Help',
@@ -803,6 +803,6 @@ async def test_remove_persistent_menu():
         },
         json={
             'setting_type': 'call_to_actions',
-            'thread_state': 'new_thread'
+            'thread_state': 'existing_thread'
         }
     )
