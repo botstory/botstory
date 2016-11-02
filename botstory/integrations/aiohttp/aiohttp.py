@@ -117,6 +117,8 @@ class AioHttpInterface:
 
     async def delete(self, url, params=None, headers=None, json=None):
         logger.debug('delete url={}'.format(url))
+        headers = headers or {}
+        headers['Content-Type'] = headers.get('Content-Type', 'application/json')
         loop = asyncio.get_event_loop()
         with aiohttp.ClientSession(loop=loop) as session:
             return await(await self.method(
