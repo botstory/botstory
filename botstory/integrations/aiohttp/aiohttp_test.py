@@ -130,3 +130,26 @@ async def test_post_400_from_wrong_path():
         await http.post('http://localhost:9876/webhook')
     except errors.HttpRequestError as err:
         assert err.code == 400
+
+
+@pytest.mark.asyncio
+async def test_delete_200(event_loop):
+    async with fake_fb.Server(event_loop) as server:
+        async with server.session() as session:
+            http = AioHttpInterface()
+            http.session = session
+
+            await http.delete(fake_fb.URI.format('/v2.6/me/thread_settings'))
+
+
+@pytest.mark.asyncio
+async def test_delete_400(event_loop):
+    async with fake_fb.Server(event_loop) as server:
+        async with server.session() as session:
+            http = AioHttpInterface()
+            http.session = session
+
+            try:
+                await http.delete(fake_fb.URI.format('/v2.6/me/wrong'))
+            except errors.HttpRequestError as err:
+                assert err.code == 404

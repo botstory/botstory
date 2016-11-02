@@ -115,6 +115,18 @@ class AioHttpInterface:
                 'text': await res.text(),
             }
 
+    async def delete(self, url, params=None, headers=None):
+        logger.debug('delete url={}'.format(url))
+        loop = asyncio.get_event_loop()
+        with aiohttp.ClientSession(loop=loop) as session:
+            return await(await self.method(
+                method_type='delete',
+                session=session,
+                url=url,
+                params=params,
+                headers=headers,
+            )).json()
+
     async def method(self, method_type, session, url, **kwargs):
         # be able to mock session from outside
         session = self.session or session
