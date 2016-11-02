@@ -602,6 +602,16 @@ async def test_can_set_greeting_text_in_constructor():
     # give few a moment for lazy initialization of greeting text
     await asyncio.sleep(0.1)
 
+    mock_http.delete.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/thread_settings',
+        params={
+            'access_token': 'qwerty9',
+        },
+        json={
+            'setting_type': 'greeting',
+        },
+    )
+
     mock_http.post.assert_called_with(
         'https://graph.facebook.com/v2.6/me/thread_settings',
         params={

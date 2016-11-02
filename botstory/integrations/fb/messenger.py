@@ -88,7 +88,7 @@ class FBInterface:
 
         if self.greeting_text:
             asyncio.ensure_future(
-                self.set_greeting_text(self.greeting_text)
+                self.reploace_greeting_text(self.greeting_text)
             )
 
         if self.persistent_menu:
@@ -230,6 +230,10 @@ class FBInterface:
         })
         if have_on_start_story:
             await self.set_greeting_call_to_action_payload(option.OnStart.DEFAULT_OPTION_PAYLOAD)
+
+    async def reploace_greeting_text(self, message):
+        await self.remove_greeting_text()
+        await self.set_greeting_text(message)
 
     async def set_greeting_text(self, message):
         """
