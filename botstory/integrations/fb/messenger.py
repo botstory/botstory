@@ -80,6 +80,12 @@ class FBInterface:
             })
 
     def add_http(self, http):
+        """
+        inject http provider
+
+        :param http:
+        :return:
+        """
         logger.debug('add_http')
         logger.debug(http)
         self.http = http
@@ -88,12 +94,12 @@ class FBInterface:
 
         if self.greeting_text:
             asyncio.ensure_future(
-                self.reploace_greeting_text(self.greeting_text)
+                self.replace_greeting_text(self.greeting_text)
             )
 
         if self.persistent_menu:
             asyncio.ensure_future(
-                self.set_persistent_menu(self.persistent_menu)
+                self.replace_persistent_menu(self.persistent_menu)
             )
 
     def add_storage(self, storage):
@@ -231,8 +237,17 @@ class FBInterface:
         if have_on_start_story:
             await self.set_greeting_call_to_action_payload(option.OnStart.DEFAULT_OPTION_PAYLOAD)
 
-    async def reploace_greeting_text(self, message):
-        await self.remove_greeting_text()
+    async def replace_greeting_text(self, message):
+        """
+        delete greeting text before
+        :param message:
+        :return:
+        """
+        try:
+            await self.remove_greeting_text()
+        except Exception:
+            pass
+
         await self.set_greeting_text(message)
 
     async def set_greeting_text(self, message):
@@ -274,6 +289,9 @@ class FBInterface:
         )
 
     async def remove_greeting_text(self):
+        if not self.http:
+            return
+
         await self.http.delete(
             self.api_uri + '/me/thread_settings',
             params={
@@ -305,6 +323,9 @@ class FBInterface:
         )
 
     async def remove_greeting_call_to_action_payload(self):
+        if not self.http:
+            return
+
         await self.http.delete(
             self.api_uri + '/me/thread_settings',
             params={
@@ -315,6 +336,13 @@ class FBInterface:
                 'thread_state': 'new_thread',
             }
         )
+
+    async def replace_persistent_menu(self, menu):
+        try:
+            await self.remove_persistent_menu()
+        except Exception:
+            pass
+        await self.set_persistent_menu(menu)
 
     async def set_persistent_menu(self, menu):
         """
@@ -347,6 +375,9 @@ class FBInterface:
         )
 
     async def remove_persistent_menu(self):
+        if not self.http:
+            return
+
         await self.http.delete(
             self.api_uri + '/me/thread_settings',
             params={

@@ -778,6 +778,17 @@ async def test_can_set_persistent_menu_inside_of_constructor():
     # give few a moment for lazy initialization of greeting text
     await asyncio.sleep(0.1)
 
+    mock_http.delete.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/thread_settings',
+        params={
+            'access_token': 'qwerty15',
+        },
+        json={
+            'setting_type': 'call_to_actions',
+            'thread_state': 'existing_thread',
+        }
+    )
+
     mock_http.post.assert_called_with(
         'https://graph.facebook.com/v2.6/me/thread_settings',
         params={
