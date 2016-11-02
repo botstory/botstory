@@ -115,7 +115,7 @@ class AioHttpInterface:
                 'text': await res.text(),
             }
 
-    async def delete(self, url, params=None, headers=None):
+    async def delete(self, url, params=None, headers=None, json=None):
         logger.debug('delete url={}'.format(url))
         loop = asyncio.get_event_loop()
         with aiohttp.ClientSession(loop=loop) as session:
@@ -125,6 +125,7 @@ class AioHttpInterface:
                 url=url,
                 params=params,
                 headers=headers,
+                data=_json.dumps(json),
             )).json()
 
     async def method(self, method_type, session, url, **kwargs):
