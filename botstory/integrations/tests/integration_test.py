@@ -110,8 +110,8 @@ async def test_integrate_mongodb_with_facebook(open_db, build_context):
                 trigger.receive(message)
 
         await facebook.handle({
-            "object": "page",
-            "entry": [{
+            'object': 'page',
+            'entry': [{
                 'id': 'PAGE_ID',
                 'time': 1473204787206,
                 'messaging': [{
@@ -157,8 +157,8 @@ async def test_integrate_mongodb_with_facebook_with_none_session(open_db, build_
                 trigger.receive(message)
 
         await facebook.handle({
-            "object": "page",
-            "entry": [{
+            'object': 'page',
+            'entry': [{
                 'id': 'PAGE_ID',
                 'time': 1473204787206,
                 'messaging': [{
@@ -198,39 +198,48 @@ async def test_story_on_start(open_db, build_context):
 
         await story.start()
 
-        # TODO: check whether we've told to fb that start button generate
-        # `BOT_STORY.PUSH_GET_STARTED_BUTTON` payload
+        http.delete.assert_called_with(
+            'https://graph.facebook.com/v2.6/me/thread_settings',
+            params={
+                'access_token': 'qwerty',
+            },
+            json={
+                'setting_type': 'call_to_actions',
+                'thread_state': 'new_thread',
+            }
+        )
+
         http.post.assert_called_with(
             'https://graph.facebook.com/v2.6/me/thread_settings',
             params={
                 'access_token': 'qwerty',
             },
             json={
-                "setting_type": "call_to_actions",
-                "thread_state": "new_thread",
-                "call_to_actions": [
+                'setting_type': 'call_to_actions',
+                'thread_state': 'new_thread',
+                'call_to_actions': [
                     {
-                        "payload": "BOT_STORY.PUSH_GET_STARTED_BUTTON"
+                        'payload': 'BOT_STORY.PUSH_GET_STARTED_BUTTON'
                     }
                 ]
             }
         )
 
         await facebook.handle({
-            "object": "page",
-            "entry": [{
+            'object': 'page',
+            'entry': [{
                 'id': 'PAGE_ID',
                 'time': 1473204787206,
                 'messaging': [{
-                    "sender": {
-                        "id": "USER_ID"
+                    'sender': {
+                        'id': 'USER_ID'
                     },
-                    "recipient": {
-                        "id": "PAGE_ID"
+                    'recipient': {
+                        'id': 'PAGE_ID'
                     },
-                    "timestamp": 1458692752478,
-                    "postback": {
-                        "payload": "BOT_STORY.PUSH_GET_STARTED_BUTTON"
+                    'timestamp': 1458692752478,
+                    'postback': {
+                        'payload': 'BOT_STORY.PUSH_GET_STARTED_BUTTON'
                     }
                 }]
             }]

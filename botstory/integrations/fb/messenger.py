@@ -235,6 +235,7 @@ class FBInterface:
             'data': {'option': option.OnStart.DEFAULT_OPTION_PAYLOAD}
         })
         if have_on_start_story:
+            await self.remove_greeting_call_to_action_payload()
             await self.set_greeting_call_to_action_payload(option.OnStart.DEFAULT_OPTION_PAYLOAD)
 
     async def replace_greeting_text(self, message):
