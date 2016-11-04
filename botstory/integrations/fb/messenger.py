@@ -1,5 +1,8 @@
+import asyncio
 import logging
+from . import validate
 from .. import commonhttp
+from ...middlewares import option
 
 logger = logging.getLogger(__name__)
 
@@ -9,22 +12,29 @@ class FBInterface:
 
     def __init__(self,
                  api_uri='https://graph.facebook.com/v2.6',
+                 greeting_text=None,
                  page_access_token=None,
+                 persistent_menu=None,
                  webhook_url=None,
                  webhook_token=None,
                  ):
         """
 
         :param api_uri:
+        :param greeting_text:
         :param page_access_token:
+        :param persistent_menu:
         :param webhook_url:
         :param webhook_token:
         """
         self.api_uri = api_uri
+        self.greeting_text = greeting_text
+        self.persistent_menu = persistent_menu
         self.token = page_access_token
         self.webhook = webhook_url
         self.webhook_token = webhook_token
 
+        self.library = None
         self.http = None
         self.processor = None
         self.storage = None
@@ -40,6 +50,11 @@ class FBInterface:
 
         :return:
         """
+
+        try:
+            validate.send_text_message(text, options)
+        except validate.Invalid as i:
+            logger.warn(str(i))
 
         if not options:
             options = []
@@ -65,11 +80,27 @@ class FBInterface:
             })
 
     def add_http(self, http):
+        """
+        inject http provider
+
+        :param http:
+        :return:
+        """
         logger.debug('add_http')
         logger.debug(http)
         self.http = http
         if self.webhook:
             http.webhook(self.webhook, self.handle, self.webhook_token)
+
+        if self.greeting_text:
+            asyncio.ensure_future(
+                self.replace_greeting_text(self.greeting_text)
+            )
+
+        if self.persistent_menu:
+            asyncio.ensure_future(
+                self.replace_persistent_menu(self.persistent_menu)
+            )
 
     def add_storage(self, storage):
         logger.debug('add_storage')
@@ -150,38 +181,44 @@ class FBInterface:
                         'session': session,
                         'user': user,
                     }
-                    raw_message = m.get('message', {})
 
-                    if raw_message == {}:
-                        logger.warning('  entry {} "message" field is empty'.format(e))
+                    if 'message' in m:
+                        logger.debug('message notification')
+                        raw_message = m.get('message', {})
+                        if 'is_echo' in raw_message:
+                            # TODO: should react somehow.
+                            # for example storing for debug purpose
+                            logger.debug('just echo message')
+                        else:
+                            data = {}
+                            text = raw_message.get('text', None)
+                            if text is not None:
+                                data['text'] = {
+                                    'raw': text,
+                                }
+                            else:
+                                logger.warning('  entry {} "text"'.format(e))
 
-                    logger.debug('  raw_message: {}'.format(raw_message))
+                            quick_reply = raw_message.get('quick_reply', None)
+                            if quick_reply is not None:
+                                data['option'] = quick_reply['payload']
 
-                    data = {}
-                    text = raw_message.get('text', None)
-                    if text is not None:
-                        data['text'] = {
-                            'raw': text,
+                            message['data'] = data
+
+                            await self.processor.match_message(message)
+
+                    elif 'postback' in m:
+                        message['data'] = {
+                            'option': m['postback']['payload'],
                         }
-                    else:
-                        logger.warning('  entry {} "text"'.format(e))
-
-                    quick_reply = raw_message.get('quick_reply', None)
-                    if quick_reply is not None:
-                        data['option'] = quick_reply['payload']
-
-                    message['data'] = data
-
-                    if raw_message.get('is_echo', False):
-                        # TODO: should react somehow.
-                        # for example storing for debug purpose
-                        logger.debug('just echo message')
+                        await self.processor.match_message(message)
                     elif 'delivery' in m:
                         logger.debug('delivery notification')
                     elif 'read' in m:
                         logger.debug('read notification')
                     else:
-                        await self.processor.match_message(message)
+                        logger.warning('(!) unknown case {}'.format(e))
+
         except BaseException as err:
             logger.exception(err)
 
@@ -189,3 +226,166 @@ class FBInterface:
             'status': 200,
             'text': 'Ok!',
         }
+
+    async def start(self):
+        logger.debug('start')
+
+        # check whether we have `On Start Story`
+        have_on_start_story = not not self.library.get_right_story({
+            'data': {'option': option.OnStart.DEFAULT_OPTION_PAYLOAD}
+        })
+        if have_on_start_story:
+            await self.remove_greeting_call_to_action_payload()
+            await self.set_greeting_call_to_action_payload(option.OnStart.DEFAULT_OPTION_PAYLOAD)
+
+    async def replace_greeting_text(self, message):
+        """
+        delete greeting text before
+        :param message:
+        :return:
+        """
+        try:
+            await self.remove_greeting_text()
+        except Exception:
+            pass
+
+        await self.set_greeting_text(message)
+
+    async def set_greeting_text(self, message):
+        """
+        set a greeting for new conversations
+
+        can use for personalizing
+            {{user_first_name}}
+            {{user_last_name}}
+            {{user_full_name}}
+
+        more: https://developers.facebook.com/docs/messenger-platform/thread-settings/greeting-text
+
+        :param message:
+        :return:
+        """
+        try:
+            validate.greeting_text(message)
+        except validate.Invalid as i:
+            logger.warn(str(i))
+
+        self.greeting_text = message
+
+        if not self.http:
+            # should wait until receive http
+            return
+
+        await self.http.post(
+            self.api_uri + '/me/thread_settings',
+            params={
+                'access_token': self.token,
+            },
+            json={
+                'setting_type': 'greeting',
+                'greeting': {
+                    'text': message,
+                },
+            }
+        )
+
+    async def remove_greeting_text(self):
+        if not self.http:
+            return
+
+        await self.http.delete(
+            self.api_uri + '/me/thread_settings',
+            params={
+                'access_token': self.token,
+            },
+            json={
+                'setting_type': 'greeting',
+            }
+        )
+
+    async def set_greeting_call_to_action_payload(self, payload):
+        """
+
+        more: https://developers.facebook.com/docs/messenger-platform/thread-settings/get-started-button
+
+        :param payload:
+        :return:
+        """
+        await self.http.post(
+            self.api_uri + '/me/thread_settings',
+            params={
+                'access_token': self.token,
+            },
+            json={
+                'setting_type': 'call_to_actions',
+                'thread_state': 'new_thread',
+                'call_to_actions': [{'payload': payload}]
+            }
+        )
+
+    async def remove_greeting_call_to_action_payload(self):
+        if not self.http:
+            return
+
+        await self.http.delete(
+            self.api_uri + '/me/thread_settings',
+            params={
+                'access_token': self.token,
+            },
+            json={
+                'setting_type': 'call_to_actions',
+                'thread_state': 'new_thread',
+            }
+        )
+
+    async def replace_persistent_menu(self, menu):
+        try:
+            await self.remove_persistent_menu()
+        except Exception:
+            pass
+        await self.set_persistent_menu(menu)
+
+    async def set_persistent_menu(self, menu):
+        """
+        more: https://developers.facebook.com/docs/messenger-platform/thread-settings/persistent-menu
+
+        :param menu:
+        :return:
+        """
+        try:
+            validate.persistent_menu(menu)
+        except validate.Invalid as i:
+            logger.warn(str(i))
+
+        self.persistent_menu = menu
+
+        if not self.http:
+            # should wait until receive http
+            return
+
+        await self.http.post(
+            self.api_uri + '/me/thread_settings',
+            params={
+                'access_token': self.token,
+            },
+            json={
+                'setting_type': 'call_to_actions',
+                'thread_state': 'existing_thread',
+                'call_to_actions': menu,
+            }
+        )
+
+    async def remove_persistent_menu(self):
+        if not self.http:
+            return
+
+        await self.http.delete(
+            self.api_uri + '/me/thread_settings',
+            params={
+                'access_token': self.token,
+            },
+            json={
+                'setting_type': 'call_to_actions',
+                'thread_state': 'existing_thread',
+            }
+        )

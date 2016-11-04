@@ -16,8 +16,11 @@ def stub(name=None):
 
 
 class MockHttpInterface:
-    def __init__(self, get={}, get_raise=sentinel,
+    def __init__(self,
+                 get={}, get_raise=sentinel,
                  post=True, post_raise=sentinel,
+                 put=True, put_raise=sentinel,
+                 delete=True, delete_raise=sentinel,
                  start=True,
                  stop=True):
         self.get = aiohttp.test_utils.make_mocked_coro(
@@ -35,6 +38,14 @@ class MockHttpInterface:
         self.post_raw = aiohttp.test_utils.make_mocked_coro(
             return_value={'text': json.dumps(post), 'status': 200, },
             raise_exception=post_raise,
+        )
+        self.delete = aiohttp.test_utils.make_mocked_coro(
+            return_value=delete,
+            raise_exception=delete_raise,
+        )
+        self.put = aiohttp.test_utils.make_mocked_coro(
+            return_value=put,
+            raise_exception=put_raise,
         )
         self.start = aiohttp.test_utils.make_mocked_coro(return_value=start)
         self.stop = aiohttp.test_utils.make_mocked_coro(return_value=stop)

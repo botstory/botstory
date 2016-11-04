@@ -173,6 +173,18 @@ class FakeFacebook:
             'status': 'ok',
         })
 
+    @post('/v2.6/me/thread_settings')
+    async def on_thread_settings_post(self, request):
+        return web.json_response({
+            'status': 'ok',
+        })
+
+    @delete('/v2.6/me/thread_settings')
+    async def on_remove_thread_setting(self, request):
+        return web.json_response({
+            'status': 'ok',
+        })
+
 
 class Server:
     def __init__(self, loop):

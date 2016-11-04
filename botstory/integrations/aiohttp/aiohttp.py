@@ -115,6 +115,21 @@ class AioHttpInterface:
                 'text': await res.text(),
             }
 
+    async def delete(self, url, params=None, headers=None, json=None):
+        logger.debug('delete url={}'.format(url))
+        headers = headers or {}
+        headers['Content-Type'] = headers.get('Content-Type', 'application/json')
+        loop = asyncio.get_event_loop()
+        with aiohttp.ClientSession(loop=loop) as session:
+            return await(await self.method(
+                method_type='delete',
+                session=session,
+                url=url,
+                params=params,
+                headers=headers,
+                data=_json.dumps(json),
+            )).json()
+
     async def method(self, method_type, session, url, **kwargs):
         # be able to mock session from outside
         session = self.session or session
@@ -136,7 +151,7 @@ class AioHttpInterface:
                     headers=resp.headers,
                     message=await resp.text(),
                 )
-        except BaseException as err:
+        except Exception as err:
             logger.warn('Exception: status: {status}, message: {message}, method: {method}, url: {url}, {kwargs}'
                         .format(status=err.code,
                                 message=err.message,

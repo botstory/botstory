@@ -27,6 +27,10 @@ class StoryProcessor:
         for interface in self.interfaces:
             interface.add_storage(storage)
 
+    def clear(self):
+        self.interfaces = []
+        self.storage = None
+
     async def match_message(self, message):
         logger.debug('')
         logger.debug('> match_message <')

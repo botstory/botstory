@@ -38,6 +38,7 @@ forking_api = forking.ForkingStoriesAPI(
 callable = callable_stories_instance.callable
 case = forking_api.case
 on = common_stories_instance.on
+on_start = common_stories_instance.on_start
 part = common_stories_instance.part
 
 # expose message handler API:
@@ -78,6 +79,9 @@ def use(middleware):
 
     if check_spec(['send_text_message'], middleware):
         chat.add_interface(middleware)
+        # TODO: should find more elegant way to inject library to fb interface
+        # or information whether we have On Start story
+        middleware.library = stories_library
 
     if check_spec(['handle'], middleware):
         story_processor_instance.add_interface(middleware)
@@ -89,6 +93,24 @@ def use(middleware):
         chat.add_http(middleware)
 
     return middleware
+
+
+def clear(clear_library=True):
+    """
+    Clear all deps
+    TODO: replace with DI
+
+    :param clear_library:
+    :return:
+    """
+
+    story_processor_instance.clear()
+    if clear_library:
+        stories_library.clear()
+    chat.clear()
+
+    global middlewares
+    middlewares = []
 
 
 async def start():

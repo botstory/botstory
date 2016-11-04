@@ -1,4 +1,4 @@
-from .. import matchers
+from .. import matchers, middlewares
 
 
 class CommonStoriesAPI:
@@ -12,6 +12,18 @@ class CommonStoriesAPI:
                 one_story,
             )
             compiled_story.extensions['validator'] = matchers.get_validator(receive)
+            self.library.add_message_handler(compiled_story)
+
+            return one_story
+
+        return fn
+
+    def on_start(self):
+        def fn(one_story):
+            compiled_story = self.parser_instance.compile(
+                one_story,
+            )
+            compiled_story.extensions['validator'] = middlewares.option.OnStart()
             self.library.add_message_handler(compiled_story)
 
             return one_story

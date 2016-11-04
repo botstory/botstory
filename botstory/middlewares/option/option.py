@@ -28,3 +28,12 @@ class Match:
     @staticmethod
     def deserialize(option):
         return Match(option)
+
+
+@matchers.matcher()
+class OnStart:
+    type = 'Option.OnStart'
+    DEFAULT_OPTION_PAYLOAD = 'BOT_STORY.PUSH_GET_STARTED_BUTTON'
+
+    def validate(self, message):
+        return message.get('data', {}).get('option', None) == self.DEFAULT_OPTION_PAYLOAD
