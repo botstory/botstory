@@ -135,8 +135,8 @@ class AioHttpInterface:
         session = self.session or session
         try:
             try:
-                method = getattr(session, method_type)
-                resp = await method(
+                method_name = getattr(session, method_type)
+                resp = await method_name(
                     url,
                     **kwargs,
                 )
@@ -152,10 +152,11 @@ class AioHttpInterface:
                     message=await resp.text(),
                 )
         except Exception as err:
-            logger.warn('Exception: status: {status}, message: {message}, method: {method}, url: {url}, {kwargs}'
-                        .format(status=err.code,
-                                message=err.message,
-                                method=method,
+            logger.warn('Exception: status: {status}, message: {message}, type: {type}, method: {method}, url: {url}, {kwargs}'
+                        .format(status=getattr(err, 'code', None),
+                                message=getattr(err, 'message', None),
+                                type=type(err),
+                                method=method_name,
                                 url=url,
                                 kwargs=kwargs,
                                 )
