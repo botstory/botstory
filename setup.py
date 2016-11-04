@@ -31,9 +31,9 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
     install_requires=[
-        'aiohttp==1.0.5',
-        'motor==0.7b0',
-        'yarl==0.4.3',
+        'aiohttp==1.1.1',
+        'motor==1.0',
+        'yarl==0.5.3',
     ],
     package_data={
         '': ['*.crt', '*.key']
