@@ -13,7 +13,7 @@ class FBInterface:
     def __init__(self,
                  api_uri='https://graph.facebook.com/v2.6',
                  greeting_text=None,
-                 page_access_token=None,
+                 page_access_token='?',
                  persistent_menu=None,
                  webhook_url=None,
                  webhook_token=None,
