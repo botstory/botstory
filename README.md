@@ -1,4 +1,4 @@
-# State [![Build Status](https://travis-ci.org/hyzhak/bot-story.svg?branch=develop)](https://travis-ci.org/hyzhak/bot-story) [![Coverage Status](https://coveralls.io/repos/github/hyzhak/bot-story/badge.svg?branch=develop)](https://coveralls.io/github/hyzhak/bot-story?branch=develop)
+# State [![Build Status](https://travis-ci.org/botstory/botstory.svg?branch=develop)](https://travis-ci.org/botstory/botstory) [![Coverage Status](https://coveralls.io/repos/github/botstory/botstory/badge.svg?branch=develop)](https://coveralls.io/github/botstory/botstory?branch=develop)
 
 Under active development
 

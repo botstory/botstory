@@ -19,8 +19,8 @@ setup(
     long_description=longDesc,
     author='Eugene Krevenets',
     author_email='ievegenii.krevenets@gmail.com',
-    url='https://github.com/hyzhak/bot-story',
-    download_url='https://github.com/hyzhak/bot-story/tarball/0.0.1',
+    url='https://github.com/botstory/bot-story',
+    download_url='https://github.com/botstory/bot-story/tarball/{}'.format(version),
     keywords=['bot', 'ai', 'nlp', 'asyncio'],
     classifiers=[
         'Development Status :: 1 - Planning',
