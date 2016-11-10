@@ -11,18 +11,18 @@ class GAStatistics:
     """
 
     def __init__(self,
-                 account_id,
+                 tracking_id,
                  ):
         """
-        :param account_id: should be like UA-XXXXX-Y
+        :param tracking_id: should be like UA-XXXXX-Y
         """
-        self.account_id = account_id
+        self.tracking_id = tracking_id
 
     def story_part(self, user, story_name, story_part_name):
         tracker = Tracker.create(
-            account=self.account_id,
+            account=self.tracking_id,
             client_id=user['_id'],
         )
-        # TODO: should make it async because we don't need to
-        # wait result of logging
+        # TODO: should make it async because we don't need
+        # to wait result of tracking
         tracker.send('pageview', '{}/{}'.format(story_name, story_part_name))
