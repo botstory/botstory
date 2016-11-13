@@ -35,18 +35,17 @@ class GAStatistics:
                               )
         )
 
-    async def event(self, user,
-                    event_category=None,
-                    event_action=None,
-                    event_label=None,
-                    event_value=None,
-                    fields_object=None,
-                    ):
-        # TODO: should make it async because we don't need
-        # to wait result of tracking
-        await self.get_tracker(user).send('event',
-                                          event_category, event_action, event_label, event_value,
-                                          fields_object)
+    def event(self, user,
+              event_category=None,
+              event_action=None,
+              event_label=None,
+              event_value=None,
+              ):
+        queue.add(
+            functools.partial(self.get_tracker(user).send,
+                              'event', event_category, event_action, event_label, event_value
+                              )
+        )
 
 
 async def store_story_page():
