@@ -1,5 +1,8 @@
 import asyncio
+import functools
 from .universal_analytics.tracker import Tracker
+
+from ...utils import queue
 
 
 class GAStatistics:
@@ -25,8 +28,12 @@ class GAStatistics:
             client_id=user['_id'],
         )
 
-    async def story(self, user, story_name, story_part_name):
-        await self.get_tracker(user).send('pageview', '{}/{}'.format(story_name, story_part_name))
+    def story(self, user, story_name, story_part_name):
+        queue.add(
+            functools.partial(self.get_tracker(user).send,
+                              'pageview', '{}/{}'.format(story_name, story_part_name),
+                              )
+        )
 
     async def event(self, user,
                     event_category=None,
