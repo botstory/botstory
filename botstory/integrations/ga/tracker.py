@@ -6,7 +6,7 @@ from ...utils import queue
 
 
 class GAStatistics:
-    type = 'interface.ga.analytics'
+    type = 'interface.tracker'
     """
     pageview: [ page path ]
     event: category, action, [ label [, value ] ]
