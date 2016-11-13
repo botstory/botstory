@@ -8,15 +8,20 @@
 ###############################################################################
 
 import urllib
+import aiohttp
+import asyncio
 from urllib.request import urlopen, build_opener, install_opener
 from urllib.request import Request, HTTPSHandler
 from urllib.error import URLError, HTTPError
 from urllib.parse import urlencode
 
 import datetime
+import hashlib
+import logging
 import time
 import uuid
-import hashlib
+
+logger = logging.getLogger(__name__)
 
 
 def generate_uuid(basedata=None):
@@ -26,7 +31,7 @@ def generate_uuid(basedata=None):
     elif isinstance(basedata, str):
         checksum = hashlib.md5(basedata).hexdigest()
         return '%8s-%4s-%4s-%4s-%12s' % (
-        checksum[0:8], checksum[8:12], checksum[12:16], checksum[16:20], checksum[20:32])
+            checksum[0:8], checksum[8:12], checksum[12:16], checksum[16:20], checksum[20:32])
 
 
 class Time(datetime.datetime):
@@ -54,13 +59,13 @@ class Time(datetime.datetime):
             base = timestamp
         else:
             base = cls.to_unix(timestamp)
-            base = base + (timestamp.microsecond / 1000000)
+            base += (timestamp.microsecond / 1000000)
         if now is None:
             now = time.time()
         return (now - base) * 1000
 
 
-class HTTPRequest(object):
+class HTTPRequest:
     """ URL Construction and request handling abstraction.
         This is not intended to be used outside this module.
 
@@ -79,7 +84,7 @@ class HTTPRequest(object):
 
     # Store properties for all requests
     def __init__(self, user_agent=None, *args, **opts):
-        self.user_agent = user_agent or 'Analytics Pros - Universal Analytics (Python)'
+        self.user_agent = user_agent or 'Bot Story'
 
     @classmethod
     def fixUTF8(cls, data):  # Ensure proper encoding for UA's servers...
@@ -90,14 +95,30 @@ class HTTPRequest(object):
         return data
 
     # Apply stored properties to the given dataset & POST to the configured endpoint
-    def send(self, values):
-        request = Request(
-            self.endpoint + '?' + urlencode(self.fixUTF8(values)),
-            headers={
-                'User-Agent': self.user_agent
-            }
-        )
-        self.open(request)
+    def send_data(self, session, values):
+        logger.debug('get')
+        logger.debug(values)
+
+        return session.get(self.endpoint + '?' + urlencode(self.fixUTF8(values)),
+                           headers={
+                               'User-Agent': self.user_agent
+                           })
+
+    # Apply stored properties to the given dataset & POST to the configured endpoint
+    async def send(self, values):
+        logging.debug('send')
+        logging.debug(values)
+
+        logging.debug('self.user_agent')
+        logging.debug(self.user_agent)
+
+        loop = asyncio.get_event_loop()
+        async with aiohttp.ClientSession(loop=loop) as session:
+            async with self.send_data(self._session or session, values) as resp:
+                logging.debug('status')
+                logging.debug(resp.status)
+                logging.debug('resp.text()')
+                logging.debug(await resp.text())
 
     def open(self, request):
         try:
@@ -115,20 +136,18 @@ class HTTPRequest(object):
 
 
 class HTTPPost(HTTPRequest):
-    # Apply stored properties to the given dataset & POST to the configured endpoint
-    def send(self, values):
+    def send_data(self, session, values):
         data = urllib.parse.urlencode(values)
         binary_data = data.encode('utf-8')
 
-        request = Request(
-            self.endpoint,
-            data=binary_data,
-            # data=urlencode(self.fixUTF8(values)),
-            headers={
-                'User-Agent': self.user_agent
-            }
-        )
-        self.open(request)
+        logging.debug('binary_data')
+        logging.debug(binary_data)
+
+        return session.post(self.endpoint,
+                            data=binary_data,
+                            headers={
+                                'User-Agent': self.user_agent
+                            })
 
 
 class Tracker(object):
@@ -195,7 +214,8 @@ class Tracker(object):
 
     def __init__(self, account, name=None, client_id=None, hash_client_id=False, user_id=None, user_agent=None,
                  use_post=True):
-
+        # for debug purpose
+        self._session = None
         if use_post is False:
             self.http = HTTPRequest(user_agent=user_agent)
         else:
@@ -220,7 +240,7 @@ class Tracker(object):
         if 'hitage' in data:  # a relative age (in seconds)
             data['qt'] = self.hittime(age=data.pop('hitage', None))
 
-    def send(self, hittype, *args, **data):
+    async def send(self, hittype, *args, **data):
         """ Transmit HTTP requests to Google Analytics using the measurement protocol """
 
         if hittype not in self.valid_hittypes:
@@ -244,7 +264,7 @@ class Tracker(object):
             data['cid'] = generate_uuid(data['cid'])
 
         # Transmit the hit to Google...
-        self.http.send(data)
+        await self.http.send(data)
 
     # Setting persistent attibutes of the session/hit/etc (inc. custom dimensions/metrics)
     def set(self, name, value=None):
@@ -426,5 +446,3 @@ for promotion_index in range(1, MAX_EC_PROMOTIONS):
 # Shortcut for creating trackers
 def create(account, *args, **kwargs):
     return Tracker(account, *args, **kwargs)
-
-# vim: set nowrap tabstop=4 shiftwidth=4 softtabstop=0 expandtab textwidth=0 filetype=python foldmethod=indent foldcolumn=4

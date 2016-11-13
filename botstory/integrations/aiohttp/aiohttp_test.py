@@ -2,18 +2,18 @@ from aiohttp import test_utils
 import json
 import pytest
 from . import AioHttpInterface
-from ..tests.fake_server import fake_fb
 from ..commonhttp import errors
+from ..tests import fake_server
 
 
 @pytest.mark.asyncio
 async def test_post(event_loop):
-    async with fake_fb.Server(event_loop) as server:
+    async with fake_server.FakeFacebook(event_loop) as server:
         async with server.session() as session:
             http = AioHttpInterface()
             http.session = session
 
-            assert await http.post(fake_fb.URI.format('/v2.6/me/messages/'), json={'message': 'hello world!'})
+            assert await http.post(fake_server.URI.format('/v2.6/me/messages/'), json={'message': 'hello world!'})
             assert len(server.history) == 1
             req = server.history[-1]['request']
             assert req.content_type == 'application/json'
@@ -82,7 +82,7 @@ async def test_should_not_create_server_if_there_wasnt_any_webhooks():
 
 
 @pytest.mark.skip(reason='too long')
-@pytest.mark.asyncio
+@pytest.mark.asynciod
 async def test_get_400_from_wrong_domain():
     http = AioHttpInterface()
     try:
@@ -102,13 +102,13 @@ async def test_get_400_from_wrong_path():
 
 @pytest.mark.asyncio
 async def test_post_to_wrong_path_get_400(event_loop):
-    async with fake_fb.Server(event_loop) as server:
+    async with fake_server.FakeFacebook(event_loop) as server:
         async with server.session() as session:
             http = AioHttpInterface()
             http.session = session
 
             try:
-                await http.post(fake_fb.URI.format('/v2.6/me/messages/mistake'), json={'message': 'hello world!'})
+                await http.post(fake_server.URI.format('/v2.6/me/messages/mistake'), json={'message': 'hello world!'})
             except errors.HttpRequestError as err:
                 assert err.code == 404
 
@@ -134,22 +134,22 @@ async def test_post_400_from_wrong_path():
 
 @pytest.mark.asyncio
 async def test_delete_200(event_loop):
-    async with fake_fb.Server(event_loop) as server:
+    async with fake_server.FakeFacebook(event_loop) as server:
         async with server.session() as session:
             http = AioHttpInterface()
             http.session = session
 
-            await http.delete(fake_fb.URI.format('/v2.6/me/thread_settings'))
+            await http.delete(fake_server.URI.format('/v2.6/me/thread_settings'))
 
 
 @pytest.mark.asyncio
 async def test_delete_400(event_loop):
-    async with fake_fb.Server(event_loop) as server:
+    async with fake_server.FakeFacebook(event_loop) as server:
         async with server.session() as session:
             http = AioHttpInterface()
             http.session = session
 
             try:
-                await http.delete(fake_fb.URI.format('/v2.6/me/wrong'))
+                await http.delete(fake_server.URI.format('/v2.6/me/wrong'))
             except errors.HttpRequestError as err:
                 assert err.code == 404
