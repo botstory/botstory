@@ -7,12 +7,15 @@
 # assistance in strategy, implementation, or auditing existing work.
 ###############################################################################
 
+#
+# reworked version
+# migrated to Python 3
+# and async/await
+#
+
 import urllib
 import aiohttp
 import asyncio
-from urllib.request import urlopen, build_opener, install_opener
-from urllib.request import HTTPSHandler
-from urllib.error import URLError, HTTPError
 from urllib.parse import urlencode
 
 import datetime
@@ -75,13 +78,6 @@ class HTTPRequest:
 
     endpoint = 'https://www.google-analytics.com/collect'
 
-    @staticmethod
-    def debug():
-        """ Activate debugging on urllib2 """
-        handler = HTTPSHandler(debuglevel=1)
-        opener = build_opener(handler)
-        install_opener(opener)
-
     # Store properties for all requests
     def __init__(self, user_agent=None, *args, **opts):
         self.user_agent = user_agent or 'Bot Story'
@@ -119,20 +115,6 @@ class HTTPRequest:
                 logging.debug(resp.status)
                 logging.debug('resp.text()')
                 logging.debug(await resp.text())
-
-    def open(self, request):
-        try:
-            return urlopen(request)
-        except HTTPError as e:
-            return False
-        except URLError as e:
-            self.cache_request(request)
-            return False
-
-    def cache_request(self, request):
-        # TODO: implement a proper caching mechanism here for re-transmitting hits
-        # record = (Time.now(), request.get_full_url(), request.get_data(), request.headers)
-        pass
 
 
 class HTTPPost(HTTPRequest):
@@ -441,8 +423,3 @@ for promotion_index in range(1, MAX_EC_PROMOTIONS):
     Tracker.alias(safe_unicode, 'promo{0}nm'.format(promotion_index))  # Promotion name
     Tracker.alias(str, 'promo{0}cr'.format(promotion_index))  # Promotion creative
     Tracker.alias(str, 'promo{0}ps'.format(promotion_index))  # Promotion position
-
-
-# Shortcut for creating trackers
-def create(account, *args, **kwargs):
-    return Tracker(account, *args, **kwargs)

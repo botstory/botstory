@@ -46,31 +46,3 @@ class GAStatistics:
                               'event', event_category, event_action, event_label, event_value
                               )
         )
-
-
-async def store_story_page():
-    s = GAStatistics(tracking_id='UA-86885596-3')
-    await s.story({'_id': 'test-user'},
-                  'test-story',
-                  'test-part',
-                  )
-
-
-async def trigger_event():
-    import random
-    s = GAStatistics(tracking_id='UA-86885596-3')
-    await s.event({'_id': 'test-user'},
-                  event_category='test-category',
-                  event_action=random.choice(
-                      'attainment, achievement, accomplishment, progress, breakthrough, effort'.split(',')
-                  ).strip(),
-                  event_value=str(random.randint(100000, 999999)),
-                  )
-
-
-if __name__ == '__main__':
-    print('just logged story parts')
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(trigger_event())
-else:
-    print('not logged')
