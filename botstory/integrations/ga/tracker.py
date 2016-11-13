@@ -27,7 +27,7 @@ class GAStatistics:
     def get_tracker(self, user):
         return Tracker(
             account=self.tracking_id,
-            client_id=user['_id'],
+            client_id=user and user['_id'],
         )
 
     def story(self, user, story_name, story_part_name):

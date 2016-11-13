@@ -1,9 +1,9 @@
-import asyncio
 import logging
 import inspect
 
-from .. import matchers
 from . import parser, callable, forking
+from .. import matchers
+from ..integrations import mocktracker
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +15,7 @@ class StoryProcessor:
         self.middlewares = middlewares
         self.parser_instance = parser_instance
         self.storage = None
+        self.tracker = mocktracker.MockTracker()
 
     def add_interface(self, interface):
         if self.storage:
@@ -26,6 +27,11 @@ class StoryProcessor:
         self.storage = storage
         for interface in self.interfaces:
             interface.add_storage(storage)
+
+    def add_tracker(self, tracker):
+        logger.debug('add_tracker')
+        logger.debug(tracker)
+        self.tracker = tracker
 
     def clear(self):
         self.interfaces = []
@@ -131,6 +137,11 @@ class StoryProcessor:
             story_part = story_line[idx]
 
             logger.debug('  going to call: {}'.format(story_part.__name__))
+            self.tracker.story(
+                user=message and message['user'],
+                story_name=compiled_story.topic,
+                story_part_name=story_part.__name__,
+            )
 
             # TODO: just should skip story part
             # but it should be done in process_next_part_of_story

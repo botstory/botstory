@@ -4,6 +4,7 @@ import pytest
 from unittest import mock
 
 from . import tracker
+from .. import fb
 from ... import story, chat, utils
 
 
@@ -57,8 +58,10 @@ async def test_should_track_story(tracker_mock):
 
     story.use(tracker.GAStatistics(tracking_id='UA-XXXXX-Y'))
     await story.start()
+
     user = utils.build_fake_user()
-    await chat.say('hi!', user=user)
+    session = utils.build_fake_session(user)
+    await utils.answer.pure_text('hi!', session, user)
 
     await asyncio.sleep(0.1)
 

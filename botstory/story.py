@@ -92,6 +92,9 @@ def use(middleware):
     if check_spec(['post', 'webhook'], middleware):
         chat.add_http(middleware)
 
+    if middleware.type == 'interface.tracker':
+        story_processor_instance.add_tracker(middleware)
+
     return middleware
 
 

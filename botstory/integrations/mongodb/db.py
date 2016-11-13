@@ -6,6 +6,8 @@ logger = logging.getLogger(__name__)
 
 
 class MongodbInterface:
+    type = 'interface.session_storage'
+
     """
     https://github.com/mongodb/motor
     """
