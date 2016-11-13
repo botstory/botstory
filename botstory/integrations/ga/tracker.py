@@ -16,11 +16,13 @@ class GAStatistics:
 
     def __init__(self,
                  tracking_id,
+                 story_tracking_template='{story}/{part}'
                  ):
         """
         :param tracking_id: should be like UA-XXXXX-Y
         """
         self.tracking_id = tracking_id
+        self.story_tracking_template = story_tracking_template
 
     def get_tracker(self, user):
         return Tracker(
@@ -31,7 +33,8 @@ class GAStatistics:
     def story(self, user, story_name, story_part_name):
         queue.add(
             functools.partial(self.get_tracker(user).send,
-                              'pageview', '{}/{}'.format(story_name, story_part_name),
+                              'pageview', self.story_tracking_template.format(story=story_name,
+                                                                              part=story_part_name),
                               )
         )
 

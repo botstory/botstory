@@ -4,7 +4,7 @@ import pytest
 from unittest import mock
 
 from . import tracker
-from ... import utils
+from ... import story, chat, utils
 
 
 @pytest.fixture
@@ -42,4 +42,27 @@ async def test_should_put_in_queue_event_tracker(tracker_mock):
     tracker_mock.send.assert_called_once_with(
         'event',
         'category', 'action', 'label', 10,
+    )
+
+
+# integration testing
+
+@pytest.mark.asyncio
+async def test_should_track_story(tracker_mock):
+    @story.on('hi!')
+    def one_story():
+        @story.part()
+        def greeting(message):
+            pass
+
+    story.use(tracker.GAStatistics(tracking_id='UA-XXXXX-Y'))
+    await story.start()
+    user = utils.build_fake_user()
+    await chat.say('hi!', user=user)
+
+    await asyncio.sleep(0.1)
+
+    tracker_mock.send.assert_called_once_with(
+        'pageview',
+        'one_story/greeting',
     )
