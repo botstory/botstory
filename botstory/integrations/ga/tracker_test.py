@@ -1,11 +1,11 @@
 import aiohttp
 import asyncio
+import json
 import pytest
 from unittest import mock
 
 from . import tracker
-from .. import fb
-from ... import story, chat, utils
+from ... import story, utils
 
 
 @pytest.fixture
@@ -28,6 +28,21 @@ async def test_should_put_in_queue_story_tracker(tracker_mock):
     tracker_mock.send.assert_called_once_with(
         'pageview',
         'one story/one part',
+    )
+
+
+@pytest.mark.asyncio
+async def test_should_put_in_queue_new_message_tracker(tracker_mock):
+    user = utils.build_fake_user()
+    ga = tracker.GAStatistics(tracking_id='UA-XXXXX-Y')
+
+    ga.new_message(user, {'text': {'raw': 'hi!'}})
+
+    await asyncio.sleep(0.1)
+
+    tracker_mock.send.assert_called_once_with(
+        'pageview',
+        'receive: {}'.format(json.dumps({'text': {'raw': 'hi!'}})),
     )
 
 
@@ -64,8 +79,11 @@ async def test_should_track_story(tracker_mock):
     await utils.answer.pure_text('hi!', session, user)
 
     await asyncio.sleep(0.1)
-
-    tracker_mock.send.assert_called_once_with(
-        'pageview',
-        'one_story/greeting',
-    )
+    tracker_mock.send.assert_has_calls([
+        mock.call('pageview',
+                  'receive: {}'.format(json.dumps({'text': {'raw': 'hi!'}})),
+                  ),
+        mock.call('pageview',
+                  'one_story/greeting',
+                  ),
+    ])

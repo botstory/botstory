@@ -38,10 +38,24 @@ class StoryProcessor:
         self.storage = None
 
     async def match_message(self, message):
+        """
+        because match_message is recursive we split function to
+        public match_message and private _match_message
+
+        :param message:
+        :return:
+        """
         logger.debug('')
         logger.debug('> match_message <')
         logger.debug('')
         logger.debug('  {} '.format(message))
+        self.tracker.new_message(
+            user=message and message['user'],
+            data=message['data'],
+        )
+        return await self._match_message(message)
+
+    async def _match_message(self, message):
         session = message['session']
         if len(session['stack']) > 0:
             logger.debug('  check stack')
@@ -201,7 +215,7 @@ class StoryProcessor:
 
             if message:
                 if bubble_up:
-                    waiting_for = await self.match_message(message)
+                    waiting_for = await self._match_message(message)
                 else:
                     logger.debug('  we reject bubbling in this call')
 
