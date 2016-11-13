@@ -11,7 +11,7 @@ import urllib
 import aiohttp
 import asyncio
 from urllib.request import urlopen, build_opener, install_opener
-from urllib.request import Request, HTTPSHandler
+from urllib.request import HTTPSHandler
 from urllib.error import URLError, HTTPError
 from urllib.parse import urlencode
 
@@ -150,7 +150,7 @@ class HTTPPost(HTTPRequest):
                             })
 
 
-class Tracker(object):
+class Tracker:
     """ Primary tracking interface for Universal Analytics """
     params = None
     parameter_alias = {}

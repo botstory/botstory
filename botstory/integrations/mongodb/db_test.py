@@ -100,6 +100,7 @@ async def test_create_new_user(open_db):
         user = await db_interface.new_user(facebook_user_id='1234567890')
         assert user['facebook_user_id'] == '1234567890'
 
+
 @pytest.mark.asyncio
 async def test_start_should_open_connection_and_close_on_stop():
     db_interface = db.MongodbInterface(uri=os.environ.get('TEST_MONGODB_URL', 'mongo'), db_name='test')

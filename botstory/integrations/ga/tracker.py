@@ -19,15 +19,14 @@ class GAStatistics:
         """
         self.tracking_id = tracking_id
 
-    async def story_part(self, user, story_name, story_part_name):
-        tracker = Tracker(
+    def get_tracker(self, user):
+        return Tracker(
             account=self.tracking_id,
             client_id=user['_id'],
         )
 
-        # TODO: should make it async because we don't need
-        # to wait result of tracking
-        await tracker.send('pageview', '{}/{}'.format(story_name, story_part_name))
+    async def story(self, user, story_name, story_part_name):
+        await self.get_tracker(user).send('pageview', '{}/{}'.format(story_name, story_part_name))
 
     async def event(self, user,
                     event_category=None,
@@ -36,23 +35,19 @@ class GAStatistics:
                     event_value=None,
                     fields_object=None,
                     ):
-        tracker = Tracker(
-            account=self.tracking_id,
-            client_id=user['_id'],
-        )
-
         # TODO: should make it async because we don't need
         # to wait result of tracking
-        await tracker.send('event',
-                           event_category, event_action, event_label, event_value, fields_object)
+        await self.get_tracker(user).send('event',
+                                          event_category, event_action, event_label, event_value,
+                                          fields_object)
 
 
 async def store_story_page():
     s = GAStatistics(tracking_id='UA-86885596-3')
-    await s.story_part({'_id': 'test-user'},
-                       'test-story',
-                       'test-part',
-                       )
+    await s.story({'_id': 'test-user'},
+                  'test-story',
+                  'test-part',
+                  )
 
 
 async def trigger_event():
