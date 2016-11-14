@@ -2,6 +2,8 @@ from ... import utils
 
 
 class MockDB:
+    type = 'interface.session_storage'
+
     def __init__(self):
         self.session = None
         self.user = None

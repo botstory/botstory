@@ -63,7 +63,7 @@ def open_db():
 
 @pytest.mark.asyncio
 async def test_facebook_interface_should_use_aiohttp_to_post_message(event_loop):
-    async with fake_server.fake_fb.Server(event_loop) as server:
+    async with fake_server.fake_fb.FakeFacebook(event_loop) as server:
         async with server.session() as server_session:
             # 1) setup app
 

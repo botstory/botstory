@@ -3,6 +3,7 @@ import logging
 from . import validate
 from .. import commonhttp
 from ...middlewares import option
+from ...ast import users
 
 logger = logging.getLogger(__name__)
 
@@ -167,6 +168,8 @@ class FBInterface:
                             timezone=messenger_profile_data.get('timezone', None),
                             gender=messenger_profile_data.get('gender', None),
                         )
+
+                        users.on_new_user_comes(user)
 
                     session = await self.storage.get_session(facebook_user_id=facebook_user_id)
                     if not session:

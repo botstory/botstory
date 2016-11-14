@@ -14,6 +14,7 @@ def uniq_id():
 
 def build_fake_user():
     return {
+        '_id': uniq_id(),
         'name': 'Alice',
         'slack_id': uniq_id(),
         'facebook_user_id': uniq_id(),

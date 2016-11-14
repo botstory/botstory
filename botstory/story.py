@@ -3,7 +3,7 @@ import logging
 
 from . import chat
 from .ast import callable as callable_module, common, \
-    forking, library, parser, processor
+    forking, library, parser, processor, users
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +92,10 @@ def use(middleware):
     if check_spec(['post', 'webhook'], middleware):
         chat.add_http(middleware)
 
+    if middleware.type == 'interface.tracker':
+        story_processor_instance.add_tracker(middleware)
+        users.add_tracker(middleware)
+
     return middleware
 
 
@@ -108,6 +112,7 @@ def clear(clear_library=True):
     if clear_library:
         stories_library.clear()
     chat.clear()
+    users.clear()
 
     global middlewares
     middlewares = []
