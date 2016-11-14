@@ -5,7 +5,16 @@ import pytest
 from unittest import mock
 
 from . import tracker
+from .. import fb, mockdb, mockhttp
 from ... import story, utils
+
+
+def setup_function():
+    story.clear()
+
+
+def teardown_function(function):
+    story.clear()
 
 
 @pytest.fixture
@@ -47,6 +56,21 @@ async def test_should_put_in_queue_new_message_tracker(tracker_mock):
 
 
 @pytest.mark.asyncio
+async def test_should_put_in_queue_new_user_tracker(tracker_mock):
+    user = utils.build_fake_user()
+    ga = tracker.GAStatistics(tracking_id='UA-XXXXX-Y')
+
+    ga.new_user(user)
+
+    await asyncio.sleep(0.1)
+
+    tracker_mock.send.assert_called_once_with(
+        'event',
+        'new_user', 'start', 'new user starts chat'
+    )
+
+
+@pytest.mark.asyncio
 async def test_should_put_in_queue_event_tracker(tracker_mock):
     user = utils.build_fake_user()
     ga = tracker.GAStatistics(tracking_id='UA-XXXXX-Y')
@@ -71,15 +95,37 @@ async def test_should_track_story(tracker_mock):
         def greeting(message):
             pass
 
+    story.use(mockdb.MockDB())
+    facebook = story.use(fb.FBInterface())
+    story.use(mockhttp.MockHttpInterface())
     story.use(tracker.GAStatistics(tracking_id='UA-XXXXX-Y'))
     await story.start()
 
-    user = utils.build_fake_user()
-    session = utils.build_fake_session(user)
-    await utils.answer.pure_text('hi!', session, user)
+    await facebook.handle({
+        'object': 'page',
+        'entry': [{
+            'id': 'PAGE_ID',
+            'time': 123456789,
+            'messaging': [{
+                'sender': {
+                    'id': 'UNKNOWN_ID',
+                },
+                'recipient': {
+                    'id': 'PAGE_ID'
+                },
+                'timestamp': 123456789,
+                'message': {
+                    'text': 'hi!'
+                }
+            }]
+        }]
+    })
 
     await asyncio.sleep(0.1)
     tracker_mock.send.assert_has_calls([
+        mock.call('event',
+                  'new_user', 'start', 'new user starts chat'
+                  ),
         mock.call('pageview',
                   'receive: {}'.format(json.dumps({'text': {'raw': 'hi!'}})),
                   ),

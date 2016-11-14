@@ -59,5 +59,10 @@ class GAStatistics:
                               )
         )
 
-    def new_user(self):
-        pass
+    def new_user(self, user):
+        queue.add(
+            functools.partial(self.get_tracker(user).send,
+                              'event',
+                              'new_user', 'start', 'new user starts chat'
+                              )
+        )
