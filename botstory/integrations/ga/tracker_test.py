@@ -4,7 +4,7 @@ import json
 import pytest
 from unittest import mock
 
-from . import tracker
+from . import GAStatistics, tracker
 from .. import fb, mockdb, mockhttp
 from ... import story, utils
 
@@ -28,7 +28,7 @@ def tracker_mock(mocker):
 @pytest.mark.asyncio
 async def test_should_put_in_queue_story_tracker(tracker_mock):
     user = utils.build_fake_user()
-    ga = tracker.GAStatistics(tracking_id='UA-XXXXX-Y')
+    ga = GAStatistics(tracking_id='UA-XXXXX-Y')
 
     ga.story(user, 'one story', 'one part')
 
@@ -43,7 +43,7 @@ async def test_should_put_in_queue_story_tracker(tracker_mock):
 @pytest.mark.asyncio
 async def test_should_put_in_queue_new_message_tracker(tracker_mock):
     user = utils.build_fake_user()
-    ga = tracker.GAStatistics(tracking_id='UA-XXXXX-Y')
+    ga = GAStatistics(tracking_id='UA-XXXXX-Y')
 
     ga.new_message(user, {'text': {'raw': 'hi!'}})
 
@@ -58,7 +58,7 @@ async def test_should_put_in_queue_new_message_tracker(tracker_mock):
 @pytest.mark.asyncio
 async def test_should_put_in_queue_new_user_tracker(tracker_mock):
     user = utils.build_fake_user()
-    ga = tracker.GAStatistics(tracking_id='UA-XXXXX-Y')
+    ga = GAStatistics(tracking_id='UA-XXXXX-Y')
 
     ga.new_user(user)
 
@@ -73,7 +73,7 @@ async def test_should_put_in_queue_new_user_tracker(tracker_mock):
 @pytest.mark.asyncio
 async def test_should_put_in_queue_event_tracker(tracker_mock):
     user = utils.build_fake_user()
-    ga = tracker.GAStatistics(tracking_id='UA-XXXXX-Y')
+    ga = GAStatistics(tracking_id='UA-XXXXX-Y')
 
     ga.event(user, 'category', 'action', 'label', 10)
 
@@ -98,7 +98,7 @@ async def test_should_track_story(tracker_mock):
     story.use(mockdb.MockDB())
     facebook = story.use(fb.FBInterface())
     story.use(mockhttp.MockHttpInterface())
-    story.use(tracker.GAStatistics(tracking_id='UA-XXXXX-Y'))
+    story.use(GAStatistics(tracking_id='UA-XXXXX-Y'))
     await story.start()
 
     await facebook.handle({
