@@ -1,3 +1,4 @@
+import aiohttp
 from ... import utils
 
 
@@ -7,6 +8,7 @@ class MockDB:
     def __init__(self):
         self.session = None
         self.user = None
+        self.setup = aiohttp.test_utils.make_mocked_coro()
 
     async def get_session(self, **kwargs):
         return self.session

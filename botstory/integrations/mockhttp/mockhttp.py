@@ -49,6 +49,7 @@ class MockHttpInterface:
             return_value=put,
             raise_exception=put_raise,
         )
+        self.setup = aiohttp.test_utils.make_mocked_coro()
         self.start = aiohttp.test_utils.make_mocked_coro(return_value=start)
         self.stop = aiohttp.test_utils.make_mocked_coro(return_value=stop)
         self.webhook = stub('webhook')

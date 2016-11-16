@@ -118,6 +118,12 @@ def clear(clear_library=True):
     middlewares = []
 
 
+async def setup():
+    await asyncio.gather(
+        *[m.setup() for m in middlewares if hasattr(m, 'setup')]
+    )
+
+
 async def start():
     await asyncio.gather(
         *[m.start() for m in middlewares if hasattr(m, 'start')]
