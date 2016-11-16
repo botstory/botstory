@@ -119,20 +119,20 @@ def clear(clear_library=True):
 
 
 async def setup():
-    await asyncio.gather(
-        *[m.setup() for m in middlewares if hasattr(m, 'setup')]
-    )
+    await _do_for_each_extension('setup')
 
 
 async def start():
-    await asyncio.gather(
-        *[m.start() for m in middlewares if hasattr(m, 'start')]
-    )
+    await _do_for_each_extension('start')
 
 
 async def stop():
+    await _do_for_each_extension('stop')
+
+
+async def _do_for_each_extension(command):
     await asyncio.gather(
-        *[m.stop() for m in middlewares if hasattr(m, 'stop')]
+        *[getattr(m, command)() for m in middlewares if hasattr(m, command)]
     )
 
 
