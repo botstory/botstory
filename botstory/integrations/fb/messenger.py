@@ -93,16 +93,6 @@ class FBInterface:
         if self.webhook:
             http.webhook(self.webhook, self.handle, self.webhook_token)
 
-        if self.greeting_text:
-            asyncio.ensure_future(
-                self.replace_greeting_text(self.greeting_text)
-            )
-
-        if self.persistent_menu:
-            asyncio.ensure_future(
-                self.replace_persistent_menu(self.persistent_menu)
-            )
-
     def add_storage(self, storage):
         logger.debug('add_storage')
         logger.debug(storage)
@@ -230,8 +220,18 @@ class FBInterface:
             'text': 'Ok!',
         }
 
-    async def start(self):
-        logger.debug('start')
+    async def setup(self):
+        logger.debug('setup')
+
+        if self.greeting_text:
+            asyncio.ensure_future(
+                self.replace_greeting_text(self.greeting_text)
+            )
+
+        if self.persistent_menu:
+            asyncio.ensure_future(
+                self.replace_persistent_menu(self.persistent_menu)
+            )
 
         # check whether we have `On Start Story`
         have_on_start_story = not not self.library.get_right_story({
