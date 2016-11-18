@@ -196,6 +196,7 @@ async def test_story_on_start(open_db, build_context):
             def greeting(message):
                 trigger.passed()
 
+        await story.setup()
         await story.start()
 
         http.delete.assert_called_with(

@@ -199,3 +199,14 @@ async def test_should_start_middlewares():
     http = story.use(mockhttp.MockHttpInterface())
     await story.start()
     http.start.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+async def test_setup_should_config_facebook_options():
+    db = story.use(mockdb.MockDB())
+    http = story.use(mockhttp.MockHttpInterface())
+
+    await story.setup()
+
+    db.setup.assert_called_once_with()
+    http.setup.assert_called_once_with()
