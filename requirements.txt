@@ -7,4 +7,4 @@ pytest-catchlog==1.2.2
 pytest-cov==2.4.0
 pytest-flakes==1.0.1
 pytest-mock==1.4.0
-yarl==0.7.0
+yarl==0.7.1
