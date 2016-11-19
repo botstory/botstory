@@ -5,6 +5,13 @@ from . import AioHttpInterface
 from ..commonhttp import errors
 from ..tests import fake_server
 
+@pytest.fixture
+def webhook_handler():
+    return test_utils.make_mocked_coro(return_value={
+        'status': 200,
+        'content_type': 'application/json',
+        'text': json.dumps({'message': 'Ok!'}),
+    })
 
 @pytest.mark.asyncio
 async def test_post(event_loop):
@@ -21,18 +28,13 @@ async def test_post(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_listen_webhook():
-    handler = test_utils.make_mocked_coro(return_value={
-        'status': 200,
-        'content_type': 'application/json',
-        'text': json.dumps({'message': 'Ok!'}),
-    })
+async def test_listen_webhook(webhook_handler):
     http = AioHttpInterface(port=9876)
-    http.webhook(uri='/webhook', handler=handler, token='qwerty')
+    http.webhook(uri='/webhook', handler=webhook_handler, token='qwerty')
     try:
         await http.start()
         res = await http.post_raw('http://localhost:9876/webhook', json={'message': 'Is there anybody in there?'})
-        handler.assert_called_once_with({'message': 'Is there anybody in there?'})
+        webhook_handler.assert_called_once_with({'message': 'Is there anybody in there?'})
         assert res['status'] == 200
         assert res['text'] == json.dumps({'message': 'Ok!'})
     finally:
@@ -153,3 +155,27 @@ async def test_delete_400(event_loop):
                 await http.delete(fake_server.URI.format('/v2.6/me/wrong'))
             except errors.HttpRequestError as err:
                 assert err.code == 404
+
+
+@pytest.mark.asyncio
+async def test_pass_middleware(mocker, webhook_handler):
+    handler_stub = mocker.stub()
+
+    def MockMiddleware():
+        async def middleware_factory(app, handler):
+            async def mock_middleware_handler(request):
+                handler_stub(request)
+                return await handler(request)
+
+            return mock_middleware_handler
+
+        return middleware_factory
+
+    try:
+        http = AioHttpInterface(middlewares=[MockMiddleware()], port=8080)
+        http.webhook(uri='/webhook', handler=webhook_handler, token='qwerty')
+        await http.start()
+        await http.post('http://localhost:8080/webhook', json={})
+        assert handler_stub.called
+    finally:
+        await http.stop()
