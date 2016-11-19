@@ -30,6 +30,7 @@ class AioHttpInterface:
     def __init__(self, host='0.0.0.0', port=None,
                  shutdown_timeout=60.0, ssl_context=None,
                  backlog=128, auto_start=True,
+                 middlewares=[],
                  ):
         if port is None:
             if not ssl_context:
@@ -39,6 +40,7 @@ class AioHttpInterface:
 
         self.backlog = backlog
         self.host = host
+        self.middlewares = middlewares
         self.port = port
         self.shutdown_timeout = shutdown_timeout
 
@@ -170,6 +172,7 @@ class AioHttpInterface:
             logger.debug('create web app')
             self.app = web.Application(
                 loop=loop,
+                middlewares=self.middlewares,
             )
         return self.app
 
