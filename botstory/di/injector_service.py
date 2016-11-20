@@ -19,9 +19,15 @@ class Scope:
 class Injector:
     def __init__(self):
         self.root = Scope()
+        self.singleton_cache = {}
 
     def register(self, type_name, instance):
         self.root.register(type_name, instance)
 
     def get(self, type_name):
-        return self.root.get(type_name)
+        try:
+            return self.singleton_cache[type_name]
+        except KeyError:
+            instance = self.root.get(type_name)
+            self.singleton_cache[type_name] = instance
+            return instance
