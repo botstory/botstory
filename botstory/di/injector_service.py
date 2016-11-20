@@ -1,9 +1,16 @@
+import inspect
+
+
 class Scope:
     def __init__(self):
         self.storage = {}
 
     def get(self, type_name):
-        return self.storage[type_name]
+        item = self.storage[type_name]
+        if inspect.isclass(item):
+            return item()
+        else:
+            return item
 
     def register(self, type_name, value):
         self.storage[type_name] = value
