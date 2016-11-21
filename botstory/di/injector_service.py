@@ -21,9 +21,12 @@ class Injector:
         self.root = Scope()
         self.singleton_cache = {}
         self.requires_fns = {}
+        self.waits_for_deps_list = []
 
     def register(self, type_name, instance):
         self.root.register(type_name, instance)
+        for wait_instance in self.waits_for_deps_list:
+            self.bind(wait_instance)
 
     def requires(self, fn):
         fn_sig = inspect.signature(fn)
@@ -31,7 +34,7 @@ class Injector:
             key: {'default': fn_sig.parameters[key].default}
             for key in fn_sig.parameters.keys() if key != 'self'}
 
-    def bind(self, instance):
+    def bind(self, instance, autoupdate=False):
         methods = [
             (m, cls.__dict__[m])
             for cls in inspect.getmro(type(instance))
@@ -46,6 +49,9 @@ class Injector:
         for (method_ptr, method_deps) in requires_of_methods:
             if len(method_deps) > 0:
                 method_ptr(instance, **method_deps)
+
+        if autoupdate:
+            self.waits_for_deps_list.append(instance)
 
         return instance
 

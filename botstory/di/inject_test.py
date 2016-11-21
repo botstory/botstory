@@ -65,3 +65,37 @@ def test_inject_default_value_if_we_dont_have_dep():
     outer = di.bind(OuterClass())
     assert isinstance(outer, OuterClass)
     assert outer.inner_class == 'Hello World!'
+
+
+def test_no_autoupdate_deps_on_new_instance_comes():
+    @di.inject()
+    class OuterClass:
+        @di.inject()
+        def inner(self, inner_class=None):
+            self.inner_class = inner_class
+
+    outer = di.bind(OuterClass(), autoupdate=False)
+
+    @di.inject()
+    class InnerClass:
+        pass
+
+    assert isinstance(outer, OuterClass)
+    assert outer.inner_class is None
+
+
+def test_autoupdate_deps_on_new_instance_comes():
+    @di.inject()
+    class OuterClass:
+        @di.inject()
+        def inner(self, inner_class=None):
+            self.inner_class = inner_class
+
+    outer = di.bind(OuterClass(), autoupdate=True)
+
+    @di.inject()
+    class InnerClass:
+        pass
+
+    assert isinstance(outer, OuterClass)
+    assert isinstance(outer.inner_class, InnerClass)
