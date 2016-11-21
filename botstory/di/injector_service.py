@@ -25,8 +25,11 @@ class Injector:
     def register(self, type_name, instance):
         self.root.register(type_name, instance)
 
-    def requires(self, fn, requires):
-        self.requires_fns[fn] = requires
+    def requires(self, fn):
+        fn_sig = inspect.signature(fn)
+        self.requires_fns[fn] = {
+            key: {'default': fn_sig.parameters[key].default}
+            for key in fn_sig.parameters.keys() if key != 'self'}
 
     def bind(self, instance):
         methods = [
@@ -35,7 +38,9 @@ class Injector:
             for m in cls.__dict__ if inspect.isfunction(cls.__dict__[m])
             ]
 
-        requires_of_methods = [(method_ptr, {dep: self.get(dep) for dep in self.requires_fns.get(method_ptr, [])})
+        requires_of_methods = [(method_ptr, {dep: self.get(dep) or dep_spec['default']
+                                             for dep, dep_spec in
+                                             self.requires_fns.get(method_ptr, {}).items()})
                                for (method_name, method_ptr) in methods]
 
         for (method_ptr, method_deps) in requires_of_methods:

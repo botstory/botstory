@@ -53,3 +53,15 @@ def test_bind_should_inject_deps_in_decorated_methods_():
     outer = di.bind(OuterClass())
     assert isinstance(outer, OuterClass)
     assert isinstance(outer.inner_class, InnerClass)
+
+
+def test_inject_default_value_if_we_dont_have_dep():
+    @di.inject()
+    class OuterClass:
+        @di.inject()
+        def inner(self, inner_class='Hello World!'):
+            self.inner_class = inner_class
+
+    outer = di.bind(OuterClass())
+    assert isinstance(outer, OuterClass)
+    assert outer.inner_class == 'Hello World!'

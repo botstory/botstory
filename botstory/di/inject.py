@@ -11,9 +11,7 @@ def inject():
             name = camel_case_to_underscore(fn.__name__)
             di.injector.register(name[0], fn)
         elif inspect.isfunction(fn):
-            fn_sig = inspect.signature(fn)
-            args = [key for key in fn_sig.parameters.keys() if key != 'self']
-            di.injector.requires(fn, args)
+            di.injector.requires(fn)
         else:
             # I'm not sure whether it possible case
             raise NotImplementedError('try decorate {}'.format(fn))
