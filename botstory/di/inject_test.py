@@ -1,6 +1,10 @@
 from .. import di
 
 
+def teardown_function(function):
+    di.clear()
+
+
 def test_inject_decorator():
     @di.inject()
     class OneClass:
@@ -31,5 +35,21 @@ def test_inject_into_method_of_class():
         pass
 
     outer = di.injector.get('outer_class')
+    assert isinstance(outer, OuterClass)
+    assert isinstance(outer.inner_class, InnerClass)
+
+
+def test_bind_should_inject_deps_in_decorated_methods_():
+    @di.inject()
+    class OuterClass:
+        @di.inject()
+        def inner(self, inner_class):
+            self.inner_class = inner_class
+
+    @di.inject()
+    class InnerClass:
+        pass
+
+    outer = di.bind(OuterClass())
     assert isinstance(outer, OuterClass)
     assert isinstance(outer.inner_class, InnerClass)
