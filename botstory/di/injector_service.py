@@ -19,13 +19,16 @@ class Scope:
 class Injector:
     def __init__(self):
         self.root = Scope()
+        # all instances that are singletones
         self.singleton_cache = {}
+        # functions that waits for deps
         self.requires_fns = {}
-        self.waits_for_deps_list = []
+        # instances that will autoupdate on each new instance come
+        self.auto_update_list = []
 
     def register(self, type_name, instance):
         self.root.register(type_name, instance)
-        for wait_instance in self.waits_for_deps_list:
+        for wait_instance in self.auto_update_list:
             self.bind(wait_instance)
 
     def requires(self, fn):
@@ -51,7 +54,7 @@ class Injector:
                 method_ptr(instance, **method_deps)
 
         if autoupdate:
-            self.waits_for_deps_list.append(instance)
+            self.auto_update_list.append(instance)
 
         return instance
 
@@ -70,7 +73,7 @@ class Injector:
                 # TODO: sometimes we should fail loudly in this case
                 return None
 
-            instance = self.bind(instance)
             self.singleton_cache[type_name] = instance
+            instance = self.bind(instance)
 
         return instance

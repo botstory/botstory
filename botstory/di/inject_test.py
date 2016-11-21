@@ -99,3 +99,21 @@ def test_autoupdate_deps_on_new_instance_comes():
 
     assert isinstance(outer, OuterClass)
     assert isinstance(outer.inner_class, InnerClass)
+
+
+def test_fail_on_cyclic_deps():
+    @di.inject()
+    class FirstClass:
+        @di.inject()
+        def deps(self, second_class=None):
+            self.second_class = second_class
+
+    @di.inject()
+    class SecondClass:
+        @di.inject()
+        def deps(self, first_class=None):
+            self.first_class = first_class
+
+    first_class = di.injector.get('first_class')
+    assert isinstance(first_class.second_class, SecondClass)
+    assert isinstance(first_class.second_class.first_class, FirstClass)
