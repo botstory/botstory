@@ -1,6 +1,7 @@
 from .. import di
 
 
+# TODO: should make scoped di
 def teardown_function(function):
     di.clear()
 

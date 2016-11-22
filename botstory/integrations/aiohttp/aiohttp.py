@@ -7,6 +7,7 @@ import urllib
 from yarl import URL
 
 from ..commonhttp import errors as common_errors, statuses
+from ... import di
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,10 @@ def is_ok(status):
     return 200 <= status < 400
 
 
+print('before @di.inject')
+
+
+@di.inject('http.interface')
 class AioHttpInterface:
     type = 'interface.aiohttp'
 
@@ -154,15 +159,16 @@ class AioHttpInterface:
                     message=await resp.text(),
                 )
         except Exception as err:
-            logger.warn('Exception: status: {status}, message: {message}, type: {type}, method: {method}, url: {url}, {kwargs}'
-                        .format(status=getattr(err, 'code', None),
-                                message=getattr(err, 'message', None),
-                                type=type(err),
-                                method=method_name,
-                                url=url,
-                                kwargs=kwargs,
-                                )
+            logger.warn(
+                'Exception: status: {status}, message: {message}, type: {type}, method: {method}, url: {url}, {kwargs}'
+                .format(status=getattr(err, 'code', None),
+                        message=getattr(err, 'message', None),
+                        type=type(err),
+                        method=method_name,
+                        url=url,
+                        kwargs=kwargs,
                         )
+                )
             raise err
         return resp
 
