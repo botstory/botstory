@@ -1,11 +1,12 @@
 import asyncio
 import logging
+import importlib
 from unittest import mock
 import pytest
 
 from . import messenger
-from .. import commonhttp, mockdb, mockhttp
-from ... import chat, story, utils
+from .. import commonhttp, fb, mockdb, mockhttp
+from ... import chat, di, story, utils
 from ...middlewares import any, option
 
 logger = logging.getLogger(__name__)
@@ -835,3 +836,10 @@ async def test_remove_persistent_menu():
             'thread_state': 'existing_thread'
         }
     )
+
+
+def test_get_as_deps():
+    # TODO: require reload aiohttp module because somewhere is used global di.clear()
+    importlib.reload(fb.messenger)
+    importlib.reload(fb)
+    assert isinstance(di.injector.get('fb.interface'), messenger.FBInterface)

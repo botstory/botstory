@@ -2,12 +2,14 @@ import asyncio
 import logging
 from . import validate
 from .. import commonhttp
+from ... import di
 from ...middlewares import option
 from ...ast import users
 
 logger = logging.getLogger(__name__)
 
 
+@di.inject('fb.interface')
 class FBInterface:
     type = 'interface.facebook'
 
