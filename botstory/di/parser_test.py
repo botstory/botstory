@@ -1,5 +1,9 @@
 from .parser import camel_case_to_underscore
 
 
-def test_():
+def test_camelcase_to_underscore():
     assert camel_case_to_underscore('ClassName')[0] == 'class_name'
+
+
+def test_remove_leading_underscore():
+    assert camel_case_to_underscore('_ClassName')[0] == 'class_name'
