@@ -1,3 +1,4 @@
+import pytest
 from .. import di
 
 
@@ -125,3 +126,8 @@ def test_custom_type():
         pass
 
     assert isinstance(di.injector.get('qwerty'), OneClass)
+
+
+def test_fail_on_incorrect_using():
+    with pytest.raises(NotImplementedError):
+        di.inject()('qwerty')
