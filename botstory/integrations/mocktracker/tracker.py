@@ -1,8 +1,10 @@
 import logging
+from ... import di
 
 logger = logging.getLogger(__name__)
 
 
+@di.inject('tracker')
 class MockTracker:
     type = 'interface.tracker'
 
