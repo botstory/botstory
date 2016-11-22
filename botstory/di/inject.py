@@ -5,11 +5,11 @@ from .parser import camel_case_to_underscore
 from .. import di
 
 
-def inject():
+def inject(t=None):
     def decorated_fn(fn):
         if inspect.isclass(fn):
-            name = camel_case_to_underscore(fn.__name__)
-            di.injector.register(name[0], fn)
+            name = t or camel_case_to_underscore(fn.__name__)[0]
+            di.injector.register(name, fn)
         elif inspect.isfunction(fn):
             di.injector.requires(fn)
         else:

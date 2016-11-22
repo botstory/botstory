@@ -117,3 +117,11 @@ def test_fail_on_cyclic_deps():
     first_class = di.injector.get('first_class')
     assert isinstance(first_class.second_class, SecondClass)
     assert isinstance(first_class.second_class.first_class, FirstClass)
+
+
+def test_custom_type():
+    @di.inject('qwerty')
+    class OneClass:
+        pass
+
+    assert isinstance(di.injector.get('qwerty'), OneClass)
