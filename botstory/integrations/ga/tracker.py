@@ -2,9 +2,11 @@ import functools
 import json
 from .universal_analytics.tracker import Tracker
 
+from ... import di
 from ...utils import queue
 
 
+@di.inject('tracker')
 class GAStatistics:
     type = 'interface.tracker'
     """
@@ -15,7 +17,7 @@ class GAStatistics:
     """
 
     def __init__(self,
-                 tracking_id,
+                 tracking_id=None,
                  story_tracking_template='{story}/{part}',
                  new_message_tracking_template='receive: {data}',
                  ):

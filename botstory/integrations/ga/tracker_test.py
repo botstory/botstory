@@ -1,12 +1,13 @@
 import aiohttp
 import asyncio
+import importlib
 import json
 import pytest
 from unittest import mock
 
 from . import GAStatistics, tracker
-from .. import fb, mockdb, mockhttp
-from ... import story, utils
+from .. import fb, ga, mockdb, mockhttp
+from ... import di, story, utils
 
 
 def setup_function():
@@ -133,3 +134,10 @@ async def test_should_track_story(tracker_mock):
                   'one_story/greeting',
                   ),
     ])
+
+
+def test_get_as_deps():
+    # TODO: require reload aiohttp module because somewhere is used global di.clear()
+    importlib.reload(ga.tracker)
+    importlib.reload(ga)
+    assert isinstance(di.injector.get('tracker'), ga.GAStatistics)
