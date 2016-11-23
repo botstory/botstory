@@ -1,4 +1,5 @@
-import importlib
+import pytest
+
 from . import tracker
 from .. import mocktracker
 from ... import di, story
@@ -24,7 +25,8 @@ def test_story():
     t.story()
 
 
-def test_get_as_deps():
+@pytest.mark.skip('DI does not work this way')
+def test_get_mock_tracker_as_dep():
     # TODO: require reload aiohttp module because somewhere is used global di.clear()
     # importlib.reload(mocktracker.tracker)
     # importlib.reload(mocktracker)
