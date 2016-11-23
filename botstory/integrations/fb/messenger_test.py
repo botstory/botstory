@@ -844,7 +844,7 @@ def reload_module():
     importlib.reload(fb)
 
 
-def test_get_as_deps():
+def test_get_fb_as_deps():
     reload_module()
     story.use(messenger.FBInterface())
 
@@ -855,3 +855,20 @@ def test_get_as_deps():
             self.fb = fb
 
     assert isinstance(di.injector.get('one_class').fb, messenger.FBInterface)
+
+
+def test_bind_fb_deps():
+    reload_module()
+
+    story.use(messenger.FBInterface())
+    story.use(mockdb.MockDB())
+    story.use(mockhttp.MockHttpInterface())
+
+    @di.desc()
+    class OneClass:
+        @di.inject()
+        def deps(self, fb):
+            self.fb = fb
+
+    assert isinstance(di.injector.get('one_class').fb.http, mockhttp.MockHttpInterface)
+    assert isinstance(di.injector.get('one_class').fb.storage, mockdb.MockDB)
