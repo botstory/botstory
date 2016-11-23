@@ -17,7 +17,7 @@ def stub(name=None):
     return mock.MagicMock(spec=lambda *args, **kwargs: None, name=name)
 
 
-@di.inject('http')
+@di.desc('http', reg=False)
 class MockHttpInterface:
     type = 'interface.http'
 

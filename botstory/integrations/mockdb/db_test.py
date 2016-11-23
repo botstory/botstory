@@ -1,10 +1,27 @@
 import importlib
 from .. import mockdb
-from ... import di
+from ... import di, story
 
 
-def test_get_as_deps():
+def teardown_function(function):
+    di.clear()
+
+
+def reload_module():
     # TODO: require reload aiohttp module because somewhere is used global di.clear()
     importlib.reload(mockdb.db)
     importlib.reload(mockdb)
-    assert isinstance(di.injector.get('storage'), mockdb.MockDB)
+
+
+def test_get_mockdb_as_dep():
+    reload_module()
+
+    story.use(mockdb.MockDB())
+
+    @di.desc()
+    class OneClass:
+        @di.inject()
+        def deps(self, storage):
+            self.storage = storage
+
+    assert isinstance(di.injector.get('one_class').storage, mockdb.MockDB)
