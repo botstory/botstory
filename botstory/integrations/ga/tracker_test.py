@@ -16,6 +16,7 @@ def setup_function():
 
 def teardown_function(function):
     story.clear()
+    di.clear()
 
 
 @pytest.fixture
@@ -136,8 +137,21 @@ async def test_should_track_story(tracker_mock):
     ])
 
 
-def test_get_as_deps():
+def reload_module():
     # TODO: require reload aiohttp module because somewhere is used global di.clear()
     importlib.reload(ga.tracker)
     importlib.reload(ga)
-    assert isinstance(di.injector.get('tracker'), ga.GAStatistics)
+
+
+def test_get_as_deps():
+    reload_module()
+
+    story.use(ga.GAStatistics())
+
+    @di.desc()
+    class OneClass:
+        @di.inject()
+        def deps(self, tracker):
+            self.tracker = tracker
+
+    assert isinstance(di.injector.get('one_class').tracker, ga.GAStatistics)

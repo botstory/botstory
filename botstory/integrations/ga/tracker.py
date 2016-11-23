@@ -6,7 +6,7 @@ from ... import di
 from ...utils import queue
 
 
-@di.inject('tracker')
+@di.desc('tracker', reg=False)
 class GAStatistics:
     type = 'interface.tracker'
     """
