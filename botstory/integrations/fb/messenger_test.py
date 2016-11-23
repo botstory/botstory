@@ -838,8 +838,19 @@ async def test_remove_persistent_menu():
     )
 
 
-def test_get_as_deps():
-    # TODO: require reload aiohttp module because somewhere is used global di.clear()
+def reload_module():
     importlib.reload(fb.messenger)
     importlib.reload(fb)
-    assert isinstance(di.injector.get('fb.interface'), messenger.FBInterface)
+
+
+def test_get_as_deps():
+    reload_module()
+    story.use(messenger.FBInterface())
+
+    @di.desc()
+    class OneClass:
+        @di.inject()
+        def deps(self, fb):
+            self.fb = fb
+
+    assert isinstance(di.injector.get('one_class').fb, messenger.FBInterface)

@@ -9,7 +9,7 @@ from ...ast import users
 logger = logging.getLogger(__name__)
 
 
-@di.inject('fb.interface')
+@di.desc('fb', reg=False)
 class FBInterface:
     type = 'interface.facebook'
 
