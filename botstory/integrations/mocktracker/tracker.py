@@ -4,7 +4,7 @@ from ... import di
 logger = logging.getLogger(__name__)
 
 
-@di.inject('tracker')
+@di.desc('tracker', lazy=True)
 class MockTracker:
     type = 'interface.tracker'
 

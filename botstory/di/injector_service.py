@@ -16,17 +16,21 @@ class Scope:
         self.storage[type_name] = value
 
 
+def null_if_empty(value):
+    return value if value is not inspect.Parameter.empty else None
+
+
 class Injector:
     def __init__(self):
-        self.root = Scope()
-        # all instances that are singletones
-        self.singleton_cache = {}
-        # functions that waits for deps
-        self.requires_fns = {}
         # instances that will autoupdate on each new instance come
         self.auto_update_list = []
         # description of classes
         self.described = {}
+        # functions that waits for deps
+        self.requires_fns = {}
+        self.root = Scope()
+        # all instances that are singletones
+        self.singleton_cache = {}
 
     def describe(self, type_name, cls):
         """
@@ -42,9 +46,9 @@ class Injector:
         }
 
     def register(self, type_name=None, instance=None):
-        if not type_name:
+        if type_name is None:
             try:
-                desc = self.described.get(instance, self.described.get(type(instance)))
+                desc = self.described.get(instance, self.described[type(instance)])
             except KeyError:
                 return None
             type_name = desc['type']
@@ -55,7 +59,7 @@ class Injector:
     def requires(self, fn):
         fn_sig = inspect.signature(fn)
         self.requires_fns[fn] = {
-            key: {'default': fn_sig.parameters[key].default}
+            key: {'default': null_if_empty(fn_sig.parameters[key].default)}
             for key in fn_sig.parameters.keys() if key != 'self'}
 
     def bind(self, instance, autoupdate=False):
@@ -80,9 +84,11 @@ class Injector:
         return instance
 
     def clear(self):
+        self.auto_update_list = []
+        self.described = {}
+        self.requires_fns = {}
         self.root = Scope()
         self.singleton_cache = {}
-        self.requires_fns = {}
 
     def get(self, type_name):
         try:

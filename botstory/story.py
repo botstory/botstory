@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from . import chat
+from . import chat, di
 from .ast import callable as callable_module, common, \
     forking, library, parser, processor, users
 
@@ -74,6 +74,8 @@ def use(middleware):
     logger.debug(middleware)
 
     middlewares.append(middleware)
+
+    di.injector.register(instance=middleware)
 
     # TODO: maybe it is good time to start using DI (dependency injection)
 
