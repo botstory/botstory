@@ -13,7 +13,7 @@ def test_injector_get():
 
 
 def test_lazy_description_should_not_register_class():
-    @di.desc(lazy=True)
+    @di.desc(reg=False)
     class OneClass:
         pass
 
@@ -21,7 +21,7 @@ def test_lazy_description_should_not_register_class():
 
 
 def test_lazy_description_should_simplify_registration():
-    @di.desc(lazy=True)
+    @di.desc(reg=False)
     class OneClass:
         pass
 
@@ -31,7 +31,7 @@ def test_lazy_description_should_simplify_registration():
 
 
 def test_not_lazy_description_should_simplify_registration():
-    @di.desc(lazy=False)
+    @di.desc(reg=True)
     class OneClass:
         pass
 
