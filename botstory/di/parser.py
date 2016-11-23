@@ -26,3 +26,12 @@ def camel_case_to_underscore(class_name):
     if not parts:
         return []
     return ['_'.join(part.lower() for part in parts)]
+
+
+def kebab_to_underscore(s):
+    """
+    Convert kebab-styled-string to underscore_styled_string
+    :param s:
+    :return:
+    """
+    return s.replace('-', '_')

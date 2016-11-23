@@ -44,3 +44,11 @@ def test_fail_if_type_is_not_string():
 
     with pytest.raises(ValueError):
         di.injector.register(OneClass)
+
+
+def test_kebab_string_style_is_synonym_to_underscore():
+    @di.desc()
+    class OneClass:
+        pass
+
+    assert isinstance(di.injector.get('one-class'), OneClass)

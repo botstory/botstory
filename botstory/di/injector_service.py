@@ -1,5 +1,7 @@
 import inspect
 
+from . import parser
+
 
 class Scope:
     def __init__(self):
@@ -93,6 +95,7 @@ class Injector:
         self.singleton_cache = {}
 
     def get(self, type_name):
+        type_name = parser.kebab_to_underscore(type_name)
         try:
             return self.singleton_cache[type_name]
         except KeyError:
