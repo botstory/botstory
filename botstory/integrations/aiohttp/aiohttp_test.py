@@ -6,7 +6,11 @@ from . import AioHttpInterface
 from .. import aiohttp
 from ..commonhttp import errors
 from ..tests import fake_server
-from ... import di
+from ... import di, story
+
+
+def teardown_function(function):
+    di.clear()
 
 
 @pytest.fixture
@@ -186,8 +190,20 @@ async def test_pass_middleware(mocker, webhook_handler):
         await http.stop()
 
 
-def test_get_as_deps():
-    # TODO: require reload aiohttp module because somewhere is used global di.clear()
+def reload_module():
     importlib.reload(aiohttp.aiohttp)
     importlib.reload(aiohttp)
-    assert isinstance(di.injector.get('http.interface'), aiohttp.AioHttpInterface)
+
+
+def test_get_as_deps():
+    reload_module()
+
+    story.use(aiohttp.AioHttpInterface())
+
+    @di.desc()
+    class OneClass:
+        @di.inject()
+        def deps(self, http):
+            self.http = http
+
+    assert isinstance(di.injector.get('one_class').http, aiohttp.AioHttpInterface)

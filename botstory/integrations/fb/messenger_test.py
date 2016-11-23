@@ -16,6 +16,7 @@ def teardown_function(function):
     logger.debug('tear down!')
     story.stories_library.clear()
     chat.interfaces = {}
+    di.clear()
 
 
 @pytest.mark.asyncio

@@ -28,7 +28,7 @@ def is_ok(status):
 print('before @di.inject')
 
 
-@di.inject('http.interface')
+@di.desc('http', reg=False)
 class AioHttpInterface:
     type = 'interface.aiohttp'
 
