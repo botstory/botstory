@@ -37,7 +37,6 @@ def test_story():
     t.story()
 
 
-# @pytest.mark.skip('DI gdoes not work this way')
 def test_get_mock_tracker_as_dep():
     reload_mocktracker()
 
@@ -49,8 +48,4 @@ def test_get_mock_tracker_as_dep():
         def deps(self, tracker):
             self.tracker = tracker
 
-    print('di.injector.root.storage')
-    print(di.injector.root.storage)
-    print('di.injector.described')
-    print(di.injector.described)
     assert isinstance(di.injector.get('one_class').tracker, mocktracker.MockTracker)

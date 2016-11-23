@@ -46,6 +46,8 @@ class Injector:
         }
 
     def register(self, type_name=None, instance=None):
+        if not isinstance(type_name, str) and type_name is not None:
+            raise ValueError('type_name parameter should be string or None')
         if type_name is None:
             try:
                 desc = self.described.get(instance, self.described[type(instance)])

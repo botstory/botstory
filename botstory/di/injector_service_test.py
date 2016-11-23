@@ -1,3 +1,4 @@
+import pytest
 from .. import di
 
 
@@ -35,3 +36,11 @@ def test_not_lazy_description_should_simplify_registration():
         pass
 
     assert isinstance(di.injector.get('one_class'), OneClass)
+
+
+def test_fail_if_type_is_not_string():
+    class OneClass:
+        pass
+
+    with pytest.raises(ValueError):
+        di.injector.register(OneClass)
