@@ -1,4 +1,3 @@
-import pytest
 import importlib
 
 from . import tracker

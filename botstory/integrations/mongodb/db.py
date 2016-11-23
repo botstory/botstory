@@ -1,10 +1,12 @@
 import asyncio
 import logging
 from motor import motor_asyncio
+from ... import di
 
 logger = logging.getLogger(__name__)
 
 
+@di.desc('storage', reg=False)
 class MongodbInterface:
     type = 'interface.session_storage'
 
