@@ -18,7 +18,7 @@ def teardown_function(function):
 
 def reload_module():
     # TODO: require reload aiohttp module because somewhere is used global di.clear()
-    importlib.reload(mongodb.db)
+    importlib.reload(mongodb.dbddd)
     importlib.reload(mongodb)
 
 
