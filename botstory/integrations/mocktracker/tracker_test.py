@@ -25,7 +25,7 @@ def test_story():
     t.story()
 
 
-@pytest.mark.skip('DI does not work this way')
+@pytest.mark.skip('DI gdoes not work this way')
 def test_get_mock_tracker_as_dep():
     # TODO: require reload aiohttp module because somewhere is used global di.clear()
     # importlib.reload(mocktracker.tracker)

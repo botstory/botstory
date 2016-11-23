@@ -25,8 +25,29 @@ class Injector:
         self.requires_fns = {}
         # instances that will autoupdate on each new instance come
         self.auto_update_list = []
+        # description of classes
+        self.described = {}
 
-    def register(self, type_name, instance):
+    def describe(self, type_name, cls):
+        """
+        add description of class
+
+        :param type_name:
+        :param cls:
+        :return:
+        """
+
+        self.described[cls] = {
+            'type': type_name,
+        }
+
+    def register(self, type_name=None, instance=None):
+        if not type_name:
+            try:
+                desc = self.described.get(instance, self.described.get(type(instance)))
+            except KeyError:
+                return None
+            type_name = desc['type']
         self.root.register(type_name, instance)
         for wait_instance in self.auto_update_list:
             self.bind(wait_instance)
