@@ -1,21 +1,10 @@
-import importlib
+import pytest
 from .. import mockdb
 from ... import di, story
 
 
-def teardown_function(function):
-    di.clear()
-
-
-def reload_module():
-    # TODO: require reload aiohttp module because somewhere is used global di.clear()
-    importlib.reload(mockdb.db)
-    importlib.reload(mockdb)
-
-
+@pytest.mark.skip()
 def test_get_mockdb_as_dep():
-    reload_module()
-
     story.use(mockdb.MockDB())
 
     @di.desc()

@@ -1,16 +1,11 @@
 from aiohttp import test_utils
 import json
-import importlib
 import pytest
 from . import AioHttpInterface
 from .. import aiohttp
 from ..commonhttp import errors
 from ..tests import fake_server
 from ... import di, story
-
-
-def teardown_function(function):
-    di.clear()
 
 
 @pytest.fixture
@@ -190,14 +185,8 @@ async def test_pass_middleware(mocker, webhook_handler):
         await http.stop()
 
 
-def reload_module():
-    importlib.reload(aiohttp.aiohttp)
-    importlib.reload(aiohttp)
-
-
+@pytest.mark.skip()
 def test_get_as_deps():
-    reload_module()
-
     story.use(aiohttp.AioHttpInterface())
 
     @di.desc()

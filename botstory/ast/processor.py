@@ -2,12 +2,13 @@ import logging
 import inspect
 
 from . import parser, callable, forking
-from .. import matchers
+from .. import di, matchers
 from ..integrations import mocktracker
 
 logger = logging.getLogger(__name__)
 
 
+@di.desc(reg=False)
 class StoryProcessor:
     def __init__(self, parser_instance, library, middlewares=[]):
         self.interfaces = []
@@ -18,19 +19,27 @@ class StoryProcessor:
         self.tracker = mocktracker.MockTracker()
 
     def add_interface(self, interface):
+        if not interface:
+            return
         if self.storage:
             interface.add_storage(self.storage)
         self.interfaces.append(interface)
         interface.processor = self
 
+    # TODO: @di.inject()
     def add_storage(self, storage):
+        if not storage:
+            return
         self.storage = storage
         for interface in self.interfaces:
             interface.add_storage(storage)
 
+    @di.inject()
     def add_tracker(self, tracker):
         logger.debug('add_tracker')
         logger.debug(tracker)
+        if not tracker:
+            return
         self.tracker = tracker
 
     def clear(self):
@@ -49,6 +58,8 @@ class StoryProcessor:
         logger.debug('> match_message <')
         logger.debug('')
         logger.debug('  {} '.format(message))
+        logger.debug('self.tracker')
+        logger.debug(self.tracker)
         self.tracker.new_message(
             user=message and message['user'],
             data=message['data'],
@@ -151,6 +162,9 @@ class StoryProcessor:
             story_part = story_line[idx]
 
             logger.debug('  going to call: {}'.format(story_part.__name__))
+
+            logger.debug('self.tracker')
+            logger.debug(self.tracker)
             self.tracker.story(
                 user=message and message['user'],
                 story_name=compiled_story.topic,

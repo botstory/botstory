@@ -1,9 +1,12 @@
 import functools
 import json
+import logging
 from .universal_analytics.tracker import Tracker
 
 from ... import di
 from ...utils import queue
+
+logger = logging.getLogger(__name__)
 
 
 @di.desc('tracker', reg=False)
@@ -28,7 +31,13 @@ class GAStatistics:
         self.story_tracking_template = story_tracking_template
         self.new_message_tracking_template = new_message_tracking_template
 
+    @staticmethod
+    def __hash__():
+        return hash('ga.tracker')
+
     def get_tracker(self, user):
+        logger.debug('get_tracker')
+        logger.debug(Tracker)
         return Tracker(
             account=self.tracking_id,
             client_id=user and user['_id'],

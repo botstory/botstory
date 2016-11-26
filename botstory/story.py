@@ -18,6 +18,8 @@ story_processor_instance = processor.StoryProcessor(
     stories_library,
     middlewares=[forking.Middleware()]
 )
+di.injector.register(instance=story_processor_instance)
+di.injector.bind(story_processor_instance, autoupdate=True)
 
 common_stories_instance = common.CommonStoriesAPI(
     parser_instance,
@@ -76,6 +78,7 @@ def use(middleware):
     middlewares.append(middleware)
 
     di.injector.register(instance=middleware)
+    di.bind(middleware, autoupdate=True)
 
     # TODO: maybe it is good time to start using DI (dependency injection)
 
@@ -93,10 +96,6 @@ def use(middleware):
 
     if check_spec(['post', 'webhook'], middleware):
         chat.add_http(middleware)
-
-    if middleware.type == 'interface.tracker':
-        story_processor_instance.add_tracker(middleware)
-        users.add_tracker(middleware)
 
     return middleware
 
