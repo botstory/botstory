@@ -66,8 +66,6 @@ class Scope:
         self.singleton_cache[type_name] = instance
 
     def get_endpoint_deps(self, method_ptr):
-        logger.debug('get_endpoint_deps {}'.format(method_ptr))
-        logger.debug(self.requires_fns.get(method_ptr, {}))
         return self.requires_fns.get(method_ptr, {}).items() or \
                self.parent and self.parent.get_endpoint_deps(method_ptr) or \
                []
@@ -187,9 +185,6 @@ class Injector:
             for cls in inspect.getmro(type(instance))
             for m in cls.__dict__ if inspect.isfunction(cls.__dict__[m])
             ]
-
-        logger.debug('bind {}'.format(instance))
-        logger.debug('methods {}'.format(methods))
 
         try:
             deps_of_endpoints = [(method_ptr, self.entrypoint_deps(method_ptr))
