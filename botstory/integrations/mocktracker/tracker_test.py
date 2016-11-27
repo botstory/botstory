@@ -5,6 +5,10 @@ from .. import mocktracker
 from ... import di, story
 
 
+def teardown_function(function):
+    story.clear()
+
+
 def test_event():
     t = tracker.MockTracker()
     t.event()

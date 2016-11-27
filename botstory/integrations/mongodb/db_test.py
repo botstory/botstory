@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def teardown_function(function):
     logger.debug('tear down!')
-    story.stories_library.clear()
+    story.clear()
 
 
 @pytest.fixture

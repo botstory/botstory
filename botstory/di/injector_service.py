@@ -44,6 +44,15 @@ class Scope:
         instance = self.singleton_cache.pop(type_name, True)
         # TODO: clear self.requires_fns and self.auto_update_list maybe we can use type(instance)?
 
+    def __repr__(self):
+        return '<Scope> {}'.format({
+            'storage': self.storage,
+            'auto_update_list': self.auto_update_list,
+            'described': self.described,
+            'requires_fns': self.requires_fns,
+            'singleton_cache': self.singleton_cache,
+        })
+
 
 def null_if_empty(value):
     return value if value is not inspect.Parameter.empty else None
@@ -109,16 +118,10 @@ class Injector:
             for m in cls.__dict__ if inspect.isfunction(cls.__dict__[m])
             ]
 
-        # print('methods')
-        # print(methods)
-
         requires_of_methods = [(method_ptr, {dep: self.get(dep) or dep_spec['default']
                                              for dep, dep_spec in
                                              self.current_scope.requires_fns.get(method_ptr, {}).items()})
                                for (method_name, method_ptr) in methods]
-
-        # print('requires_of_methods')
-        # print(requires_of_methods)
 
         for (method_ptr, method_deps) in requires_of_methods:
             if len(method_deps) > 0:

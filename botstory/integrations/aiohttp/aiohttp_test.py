@@ -8,6 +8,10 @@ from ..tests import fake_server
 from ... import di, story
 
 
+def teardown_function(function):
+    story.clear()
+
+
 @pytest.fixture
 def webhook_handler():
     return test_utils.make_mocked_coro(return_value={

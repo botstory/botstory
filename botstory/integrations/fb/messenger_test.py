@@ -311,6 +311,8 @@ def build_fb_interface():
         storage = story.use(mockdb.MockDB())
         fb = story.use(messenger.FBInterface(page_access_token='qwerty'))
 
+        await story.start()
+
         await storage.set_session(session)
         await storage.set_user(user)
 
@@ -576,7 +578,7 @@ async def test_can_set_greeting_text_before_inject_http():
 
     mock_http = story.use(mockhttp.MockHttpInterface())
 
-    await fb_interface.setup()
+    await story.setup()
 
     # give few a moment for lazy initialization of greeting text
     await asyncio.sleep(0.1)
@@ -604,7 +606,7 @@ async def test_can_set_greeting_text_in_constructor():
 
     mock_http = story.use(mockhttp.MockHttpInterface())
 
-    await fb.setup()
+    await story.setup()
 
     # give few a moment for lazy initialization of greeting text
     await asyncio.sleep(0.1)
@@ -741,7 +743,7 @@ async def test_can_set_persistent_menu_before_http():
 
     mock_http = story.use(mockhttp.MockHttpInterface())
 
-    await fb_interface.setup()
+    await story.setup()
 
     # give few a moment for lazy initialization of greeting text
     await asyncio.sleep(0.1)
@@ -769,7 +771,7 @@ async def test_can_set_persistent_menu_before_http():
 
 @pytest.mark.asyncio
 async def test_can_set_persistent_menu_inside_of_constructor():
-    fb = story.use(messenger.FBInterface(
+    story.use(messenger.FBInterface(
         page_access_token='qwerty15',
         persistent_menu=[{
             'type': 'postback',
@@ -784,7 +786,7 @@ async def test_can_set_persistent_menu_inside_of_constructor():
 
     mock_http = story.use(mockhttp.MockHttpInterface())
 
-    await fb.setup()
+    await story.setup()
 
     # give few a moment for lazy initialization of greeting text
     await asyncio.sleep(0.1)

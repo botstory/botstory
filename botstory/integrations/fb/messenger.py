@@ -39,8 +39,38 @@ class FBInterface:
 
         self.library = None
         self.http = None
-        self.processor = None
+        self.story_processor = None
         self.storage = None
+
+    @di.inject()
+    def add_library(self, stories_library):
+        logger.debug('add_library')
+        logger.debug(stories_library)
+        self.library = stories_library
+
+    @di.inject()
+    def add_http(self, http):
+        """
+        inject http provider
+
+        :param http:
+        :return:
+        """
+        logger.debug('add_http')
+        logger.debug(http)
+        self.http = http
+
+    @di.inject()
+    def add_processor(self, story_processor):
+        logger.debug('add_processor')
+        logger.debug(story_processor)
+        self.story_processor = story_processor
+
+    @di.inject()
+    def add_storage(self, storage):
+        logger.debug('add_storage')
+        logger.debug(storage)
+        self.storage = storage
 
     async def send_text_message(self, recipient, text, options=None):
         """
@@ -81,24 +111,6 @@ class FBInterface:
                 },
                 'message': message,
             })
-
-    @di.inject()
-    def add_http(self, http):
-        """
-        inject http provider
-
-        :param http:
-        :return:
-        """
-        logger.debug('add_http')
-        logger.debug(http)
-        self.http = http
-
-    @di.inject()
-    def add_storage(self, storage):
-        logger.debug('add_storage')
-        logger.debug(storage)
-        self.storage = storage
 
     async def request_profile(self, facebook_user_id):
         """
@@ -200,13 +212,13 @@ class FBInterface:
 
                             message['data'] = data
 
-                            await self.processor.match_message(message)
+                            await self.story_processor.match_message(message)
 
                     elif 'postback' in m:
                         message['data'] = {
                             'option': m['postback']['payload'],
                         }
-                        await self.processor.match_message(message)
+                        await self.story_processor.match_message(message)
                     elif 'delivery' in m:
                         logger.debug('delivery notification')
                     elif 'read' in m:

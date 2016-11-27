@@ -5,14 +5,9 @@ import pytest
 
 from . import fake_server
 from .. import aiohttp, fb, mongodb, mockhttp
-from ... import chat, story, utils
+from ... import chat, di, story, utils
 
 logger = logging.getLogger(__name__)
-
-
-def setup_function():
-    logger.debug('setup!')
-    story.clear()
 
 
 def teardown_function(function):
@@ -35,6 +30,8 @@ def build_context():
         story.use(db)
         fb_interface = story.use(fb.FBInterface(page_access_token='qwerty'))
         http = story.use(mockhttp.MockHttpInterface())
+
+        await story.start()
 
         return fb_interface, http, user
 

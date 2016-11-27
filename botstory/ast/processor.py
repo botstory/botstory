@@ -11,18 +11,10 @@ logger = logging.getLogger(__name__)
 @di.desc(reg=False)
 class StoryProcessor:
     def __init__(self, parser_instance, library, middlewares=[]):
-        self.interfaces = []
         self.library = library
         self.middlewares = middlewares
         self.parser_instance = parser_instance
-        self.storage = None
         self.tracker = mocktracker.MockTracker()
-
-    def add_interface(self, interface):
-        if not interface:
-            return
-        self.interfaces.append(interface)
-        interface.processor = self
 
     @di.inject()
     def add_tracker(self, tracker):
@@ -31,10 +23,6 @@ class StoryProcessor:
         if not tracker:
             return
         self.tracker = tracker
-
-    def clear(self):
-        self.interfaces = []
-        self.storage = None
 
     async def match_message(self, message):
         """

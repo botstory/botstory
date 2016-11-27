@@ -2,10 +2,12 @@ import logging
 import itertools
 
 from . import parser
+from .. import di
 
 logger = logging.getLogger(__name__)
 
 
+@di.desc(reg=False)
 class StoriesLibrary:
     """
     storage of all available stories

@@ -6,11 +6,11 @@ from ...utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
 def teardown_function(function):
     print('tear down!')
-    story.stories_library.clear()
+    story.clear()
 
 
 @pytest.mark.asyncio
-async def test_should_trigger_on_any_location():
+async def test_should_trigger_on_any_location(event_loop):
     trigger = SimpleTrigger()
     session = build_fake_session()
     user = build_fake_user()
@@ -20,6 +20,9 @@ async def test_should_trigger_on_any_location():
         @story.part()
         def then(message):
             trigger.passed()
+
+    assert not event_loop.is_closed()
+    await story.start(event_loop)
 
     await answer.location({'lat': 1, 'lng': 1}, session, user)
     assert trigger.is_triggered
