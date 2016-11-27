@@ -21,18 +21,8 @@ class StoryProcessor:
     def add_interface(self, interface):
         if not interface:
             return
-        if self.storage:
-            interface.add_storage(self.storage)
         self.interfaces.append(interface)
         interface.processor = self
-
-    # @di.inject()
-    def add_storage(self, storage):
-        if not storage:
-            return
-        self.storage = storage
-        for interface in self.interfaces:
-            interface.add_storage(storage)
 
     @di.inject()
     def add_tracker(self, tracker):

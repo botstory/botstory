@@ -89,9 +89,6 @@ def use(middleware):
     if check_spec(['handle'], middleware):
         story_processor_instance.add_interface(middleware)
 
-    if check_spec(['get_user', 'set_user', 'get_session', 'set_session'], middleware):
-        story_processor_instance.add_storage(middleware)
-
     return middleware
 
 
