@@ -82,6 +82,7 @@ class FBInterface:
                 'message': message,
             })
 
+    @di.inject()
     def add_http(self, http):
         """
         inject http provider
@@ -92,9 +93,8 @@ class FBInterface:
         logger.debug('add_http')
         logger.debug(http)
         self.http = http
-        if self.webhook:
-            http.webhook(self.webhook, self.handle, self.webhook_token)
 
+    @di.inject()
     def add_storage(self, storage):
         logger.debug('add_storage')
         logger.debug(storage)
@@ -242,6 +242,10 @@ class FBInterface:
         if have_on_start_story:
             await self.remove_greeting_call_to_action_payload()
             await self.set_greeting_call_to_action_payload(option.OnStart.DEFAULT_OPTION_PAYLOAD)
+
+    async def start(self):
+        if self.webhook and self.http:
+            self.http.webhook(self.webhook, self.handle, self.webhook_token)
 
     async def replace_greeting_text(self, message):
         """

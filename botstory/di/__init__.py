@@ -5,8 +5,10 @@ __all__ = []
 injector = injector_service.Injector()
 
 bind = injector.bind
-desc = desc_module.desc
-inject = inject_module.inject
 child_scope = injector.child_scope
+clear_instances = injector.clear_instances
+desc = desc_module.desc
+get = injector.get
+inject = inject_module.inject
 
-__all__.extend([bind, child_scope, desc, inject])
+__all__.extend([bind, child_scope, clear_instances, desc, inject])

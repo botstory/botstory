@@ -28,8 +28,21 @@ class Scope:
         self.requires_fns = {}
         self.singleton_cache = {}
 
+    def clear_instances(self):
+        self.auto_update_list = []
+        self.singleton_cache = {}
+        self.storage = {}
+
     def register(self, type_name, value):
+        if type_name in self.storage:
+            self.remove_type(type_name)
+
         self.storage[type_name] = value
+
+    def remove_type(self, type_name):
+        self.storage.pop(type_name, True)
+        instance = self.singleton_cache.pop(type_name, True)
+        # TODO: clear self.requires_fns and self.auto_update_list maybe we can use type(instance)?
 
 
 def null_if_empty(value):
@@ -134,6 +147,9 @@ class Injector:
 
     def child_scope(self):
         return ChildScopeBuilder(self)
+
+    def clear_instances(self):
+        self.current_scope.clear_instances()
 
     def add_scope(self, scope):
         self.current_scope = scope

@@ -18,8 +18,6 @@ story_processor_instance = processor.StoryProcessor(
     stories_library,
     middlewares=[forking.Middleware()]
 )
-di.injector.register(instance=story_processor_instance)
-di.injector.bind(story_processor_instance, autoupdate=True)
 
 common_stories_instance = common.CommonStoriesAPI(
     parser_instance,
@@ -94,9 +92,6 @@ def use(middleware):
     if check_spec(['get_user', 'set_user', 'get_session', 'set_session'], middleware):
         story_processor_instance.add_storage(middleware)
 
-    if check_spec(['post', 'webhook'], middleware):
-        chat.add_http(middleware)
-
     return middleware
 
 
@@ -118,12 +113,18 @@ def clear(clear_library=True):
     global middlewares
     middlewares = []
 
+    di.clear_instances()
+
 
 async def setup():
+    di.injector.register(instance=story_processor_instance)
+    di.injector.bind(story_processor_instance, autoupdate=True)
     await _do_for_each_extension('setup')
 
 
 async def start():
+    di.injector.register(instance=story_processor_instance)
+    di.injector.bind(story_processor_instance, autoupdate=True)
     await _do_for_each_extension('start')
 
 

@@ -1,10 +1,11 @@
 import logging
 import os
+
 import pytest
 
 from . import fake_server
-from .. import fb, aiohttp, mongodb, mockhttp
-from ... import story, chat, utils
+from .. import aiohttp, fb, mongodb, mockhttp
+from ... import chat, story, utils
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +33,10 @@ def build_context():
             await db.set_session(session)
 
         story.use(db)
-        interface = story.use(fb.FBInterface(page_access_token='qwerty'))
+        fb_interface = story.use(fb.FBInterface(page_access_token='qwerty'))
         http = story.use(mockhttp.MockHttpInterface())
 
-        return interface, http, user
+        return fb_interface, http, user
 
     return builder
 
@@ -67,7 +68,7 @@ async def test_facebook_interface_should_use_aiohttp_to_post_message(event_loop)
         async with server.session() as server_session:
             # 1) setup app
 
-            try:
+            # try:
                 story.use(fb.FBInterface(
                     webhook_url='/webhook',
                 ))
@@ -92,8 +93,8 @@ async def test_facebook_interface_should_use_aiohttp_to_post_message(event_loop)
                         'text': 'Pryvit!'
                     }
                 }
-            finally:
-                await story.stop()
+            # finally:
+            #     await story.stop()
 
 
 @pytest.mark.asyncio
@@ -197,7 +198,6 @@ async def test_story_on_start(open_db, build_context):
                 trigger.passed()
 
         await story.setup()
-        await story.start()
 
         http.delete.assert_called_with(
             'https://graph.facebook.com/v2.6/me/thread_settings',
@@ -225,6 +225,8 @@ async def test_story_on_start(open_db, build_context):
                 ]
             }
         )
+
+        await story.start()
 
         await facebook.handle({
             'object': 'page',

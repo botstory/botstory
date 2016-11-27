@@ -26,7 +26,7 @@ class StoryProcessor:
         self.interfaces.append(interface)
         interface.processor = self
 
-    # TODO: @di.inject()
+    # @di.inject()
     def add_storage(self, storage):
         if not storage:
             return

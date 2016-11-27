@@ -2,7 +2,7 @@ import aiohttp
 from ... import di, utils
 
 
-@di.inject('storage')
+@di.desc('storage', reg=False)
 class MockDB:
     type = 'interface.session_storage'
 

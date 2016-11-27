@@ -13,8 +13,7 @@ logger = logging.getLogger(__name__)
 
 def teardown_function(function):
     logger.debug('tear down!')
-    story.stories_library.clear()
-    chat.interfaces = {}
+    story.clear()
 
 
 @pytest.mark.asyncio
@@ -23,6 +22,8 @@ async def test_send_text_message():
 
     interface = story.use(messenger.FBInterface(page_access_token='qwerty1'))
     mock_http = story.use(mockhttp.MockHttpInterface())
+
+    await story.start()
 
     await interface.send_text_message(
         recipient=user, text='hi!', options=None
@@ -132,6 +133,8 @@ async def test_setup_webhook():
         webhook_token='some-token',
     ))
     mock_http = story.use(mockhttp.MockHttpInterface())
+
+    await story.start()
 
     mock_http.webhook.assert_called_with(
         '/webhook',
