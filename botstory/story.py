@@ -76,7 +76,7 @@ def use(middleware):
     middlewares.append(middleware)
 
     di.injector.register(instance=middleware)
-    di.bind(middleware, autoupdate=True)
+    di.bind(middleware, auto=True)
 
     # TODO: should use DI somehow
     if check_spec(['send_text_message'], middleware):
@@ -108,8 +108,8 @@ def clear(clear_library=True):
 def register():
     di.injector.register(instance=story_processor_instance)
     di.injector.register(instance=stories_library)
-    di.injector.bind(story_processor_instance, autoupdate=True)
-    di.injector.bind(stories_library, autoupdate=True)
+    di.injector.bind(story_processor_instance, auto=True)
+    di.injector.bind(stories_library, auto=True)
 
 
 async def setup(event_loop=None):

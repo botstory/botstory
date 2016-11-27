@@ -4,32 +4,80 @@ from . import parser
 
 
 class Scope:
-    def __init__(self):
+    def __init__(self, name, parent=None):
         self.storage = {}
         # instances that will auto update on each new instance come
-        self.auto_update_list = []
+        self.auto_bind_list = []
         # description of classes
         self.described = {}
         # functions that waits for deps
         self.requires_fns = {}
         # all instances that are singletones
         self.singleton_cache = {}
+        self.name = name
+        # parent scope
+        self.parent = parent
 
     def get(self, type_name):
-        item = self.storage[type_name]
-        if inspect.isclass(item):
-            return item()
-        else:
-            return item
+        try:
+            item = self.storage[type_name]
+            if inspect.isclass(item):
+                return item()
+            else:
+                return item
+        except KeyError as err:
+            if self.parent:
+                return self.parent.get(type_name)
+            raise err
+
+    def get_instance(self, type_name):
+        try:
+            return self.singleton_cache[type_name]
+        except KeyError as err:
+            if self.parent:
+                return self.parent.get_instance(type_name)
+            raise err
+
+    def describe(self, type_name, cls):
+        self.described[cls] = {
+            'type': type_name,
+        }
+
+    def get_auto_bind_list(self):
+        yield from self.auto_bind_list
+        if self.parent:
+            yield from self.parent.get_auto_bind_list()
+
+    def auto_bind(self, instance):
+        self.auto_bind_list.append(instance)
+
+    def get_description(self, value):
+        try:
+            return self.described.get(value, self.described[type(value)])
+        except KeyError as err:
+            if self.parent:
+                return self.parent.get_description(value)
+            raise err
+
+    def store_instance(self, type_name, instance):
+        self.singleton_cache[type_name] = instance
+
+    def get_endpoint_deps(self, method_ptr):
+        return self.requires_fns.get(method_ptr, {}).items() or \
+               self.parent and self.parent.get_endpoint_deps(method_ptr) or \
+               []
+
+    def store_deps_endpoint(self, fn, deps):
+        self.requires_fns[fn] = deps
 
     def clear(self):
-        self.auto_update_list = []
+        self.auto_bind_list = []
         self.described = {}
         self.requires_fns = {}
         self.singleton_cache = {}
 
     def clear_instances(self):
-        self.auto_update_list = []
+        self.auto_bind_list = []
         self.singleton_cache = {}
         self.storage = {}
 
@@ -45,9 +93,9 @@ class Scope:
         # TODO: clear self.requires_fns and self.auto_update_list maybe we can use type(instance)?
 
     def __repr__(self):
-        return '<Scope> {}'.format({
+        return '<Scope {}> {}'.format(self.name, {
             'storage': self.storage,
-            'auto_update_list': self.auto_update_list,
+            'auto_update_list': self.auto_bind_list,
             'described': self.described,
             'requires_fns': self.requires_fns,
             'singleton_cache': self.singleton_cache,
@@ -64,7 +112,7 @@ class MissedDescriptionError(Exception):
 
 class Injector:
     def __init__(self):
-        self.root = Scope()
+        self.root = Scope('root')
         self.current_scope = self.root
 
     def describe(self, type_name, cls):
@@ -76,9 +124,7 @@ class Injector:
         :return:
         """
 
-        self.current_scope.described[cls] = {
-            'type': type_name,
-        }
+        self.current_scope.describe(type_name, cls)
 
     def register(self, type_name=None, instance=None):
         print()
@@ -87,7 +133,7 @@ class Injector:
             raise ValueError('type_name parameter should be string or None')
         if type_name is None:
             try:
-                desc = self.current_scope.described.get(instance, self.current_scope.described[type(instance)])
+                desc = self.current_scope.get_description(instance)
             except KeyError:
                 # TODO: should raise exception
                 # raise MissedDescriptionError('{} was not registered'.format(instance))
@@ -102,40 +148,46 @@ class Injector:
             type_name = desc['type']
         # print('> before store {} = {}'.format(type_name, instance))
         self.current_scope.register(type_name, instance)
-        for wait_instance in self.current_scope.auto_update_list:
+        for wait_instance in self.current_scope.get_auto_bind_list():
             self.bind(wait_instance)
 
     def requires(self, fn):
         fn_sig = inspect.signature(fn)
-        self.current_scope.requires_fns[fn] = {
+        self.current_scope.store_deps_endpoint(fn, {
             key: {'default': null_if_empty(fn_sig.parameters[key].default)}
-            for key in fn_sig.parameters.keys() if key != 'self'}
+            for key in fn_sig.parameters.keys() if key != 'self'})
 
-    def bind(self, instance, autoupdate=False):
+    def bind(self, instance, auto=False):
+        """
+        Bind deps to instance
+
+        :param instance:
+        :param auto: follow update of DI and refresh binds once we will get something new
+        :return:
+        """
         methods = [
             (m, cls.__dict__[m])
             for cls in inspect.getmro(type(instance))
             for m in cls.__dict__ if inspect.isfunction(cls.__dict__[m])
             ]
 
-        requires_of_methods = [(method_ptr, {dep: self.get(dep) or dep_spec['default']
-                                             for dep, dep_spec in
-                                             self.current_scope.requires_fns.get(method_ptr, {}).items()})
-                               for (method_name, method_ptr) in methods]
+        deps_of_endpoints = [(method_ptr, {dep: self.get(dep) or dep_spec['default']
+                                           for dep, dep_spec in self.current_scope.get_endpoint_deps(method_ptr)})
+                             for (method_name, method_ptr) in methods]
 
-        for (method_ptr, method_deps) in requires_of_methods:
+        for (method_ptr, method_deps) in deps_of_endpoints:
             if len(method_deps) > 0:
                 method_ptr(instance, **method_deps)
 
-        if autoupdate and instance not in self.current_scope.auto_update_list:
-            self.current_scope.auto_update_list.append(instance)
+        if auto and instance not in self.current_scope.get_auto_bind_list():
+            self.current_scope.auto_bind(instance)
 
         return instance
 
     def get(self, type_name):
         type_name = parser.kebab_to_underscore(type_name)
         try:
-            return self.current_scope.singleton_cache[type_name]
+            return self.current_scope.get_instance(type_name)
         except KeyError:
             try:
                 instance = self.current_scope.get(type_name)
@@ -143,13 +195,13 @@ class Injector:
                 # TODO: sometimes we should fail loudly in this case
                 return None
 
-            self.current_scope.singleton_cache[type_name] = instance
+            self.current_scope.store_instance(type_name, instance)
             instance = self.bind(instance)
 
         return instance
 
-    def child_scope(self):
-        return ChildScopeBuilder(self)
+    def child_scope(self, name='undefined'):
+        return ChildScopeBuilder(self, self.current_scope, name)
 
     def clear_instances(self):
         self.current_scope.clear_instances()
@@ -159,15 +211,17 @@ class Injector:
 
     def remove_scope(self, scope):
         assert self.current_scope == scope
-        self.current_scope = self.root
+        self.current_scope = scope.parent
 
 
 class ChildScopeBuilder:
-    def __init__(self, injector):
+    def __init__(self, injector, parent, name):
         self.injector = injector
+        self.name = name
+        self.parent = parent
 
     def __enter__(self):
-        self.scope = Scope()
+        self.scope = Scope(self.name, self.parent)
         self.injector.add_scope(self.scope)
         return self.scope
 

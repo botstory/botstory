@@ -77,7 +77,7 @@ def test_no_autoupdate_deps_on_new_instance_comes():
             def inner(self, inner_class=None):
                 self.inner_class = inner_class
 
-        outer = di.bind(OuterClass(), autoupdate=False)
+        outer = di.bind(OuterClass(), auto=False)
 
         @di.inject()
         class InnerClass:
@@ -95,7 +95,7 @@ def test_autoupdate_deps_on_new_instance_comes():
             def inner(self, inner_class=None):
                 self.inner_class = inner_class
 
-        outer = di.bind(OuterClass(), autoupdate=True)
+        outer = di.bind(OuterClass(), auto=True)
 
         @di.inject()
         class InnerClass:

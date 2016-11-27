@@ -69,7 +69,7 @@ def test_later_binding():
 
         outer = OuterClass()
         di.injector.register(instance=outer)
-        di.bind(outer, autoupdate=True)
+        di.bind(outer, auto=True)
 
         inner = InnerClass()
         di.injector.register(instance=inner)
@@ -94,3 +94,21 @@ def test_overwrite_previous_singleton_instance():
         assert first_class != second_class
         assert isinstance(first_class, FirstClass)
         assert isinstance(second_class, SecondClass)
+
+
+def test_inherit_scope():
+    with di.child_scope('first'):
+        @di.desc()
+        class First:
+            pass
+
+        with di.child_scope('second'):
+            @di.desc()
+            class Second:
+                @di.inject()
+                def deps(self, first):
+                    self.first = first
+
+            second = di.get('second')
+            assert isinstance(second, Second)
+            assert isinstance(second.first, First)
