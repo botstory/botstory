@@ -122,14 +122,14 @@ async def test_start_should_open_connection_and_close_on_stop():
     assert not db_interface.db
 
 
-@pytest.mark.skip()
 def test_get_mongodb_as_dep():
     story.use(mongodb.MongodbInterface())
 
-    @di.desc()
-    class OneClass:
-        @di.inject()
-        def deps(self, storage):
-            self.storage = storage
+    with di.child_scope():
+        @di.desc()
+        class OneClass:
+            @di.inject()
+            def deps(self, storage):
+                self.storage = storage
 
-    assert isinstance(di.injector.get('one_class').storage, mongodb.MongodbInterface)
+        assert isinstance(di.injector.get('one_class').storage, mongodb.MongodbInterface)

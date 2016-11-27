@@ -842,30 +842,30 @@ async def test_remove_persistent_menu():
     )
 
 
-@pytest.mark.skip()
 def test_get_fb_as_deps():
     story.use(messenger.FBInterface())
 
-    @di.desc()
-    class OneClass:
-        @di.inject()
-        def deps(self, fb):
-            self.fb = fb
+    with di.child_scope():
+        @di.desc()
+        class OneClass:
+            @di.inject()
+            def deps(self, fb):
+                self.fb = fb
 
-    assert isinstance(di.injector.get('one_class').fb, messenger.FBInterface)
+        assert isinstance(di.injector.get('one_class').fb, messenger.FBInterface)
 
 
-@pytest.mark.skip()
 def test_bind_fb_deps():
     story.use(messenger.FBInterface())
     story.use(mockdb.MockDB())
     story.use(mockhttp.MockHttpInterface())
 
-    @di.desc()
-    class OneClass:
-        @di.inject()
-        def deps(self, fb):
-            self.fb = fb
+    with di.child_scope():
+        @di.desc()
+        class OneClass:
+            @di.inject()
+            def deps(self, fb):
+                self.fb = fb
 
-    assert isinstance(di.injector.get('one_class').fb.http, mockhttp.MockHttpInterface)
-    assert isinstance(di.injector.get('one_class').fb.storage, mockdb.MockDB)
+        assert isinstance(di.injector.get('one_class').fb.http, mockhttp.MockHttpInterface)
+        assert isinstance(di.injector.get('one_class').fb.storage, mockdb.MockDB)

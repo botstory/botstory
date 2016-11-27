@@ -189,14 +189,14 @@ async def test_pass_middleware(mocker, webhook_handler):
         await http.stop()
 
 
-@pytest.mark.skip()
 def test_get_as_deps():
     story.use(aiohttp.AioHttpInterface())
 
-    @di.desc()
-    class OneClass:
-        @di.inject()
-        def deps(self, http):
-            self.http = http
+    with di.child_scope('http'):
+        @di.desc()
+        class OneClass:
+            @di.inject()
+            def deps(self, http):
+                self.http = http
 
-    assert isinstance(di.injector.get('one_class').http, aiohttp.AioHttpInterface)
+        assert isinstance(di.injector.get('one_class').http, aiohttp.AioHttpInterface)

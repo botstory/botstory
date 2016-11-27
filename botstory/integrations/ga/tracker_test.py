@@ -136,14 +136,14 @@ async def test_should_track_story(tracker_mock):
     ])
 
 
-@pytest.mark.skip()
 def test_get_as_deps():
     story.use(ga.GAStatistics())
 
-    @di.desc()
-    class OneClass:
-        @di.inject()
-        def deps(self, tracker):
-            self.tracker = tracker
+    with di.child_scope():
+        @di.desc()
+        class OneClass:
+            @di.inject()
+            def deps(self, tracker):
+                self.tracker = tracker
 
-    assert isinstance(di.injector.get('one_class').tracker, ga.GAStatistics)
+        assert isinstance(di.injector.get('one_class').tracker, ga.GAStatistics)

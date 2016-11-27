@@ -29,14 +29,14 @@ def test_story():
     t.story()
 
 
-@pytest.mark.skip()
 def test_get_mock_tracker_as_dep():
     story.use(mocktracker.MockTracker())
 
-    @di.desc()
-    class OneClass:
-        @di.inject()
-        def deps(self, tracker):
-            self.tracker = tracker
+    with di.child_scope():
+        @di.desc()
+        class OneClass:
+            @di.inject()
+            def deps(self, tracker):
+                self.tracker = tracker
 
-    assert isinstance(di.injector.get('one_class').tracker, mocktracker.MockTracker)
+        assert isinstance(di.injector.get('one_class').tracker, mocktracker.MockTracker)
