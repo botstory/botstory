@@ -30,8 +30,6 @@ print('before @di.inject')
 
 @di.desc('http', reg=False)
 class AioHttpInterface:
-    type = 'interface.aiohttp'
-
     def __init__(self, host='0.0.0.0', port=None,
                  shutdown_timeout=60.0, ssl_context=None,
                  backlog=128, auto_start=True,

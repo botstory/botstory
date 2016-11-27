@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 @di.desc('fb', reg=False)
 class FBInterface:
-    type = 'interface.facebook'
+    type = 'facebook'
 
     def __init__(self,
                  api_uri='https://graph.facebook.com/v2.6',

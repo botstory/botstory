@@ -19,8 +19,6 @@ def stub(name=None):
 
 @di.desc('http', reg=False)
 class MockHttpInterface:
-    type = 'interface.http'
-
     def __init__(self,
                  get={}, get_raise=sentinel,
                  post=True, post_raise=sentinel,

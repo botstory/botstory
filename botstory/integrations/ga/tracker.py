@@ -1,3 +1,10 @@
+"""
+pageview: [ page path ]
+event: category, action, [ label [, value ] ]
+social: network, action [, target ]
+timing: category, variable, time [, label ]
+"""
+
 import functools
 import json
 import logging
@@ -11,13 +18,6 @@ logger = logging.getLogger(__name__)
 
 @di.desc('tracker', reg=False)
 class GAStatistics:
-    type = 'interface.tracker'
-    """
-    pageview: [ page path ]
-    event: category, action, [ label [, value ] ]
-    social: network, action [, target ]
-    timing: category, variable, time [, label ]
-    """
 
     def __init__(self,
                  tracking_id=None,

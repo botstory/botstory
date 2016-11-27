@@ -6,8 +6,6 @@ logger = logging.getLogger(__name__)
 
 @di.desc('tracker', reg=False)
 class MockTracker:
-    type = 'interface.tracker'
-
     def event(self, *args, **kwargs):
         logging.debug('event')
         logging.debug(kwargs)
