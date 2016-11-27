@@ -25,9 +25,6 @@ def is_ok(status):
     return 200 <= status < 400
 
 
-print('before @di.inject')
-
-
 @di.desc('http', reg=False)
 class AioHttpInterface:
     def __init__(self, host='0.0.0.0', port=None,
@@ -159,14 +156,14 @@ class AioHttpInterface:
         except Exception as err:
             logger.warn(
                 'Exception: status: {status}, message: {message}, type: {type}, method: {method}, url: {url}, {kwargs}'
-                .format(status=getattr(err, 'code', None),
-                        message=getattr(err, 'message', None),
-                        type=type(err),
-                        method=method_name,
-                        url=url,
-                        kwargs=kwargs,
-                        )
-                )
+                    .format(status=getattr(err, 'code', None),
+                            message=getattr(err, 'message', None),
+                            type=type(err),
+                            method=method_name,
+                            url=url,
+                            kwargs=kwargs,
+                            )
+            )
             raise err
         return resp
 

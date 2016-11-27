@@ -112,3 +112,71 @@ def test_inherit_scope():
             second = di.get('second')
             assert isinstance(second, Second)
             assert isinstance(second.first, First)
+
+
+def test_do_not_call_deps_endpoint_before_we_have_all_needed_deps():
+    with di.child_scope():
+        @di.desc()
+        class Container:
+            def __init__(self):
+                self.one = 'undefined'
+                self.two = 'undefined'
+
+            @di.inject()
+            def deps(self, one, two):
+                self.one = one
+                self.two = two
+
+        container = di.get('container')
+        assert container.one == 'undefined'
+        assert container.two == 'undefined'
+
+        @di.desc()
+        class One:
+            pass
+
+        di.bind(container)
+        assert container.one == 'undefined'
+        assert container.two == 'undefined'
+
+        @di.desc()
+        class Two:
+            pass
+
+        di.bind(container)
+        assert isinstance(container.one, One)
+        assert isinstance(container.two, Two)
+
+
+def test_do_not_call_deps_endpoint_before_we_have_all_needed_deps_or_default_value():
+    with di.child_scope():
+        @di.desc()
+        class Container:
+            def __init__(self):
+                self.one = 'undefined'
+                self.two = 'undefined'
+
+            @di.inject()
+            def deps(self, one, two='default'):
+                self.one = one
+                self.two = two
+
+        container = di.get('container')
+        assert container.one == 'undefined'
+        assert container.two == 'undefined'
+
+        @di.desc()
+        class One:
+            pass
+
+        di.bind(container)
+        assert isinstance(container.one, One)
+        assert container.two == 'default'
+
+        @di.desc()
+        class Two:
+            pass
+
+        di.bind(container)
+        assert isinstance(container.one, One)
+        assert isinstance(container.two, Two)

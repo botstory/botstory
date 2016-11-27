@@ -1,6 +1,9 @@
+import logging
 import inspect
 
 from . import parser
+
+logger = logging.getLogger(__name__)
 
 
 class Scope:
@@ -63,6 +66,8 @@ class Scope:
         self.singleton_cache[type_name] = instance
 
     def get_endpoint_deps(self, method_ptr):
+        logger.debug('get_endpoint_deps {}'.format(method_ptr))
+        logger.debug(self.requires_fns.get(method_ptr, {}))
         return self.requires_fns.get(method_ptr, {}).items() or \
                self.parent and self.parent.get_endpoint_deps(method_ptr) or \
                []
@@ -102,8 +107,8 @@ class Scope:
         })
 
 
-def null_if_empty(value):
-    return value if value is not inspect.Parameter.empty else None
+def empty_array_if_empty(default):
+    return [default] if default is not inspect.Parameter.empty else []
 
 
 class MissedDescriptionError(Exception):
@@ -154,8 +159,20 @@ class Injector:
     def requires(self, fn):
         fn_sig = inspect.signature(fn)
         self.current_scope.store_deps_endpoint(fn, {
-            key: {'default': null_if_empty(fn_sig.parameters[key].default)}
+            key: {'default': default for default in empty_array_if_empty(fn_sig.parameters[key].default)}
             for key in fn_sig.parameters.keys() if key != 'self'})
+
+    def entrypoint_deps(self, method_ptr):
+        # we should have something to inject
+        # registered instance, class or default value
+        if not any(self.get(dep) or 'default' in dep_spec
+                   for dep, dep_spec
+                   in self.current_scope.get_endpoint_deps(method_ptr)):
+            # otherwise we should inject anything
+            return {}
+
+        return {dep: self.get(dep) or dep_spec['default']
+                for dep, dep_spec in self.current_scope.get_endpoint_deps(method_ptr)}
 
     def bind(self, instance, auto=False):
         """
@@ -171,13 +188,18 @@ class Injector:
             for m in cls.__dict__ if inspect.isfunction(cls.__dict__[m])
             ]
 
-        deps_of_endpoints = [(method_ptr, {dep: self.get(dep) or dep_spec['default']
-                                           for dep, dep_spec in self.current_scope.get_endpoint_deps(method_ptr)})
-                             for (method_name, method_ptr) in methods]
+        logger.debug('bind {}'.format(instance))
+        logger.debug('methods {}'.format(methods))
 
-        for (method_ptr, method_deps) in deps_of_endpoints:
-            if len(method_deps) > 0:
-                method_ptr(instance, **method_deps)
+        try:
+            deps_of_endpoints = [(method_ptr, self.entrypoint_deps(method_ptr))
+                                 for (method_name, method_ptr) in methods]
+
+            for (method_ptr, method_deps) in deps_of_endpoints:
+                if len(method_deps) > 0:
+                    method_ptr(instance, **method_deps)
+        except KeyError:
+            pass
 
         if auto and instance not in self.current_scope.get_auto_bind_list():
             self.current_scope.auto_bind(instance)
