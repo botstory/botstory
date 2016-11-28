@@ -3,6 +3,8 @@ from aiohttp.helpers import sentinel
 import json
 from unittest import mock
 
+from ... import di
+
 
 def stub(name=None):
     """
@@ -15,9 +17,8 @@ def stub(name=None):
     return mock.MagicMock(spec=lambda *args, **kwargs: None, name=name)
 
 
+@di.desc('http', reg=False)
 class MockHttpInterface:
-    type = 'interface.http'
-
     def __init__(self,
                  get={}, get_raise=sentinel,
                  post=True, post_raise=sentinel,

@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from . import chat
+from . import chat, di
 from .ast import callable as callable_module, common, \
     forking, library, parser, processor, users
 
@@ -75,26 +75,12 @@ def use(middleware):
 
     middlewares.append(middleware)
 
-    # TODO: maybe it is good time to start using DI (dependency injection)
+    di.injector.register(instance=middleware)
+    di.bind(middleware, auto=True)
 
+    # TODO: should use DI somehow
     if check_spec(['send_text_message'], middleware):
         chat.add_interface(middleware)
-        # TODO: should find more elegant way to inject library to fb interface
-        # or information whether we have On Start story
-        middleware.library = stories_library
-
-    if check_spec(['handle'], middleware):
-        story_processor_instance.add_interface(middleware)
-
-    if check_spec(['get_user', 'set_user', 'get_session', 'set_session'], middleware):
-        story_processor_instance.add_storage(middleware)
-
-    if check_spec(['post', 'webhook'], middleware):
-        chat.add_http(middleware)
-
-    if middleware.type == 'interface.tracker':
-        story_processor_instance.add_tracker(middleware)
-        users.add_tracker(middleware)
 
     return middleware
 
@@ -108,7 +94,6 @@ def clear(clear_library=True):
     :return:
     """
 
-    story_processor_instance.clear()
     if clear_library:
         stories_library.clear()
     chat.clear()
@@ -117,23 +102,34 @@ def clear(clear_library=True):
     global middlewares
     middlewares = []
 
-
-async def setup():
-    await _do_for_each_extension('setup')
+    di.clear_instances()
 
 
-async def start():
-    await _do_for_each_extension('start')
+def register():
+    di.injector.register(instance=story_processor_instance)
+    di.injector.register(instance=stories_library)
+    di.injector.bind(story_processor_instance, auto=True)
+    di.injector.bind(stories_library, auto=True)
 
 
-async def stop():
-    await _do_for_each_extension('stop')
+async def setup(event_loop=None):
+    register()
+    await _do_for_each_extension('setup', event_loop)
 
 
-async def _do_for_each_extension(command):
+async def start(event_loop=None):
+    register()
+    await _do_for_each_extension('start', event_loop)
+
+
+async def stop(event_loop=None):
+    await _do_for_each_extension('stop', event_loop)
+
+
+async def _do_for_each_extension(command, even_loop):
     await asyncio.gather(
-        *[getattr(m, command)() for m in middlewares if hasattr(m, command)]
-    )
+        *[getattr(m, command)() for m in middlewares if hasattr(m, command)],
+        loop=even_loop)
 
 
 def forever(loop):

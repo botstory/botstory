@@ -3,15 +3,16 @@ import os
 import pytest
 
 from . import db
+from .. import mongodb
 from ..fb import messenger
-from ... import story, utils
+from ... import di, story, utils
 
 logger = logging.getLogger(__name__)
 
 
 def teardown_function(function):
     logger.debug('tear down!')
-    story.stories_library.clear()
+    story.clear()
 
 
 @pytest.fixture
@@ -119,3 +120,16 @@ async def test_start_should_open_connection_and_close_on_stop():
     assert not db_interface.session_collection
     assert not db_interface.user_collection
     assert not db_interface.db
+
+
+def test_get_mongodb_as_dep():
+    story.use(mongodb.MongodbInterface())
+
+    with di.child_scope():
+        @di.desc()
+        class OneClass:
+            @di.inject()
+            def deps(self, storage):
+                self.storage = storage
+
+        assert isinstance(di.injector.get('one_class').storage, mongodb.MongodbInterface)

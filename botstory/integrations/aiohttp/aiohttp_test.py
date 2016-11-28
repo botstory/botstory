@@ -2,8 +2,15 @@ from aiohttp import test_utils
 import json
 import pytest
 from . import AioHttpInterface
+from .. import aiohttp
 from ..commonhttp import errors
 from ..tests import fake_server
+from ... import di, story
+
+
+def teardown_function(function):
+    story.clear()
+
 
 @pytest.fixture
 def webhook_handler():
@@ -12,6 +19,7 @@ def webhook_handler():
         'content_type': 'application/json',
         'text': json.dumps({'message': 'Ok!'}),
     })
+
 
 @pytest.mark.asyncio
 async def test_post(event_loop):
@@ -179,3 +187,16 @@ async def test_pass_middleware(mocker, webhook_handler):
         assert handler_stub.called
     finally:
         await http.stop()
+
+
+def test_get_as_deps():
+    story.use(aiohttp.AioHttpInterface())
+
+    with di.child_scope('http'):
+        @di.desc()
+        class OneClass:
+            @di.inject()
+            def deps(self, http):
+                self.http = http
+
+        assert isinstance(di.injector.get('one_class').http, aiohttp.AioHttpInterface)

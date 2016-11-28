@@ -4,8 +4,8 @@ from unittest import mock
 import pytest
 
 from . import messenger
-from .. import commonhttp, mockdb, mockhttp
-from ... import chat, story, utils
+from .. import commonhttp, fb, mockdb, mockhttp
+from ... import chat, di, story, utils
 from ...middlewares import any, option
 
 logger = logging.getLogger(__name__)
@@ -13,8 +13,7 @@ logger = logging.getLogger(__name__)
 
 def teardown_function(function):
     logger.debug('tear down!')
-    story.stories_library.clear()
-    chat.interfaces = {}
+    story.clear()
 
 
 @pytest.mark.asyncio
@@ -23,6 +22,8 @@ async def test_send_text_message():
 
     interface = story.use(messenger.FBInterface(page_access_token='qwerty1'))
     mock_http = story.use(mockhttp.MockHttpInterface())
+
+    await story.start()
 
     await interface.send_text_message(
         recipient=user, text='hi!', options=None
@@ -132,6 +133,8 @@ async def test_setup_webhook():
         webhook_token='some-token',
     ))
     mock_http = story.use(mockhttp.MockHttpInterface())
+
+    await story.start()
 
     mock_http.webhook.assert_called_with(
         '/webhook',
@@ -307,6 +310,8 @@ def build_fb_interface():
 
         storage = story.use(mockdb.MockDB())
         fb = story.use(messenger.FBInterface(page_access_token='qwerty'))
+
+        await story.start()
 
         await storage.set_session(session)
         await storage.set_user(user)
@@ -573,7 +578,7 @@ async def test_can_set_greeting_text_before_inject_http():
 
     mock_http = story.use(mockhttp.MockHttpInterface())
 
-    await fb_interface.setup()
+    await story.setup()
 
     # give few a moment for lazy initialization of greeting text
     await asyncio.sleep(0.1)
@@ -601,7 +606,7 @@ async def test_can_set_greeting_text_in_constructor():
 
     mock_http = story.use(mockhttp.MockHttpInterface())
 
-    await fb.setup()
+    await story.setup()
 
     # give few a moment for lazy initialization of greeting text
     await asyncio.sleep(0.1)
@@ -738,7 +743,7 @@ async def test_can_set_persistent_menu_before_http():
 
     mock_http = story.use(mockhttp.MockHttpInterface())
 
-    await fb_interface.setup()
+    await story.setup()
 
     # give few a moment for lazy initialization of greeting text
     await asyncio.sleep(0.1)
@@ -766,7 +771,7 @@ async def test_can_set_persistent_menu_before_http():
 
 @pytest.mark.asyncio
 async def test_can_set_persistent_menu_inside_of_constructor():
-    fb = story.use(messenger.FBInterface(
+    story.use(messenger.FBInterface(
         page_access_token='qwerty15',
         persistent_menu=[{
             'type': 'postback',
@@ -781,7 +786,7 @@ async def test_can_set_persistent_menu_inside_of_constructor():
 
     mock_http = story.use(mockhttp.MockHttpInterface())
 
-    await fb.setup()
+    await story.setup()
 
     # give few a moment for lazy initialization of greeting text
     await asyncio.sleep(0.1)
@@ -835,3 +840,32 @@ async def test_remove_persistent_menu():
             'thread_state': 'existing_thread'
         }
     )
+
+
+def test_get_fb_as_deps():
+    story.use(messenger.FBInterface())
+
+    with di.child_scope():
+        @di.desc()
+        class OneClass:
+            @di.inject()
+            def deps(self, fb):
+                self.fb = fb
+
+        assert isinstance(di.injector.get('one_class').fb, messenger.FBInterface)
+
+
+def test_bind_fb_deps():
+    story.use(messenger.FBInterface())
+    story.use(mockdb.MockDB())
+    story.use(mockhttp.MockHttpInterface())
+
+    with di.child_scope():
+        @di.desc()
+        class OneClass:
+            @di.inject()
+            def deps(self, fb):
+                self.fb = fb
+
+        assert isinstance(di.injector.get('one_class').fb.http, mockhttp.MockHttpInterface)
+        assert isinstance(di.injector.get('one_class').fb.storage, mockdb.MockDB)

@@ -1,10 +1,12 @@
 import logging
-from ..integrations.mocktracker import tracker
+from .. import di
+from ..integrations.mocktracker import tracker as tracker_module
 
 logger = logging.getLogger(__name__)
 _tracker = None
 
 
+@di.inject()
 def add_tracker(tracker):
     logger.debug('add_tracker')
     logger.debug(tracker)
@@ -26,7 +28,7 @@ def on_new_user_comes(user):
 
 def clear():
     global _tracker
-    _tracker = tracker.MockTracker()
+    _tracker = tracker_module.MockTracker()
 
 
 clear()

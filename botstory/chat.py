@@ -70,13 +70,6 @@ async def send_text_message_to_all_interfaces(*args, **kwargs):
     return res
 
 
-def add_http(http):
-    logger.debug('add_http')
-    logger.debug(http)
-    for _, interface in interfaces.items():
-        interface.add_http(http)
-
-
 def add_interface(interface):
     logger.debug('add_interface')
     logger.debug(interface)

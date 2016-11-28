@@ -2,14 +2,16 @@ import asyncio
 import logging
 from . import validate
 from .. import commonhttp
+from ... import di
 from ...middlewares import option
 from ...ast import users
 
 logger = logging.getLogger(__name__)
 
 
+@di.desc('fb', reg=False)
 class FBInterface:
-    type = 'interface.facebook'
+    type = 'facebook'
 
     def __init__(self,
                  api_uri='https://graph.facebook.com/v2.6',
@@ -37,8 +39,38 @@ class FBInterface:
 
         self.library = None
         self.http = None
-        self.processor = None
+        self.story_processor = None
         self.storage = None
+
+    @di.inject()
+    def add_library(self, stories_library):
+        logger.debug('add_library')
+        logger.debug(stories_library)
+        self.library = stories_library
+
+    @di.inject()
+    def add_http(self, http):
+        """
+        inject http provider
+
+        :param http:
+        :return:
+        """
+        logger.debug('add_http')
+        logger.debug(http)
+        self.http = http
+
+    @di.inject()
+    def add_processor(self, story_processor):
+        logger.debug('add_processor')
+        logger.debug(story_processor)
+        self.story_processor = story_processor
+
+    @di.inject()
+    def add_storage(self, storage):
+        logger.debug('add_storage')
+        logger.debug(storage)
+        self.storage = storage
 
     async def send_text_message(self, recipient, text, options=None):
         """
@@ -79,24 +111,6 @@ class FBInterface:
                 },
                 'message': message,
             })
-
-    def add_http(self, http):
-        """
-        inject http provider
-
-        :param http:
-        :return:
-        """
-        logger.debug('add_http')
-        logger.debug(http)
-        self.http = http
-        if self.webhook:
-            http.webhook(self.webhook, self.handle, self.webhook_token)
-
-    def add_storage(self, storage):
-        logger.debug('add_storage')
-        logger.debug(storage)
-        self.storage = storage
 
     async def request_profile(self, facebook_user_id):
         """
@@ -198,13 +212,13 @@ class FBInterface:
 
                             message['data'] = data
 
-                            await self.processor.match_message(message)
+                            await self.story_processor.match_message(message)
 
                     elif 'postback' in m:
                         message['data'] = {
                             'option': m['postback']['payload'],
                         }
-                        await self.processor.match_message(message)
+                        await self.story_processor.match_message(message)
                     elif 'delivery' in m:
                         logger.debug('delivery notification')
                     elif 'read' in m:
@@ -240,6 +254,10 @@ class FBInterface:
         if have_on_start_story:
             await self.remove_greeting_call_to_action_payload()
             await self.set_greeting_call_to_action_payload(option.OnStart.DEFAULT_OPTION_PAYLOAD)
+
+    async def start(self):
+        if self.webhook and self.http:
+            self.http.webhook(self.webhook, self.handle, self.webhook_token)
 
     async def replace_greeting_text(self, message):
         """
