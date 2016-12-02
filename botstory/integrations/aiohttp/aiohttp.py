@@ -197,9 +197,13 @@ class AioHttpInterface:
                                 status=statuses.HTTP_422_UNPROCESSABLE_ENTITY)
 
     async def start(self):
-        if not self.has_app() or not self.auto_start:
-            return
         logger.debug('start')
+        if not self.has_app():
+            logger.debug('does not have app')
+            return
+        if not self.auto_start:
+            logger.debug('should start automatically')
+            return
         app = self.get_app()
         handler = app.make_handler()
         loop = asyncio.get_event_loop()
@@ -226,9 +230,10 @@ class AioHttpInterface:
         self.handler = handler
 
     async def stop(self):
-        if not self.has_app():
-            return
         logger.debug('stop')
+        if not self.has_app():
+            logger.debug('does not have app')
+            return
         self.server.close()
         await self.server.wait_closed()
         await self.app.shutdown()
