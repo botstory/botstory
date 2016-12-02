@@ -200,3 +200,13 @@ def test_get_as_deps():
                 self.http = http
 
         assert isinstance(di.injector.get('one_class').http, aiohttp.AioHttpInterface)
+
+
+@pytest.mark.asyncio
+async def test_shop_should_remove_app():
+    http = aiohttp.AioHttpInterface()
+    assert not http.has_app()
+    http.get_app()
+    assert http.has_app()
+    await http.stop()
+    assert not http.has_app()

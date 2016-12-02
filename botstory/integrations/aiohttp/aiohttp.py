@@ -231,11 +231,18 @@ class AioHttpInterface:
 
     async def stop(self):
         logger.debug('stop')
+
         if not self.has_app():
             logger.debug('does not have app')
             return
-        self.server.close()
-        await self.server.wait_closed()
+
+        if self.server:
+            self.server.close()
+            await self.server.wait_closed()
+
         await self.app.shutdown()
-        await self.handler.finish_connections(self.shutdown_timeout)
         await self.app.cleanup()
+        self.app = None
+
+        if self.handler:
+            await self.handler.finish_connections(self.shutdown_timeout)
