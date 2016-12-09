@@ -202,7 +202,7 @@ class AioHttpInterface:
             logger.debug('does not have app')
             return
         if not self.auto_start:
-            logger.debug('should start automatically')
+            logger.debug('should not start automatically')
             return
         app = self.get_app()
         handler = app.make_handler()
