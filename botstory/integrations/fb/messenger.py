@@ -256,6 +256,7 @@ class FBInterface:
             await self.set_greeting_call_to_action_payload(option.OnStart.DEFAULT_OPTION_PAYLOAD)
 
     async def start(self):
+        logger.debug('start')
         if self.webhook and self.http:
             self.http.webhook(self.webhook, self.handle, self.webhook_token)
 
@@ -286,6 +287,7 @@ class FBInterface:
         :param message:
         :return:
         """
+        logger.debug('set_greeting_text')
         try:
             validate.greeting_text(message)
         except validate.Invalid as i:
@@ -311,6 +313,7 @@ class FBInterface:
         )
 
     async def remove_greeting_text(self):
+        logger.debug('remove_greeting_text')
         if not self.http:
             return
 
@@ -325,6 +328,7 @@ class FBInterface:
         )
 
     async def set_greeting_call_to_action_payload(self, payload):
+        logger.debug('set_greeting_call_to_action_payload')
         """
 
         more: https://developers.facebook.com/docs/messenger-platform/thread-settings/get-started-button
@@ -345,6 +349,7 @@ class FBInterface:
         )
 
     async def remove_greeting_call_to_action_payload(self):
+        logger.debug('remove_greeting_call_to_action_payload')
         if not self.http:
             return
 
@@ -360,6 +365,7 @@ class FBInterface:
         )
 
     async def replace_persistent_menu(self, menu):
+        logger.debug('replace_persistent_menu')
         try:
             await self.remove_persistent_menu()
         except Exception:
@@ -373,6 +379,7 @@ class FBInterface:
         :param menu:
         :return:
         """
+        logger.debug('set_persistent_menu')
         try:
             validate.persistent_menu(menu)
         except validate.Invalid as i:
@@ -397,6 +404,7 @@ class FBInterface:
         )
 
     async def remove_persistent_menu(self):
+        logger.debug('remove_persistent_menu')
         if not self.http:
             return
 
