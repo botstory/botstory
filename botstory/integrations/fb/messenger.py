@@ -4,7 +4,6 @@ from . import validate
 from .. import commonhttp
 from ... import di
 from ...middlewares import option
-from ...ast import users
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +40,7 @@ class FBInterface:
         self.http = None
         self.story_processor = None
         self.storage = None
+        self.users = None
 
     @di.inject()
     def add_library(self, stories_library):
@@ -71,6 +71,12 @@ class FBInterface:
         logger.debug('add_storage')
         logger.debug(storage)
         self.storage = storage
+
+    @di.inject()
+    def add_users(self, users):
+        logger.debug('add_users')
+        logger.debug(users)
+        self.users = users
 
     async def send_text_message(self, recipient, text, options=None):
         """
@@ -173,7 +179,7 @@ class FBInterface:
                             gender=messenger_profile_data.get('gender', None),
                         )
 
-                        users.on_new_user_comes(user)
+                        self.users.on_new_user_comes(user)
 
                     session = await self.storage.get_session(facebook_user_id=facebook_user_id)
                     if not session:

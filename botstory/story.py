@@ -42,6 +42,7 @@ class Story:
         )
         self.middlewares = []
         self.chat = chat.Chat()
+        self.users = users.Users()
 
     def on(self, receive):
         return self.common_stories_instance.on(receive)
@@ -108,8 +109,10 @@ class Story:
     def register(self):
         di.injector.register(instance=self.story_processor_instance)
         di.injector.register(instance=self.stories_library)
+        di.injector.register(instance=self.users)
         di.injector.bind(self.story_processor_instance, auto=True)
         di.injector.bind(self.stories_library, auto=True)
+        di.injector.bind(self.users, auto=True)
 
     async def _do_for_each_extension(self, command, even_loop):
         await asyncio.gather(
@@ -126,7 +129,7 @@ class Story:
 
         self.stories_library.clear()
         self.chat.clear()
-        users.clear()
+        self.users.clear()
 
         self.middlewares = []
 
