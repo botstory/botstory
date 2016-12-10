@@ -1,32 +1,35 @@
 import logging
 import pytest
 from . import option
-from ... import chat, matchers, story
+from ... import matchers, Story
 from ...utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
 logger = logging.getLogger(__name__)
 
 
+story = None
+
+
 def setup_function(function):
     logger.debug('setup')
-    chat.interfaces = {}
-    story.stories_library.clear()
+    story and story.clear()
 
 
 @pytest.mark.asyncio
 async def test_should_ask_with_options():
-    logger.debug('chat.interfaces')
-    logger.debug(chat.interfaces)
     session = build_fake_session()
     user = build_fake_user()
 
     trigger = SimpleTrigger()
 
+    global story
+    story = Story()
+
     @story.on('How are you?')
     def one_story():
         @story.part()
         async def ask(message):
-            return await chat.ask(
+            return await story.ask(
                 'I feel fine. How about you?',
                 options=[{
                     'title': 'Good!',
@@ -57,6 +60,9 @@ async def test_validate_option():
 
     trigger = SimpleTrigger()
 
+    global story
+    story = Story()
+
     @story.on(receive=option.Any())
     def one_story():
         @story.part()
@@ -73,6 +79,9 @@ async def test_validate_only_option():
     user = build_fake_user()
 
     trigger = SimpleTrigger()
+
+    global story
+    story = Story()
 
     @story.on(receive=option.Any())
     def one_story():
@@ -97,6 +106,9 @@ async def test_validate_only_option():
     user = build_fake_user()
 
     trigger = SimpleTrigger()
+
+    global story
+    story = Story()
 
     @story.on(receive=option.Match('green'))
     def one_story():
