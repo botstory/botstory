@@ -2,17 +2,19 @@ import asyncio
 import logging
 import pytest
 
-from . import chat, story
+from . import Story
 from .integrations import mockdb, mockhttp
 from .middlewares import any, location, text
 from .utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
 logger = logging.getLogger(__name__)
 
+story = None
+
 
 def teardown_function(function):
     logger.debug('tear down!')
-    story.stories_library.clear()
+    story.clear()
 
 
 @pytest.mark.asyncio
@@ -21,6 +23,9 @@ async def test_should_run_sequence_of_parts():
     trigger_2 = SimpleTrigger()
     user = build_fake_user()
     session = build_fake_session()
+
+    global story
+    story = Story()
 
     @story.on('hi there!')
     def one_story():
@@ -32,7 +37,7 @@ async def test_should_run_sequence_of_parts():
         def then(message):
             trigger_2.passed()
 
-    await answer.pure_text('hi there!', session, user)
+    await answer.pure_text('hi there!', session, user, s=story)
 
     assert trigger_1.is_triggered
     assert trigger_2.is_triggered
@@ -44,21 +49,24 @@ async def test_should_wait_for_answer_on_ask():
     session = build_fake_session()
     user = build_fake_user()
 
+    global story
+    story = Story()
+
     @story.on('hi there!')
     def one_story():
         @story.part()
         async def then(message):
-            return await chat.ask('How are you?', user=message['user'])
+            return await story.ask('How are you?', user=message['user'])
 
         @story.part()
         def then(message):
             trigger.passed()
 
-    await answer.pure_text('hi there!', session, user)
+    await answer.pure_text('hi there!', session, user, s=story)
 
     assert not trigger.is_triggered
 
-    await answer.pure_text('Great!', session, user)
+    await answer.pure_text('Great!', session, user, s=story)
 
     assert trigger.is_triggered
 
@@ -70,11 +78,14 @@ async def test_should_prevent_other_story_to_start_until_we_waiting_for_answer()
     session = build_fake_session()
     user = build_fake_user()
 
+    global story
+    story = Story()
+
     @story.on('hi there!')
     def one_story():
         @story.part()
         async def then(message):
-            return await chat.ask('How are you?', user=message['user'])
+            return await story.ask('How are you?', user=message['user'])
 
         @story.part()
         def then(message):
@@ -86,8 +97,8 @@ async def test_should_prevent_other_story_to_start_until_we_waiting_for_answer()
         def then(message):
             trigger_1.passed()
 
-    await answer.pure_text('hi there!', session, user)
-    await answer.pure_text('Great!', session, user)
+    await answer.pure_text('hi there!', session, user, story)
+    await answer.pure_text('Great!', session, user, story)
 
     assert trigger_2.is_triggered
     assert not trigger_1.is_triggered
@@ -99,11 +110,14 @@ async def test_should_start_next_story_after_current_finished():
     session = build_fake_session()
     user = build_fake_user()
 
+    global story
+    story = Story()
+
     @story.on('hi there!')
     def one_story():
         @story.part()
         async def then(message):
-            return await chat.ask('How are you?', user=message['user'])
+            return await story.ask('How are you?', user=message['user'])
 
         @story.part()
         def then(message):
@@ -115,9 +129,9 @@ async def test_should_start_next_story_after_current_finished():
         def then(message):
             trigger.passed()
 
-    await answer.pure_text('hi there!', session, user)
-    await answer.pure_text('Great!', session, user)
-    await answer.pure_text('Great!', session, user)
+    await answer.pure_text('hi there!', session, user, story)
+    await answer.pure_text('Great!', session, user, story)
+    await answer.pure_text('Great!', session, user, story)
 
     assert trigger.is_triggered
 
@@ -128,6 +142,9 @@ async def test_should_match_group_of_matchers_between_parts_of_story():
     trigger_2 = SimpleTrigger()
     session = build_fake_session()
     user = build_fake_user()
+
+    global story
+    story = Story()
 
     @story.on('hi there!')
     def one_story():
@@ -144,9 +161,9 @@ async def test_should_match_group_of_matchers_between_parts_of_story():
         def then(message):
             trigger_2.passed()
 
-    await answer.pure_text('hi there!', session, user)
-    await answer.location({'lat': 1, 'lng': 1}, session, user)
-    await answer.pure_text('hi there!', session, user)
+    await answer.pure_text('hi there!', session, user, story)
+    await answer.location({'lat': 1, 'lng': 1}, session, user, story)
+    await answer.pure_text('hi there!', session, user, story)
 
     assert trigger_1.is_triggered
     assert trigger_2.is_triggered
@@ -158,14 +175,17 @@ async def test_should_match_group_of_matchers_on_story_start():
     session = build_fake_session()
     user = build_fake_user()
 
+    global story
+    story = Story()
+
     @story.on(receive=['hi there!', location.Any()])
     def one_story():
         @story.part()
         def then(message):
             trigger.passed()
 
-    await answer.pure_text('hi there!', session, user)
-    await answer.location({'lat': 1, 'lng': 1}, session, user)
+    await answer.pure_text('hi there!', session, user, story)
+    await answer.location({'lat': 1, 'lng': 1}, session, user, story)
 
     assert trigger.triggered_times == 2
 
@@ -176,6 +196,9 @@ async def test_can_combine_async_with_sync_parts():
     user = build_fake_user()
     async_trigger = SimpleTrigger()
     sync_trigger = SimpleTrigger()
+
+    global story
+    story = Story()
 
     @story.on('yo!')
     def one_story():
@@ -188,13 +211,15 @@ async def test_can_combine_async_with_sync_parts():
         def sync_part(message):
             sync_trigger.passed()
 
-    await answer.pure_text('yo!', session, user)
+    await answer.pure_text('yo!', session, user, story)
     assert async_trigger.is_triggered
     assert sync_trigger.is_triggered
 
 
 @pytest.mark.asyncio
 async def test_should_start_middlewares():
+    global story
+    story = Story()
     story.use(mockdb.MockDB())
     http = story.use(mockhttp.MockHttpInterface())
     await story.start()
@@ -203,6 +228,8 @@ async def test_should_start_middlewares():
 
 @pytest.mark.asyncio
 async def test_setup_should_config_facebook_options():
+    global story
+    story = Story()
     db = story.use(mockdb.MockDB())
     http = story.use(mockhttp.MockHttpInterface())
 
