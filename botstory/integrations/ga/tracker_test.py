@@ -6,16 +6,13 @@ from unittest import mock
 
 from . import GAStatistics, tracker
 from .. import fb, ga, mockdb, mockhttp
-from ... import di, story, story_test, utils
-from ..ga import tracker_test
+from ... import di, Story, utils
 
-
-def setup_function():
-    story.clear()
+story = None
 
 
 def teardown_function(function):
-    story.clear()
+    story and story.clear()
 
 
 @pytest.fixture
@@ -90,6 +87,9 @@ async def test_should_put_in_queue_event_tracker(tracker_mock):
 
 @pytest.mark.asyncio
 async def test_should_track_story(tracker_mock):
+    global story
+    story = Story()
+
     @story.on('hi!')
     def one_story():
         @story.part()
@@ -137,6 +137,9 @@ async def test_should_track_story(tracker_mock):
 
 
 def test_get_as_deps():
+    global story
+    story = Story()
+
     story.use(ga.GAStatistics())
 
     with di.child_scope():
