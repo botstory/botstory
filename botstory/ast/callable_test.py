@@ -2,21 +2,26 @@ import logging
 import pytest
 import random
 
-from .. import chat, story
+from .. import EndOfStory, Story, SwitchOnValue
 from ..utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
 logger = logging.getLogger(__name__)
 
+story = None
+
 
 def teardown_function(function):
     logger.debug('tear down!')
-    story.stories_library.clear()
+    story.clear()
 
 
 @pytest.mark.asyncio
 async def test_begin_of_callable_story():
     trigger = SimpleTrigger()
     session = build_fake_session()
+
+    global story
+    story = Story()
 
     @story.callable()
     def one_story():
@@ -42,11 +47,14 @@ async def test_parts_of_callable_story():
     session = build_fake_session()
     user = build_fake_user()
 
+    global story
+    story = Story()
+
     @story.callable()
     def meet_ava_story():
         @story.part()
         async def ask_name(user):
-            return await chat.ask(
+            return await story.ask(
                 'My name is Ava. What is your name?',
                 user=user,
             )
@@ -54,7 +62,7 @@ async def test_parts_of_callable_story():
         @story.part()
         async def ask_age(message):
             trigger_1.passed()
-            return await chat.ask(
+            return await story.ask(
                 'Nice to see you {}. What do you do here?'.format(message['data']['text']['raw']),
                 user=message['user'],
             )
@@ -67,16 +75,17 @@ async def test_parts_of_callable_story():
             else:
                 res = 'Hm. Too old to die young'
 
-            await chat.say(res, user=message['user'])
+            await story.say(res, user=message['user'])
             trigger_2.passed()
 
     await meet_ava_story(user, session=session)
 
-    await answer.pure_text('Eugene', session, user=user)
-    await answer.pure_text('13', session, user=user)
+    await answer.pure_text('Eugene', session, user=user, s=story)
+    await answer.pure_text('13', session, user=user, s=story)
 
     assert trigger_1.is_triggered
     assert trigger_2.is_triggered
+
 
 @pytest.mark.asyncio
 async def test_call_story_from_common_story():
@@ -85,11 +94,14 @@ async def test_call_story_from_common_story():
     session = build_fake_session()
     user = build_fake_user()
 
+    global story
+    story = Story()
+
     @story.callable()
     def common_greeting():
         @story.part()
         async def ask_name(user):
-            return await chat.ask(
+            return await story.ask(
                 'Hi {}. How are you?'.format(user['name']),
                 user=user,
             )
@@ -105,7 +117,7 @@ async def test_call_story_from_common_story():
 
         @story.part()
         async def ask_location(message):
-            return await chat.ask(
+            return await story.ask(
                 'Which planet are we going to visit today?',
                 user=message['user'],
             )
@@ -114,9 +126,9 @@ async def test_call_story_from_common_story():
         def parse(message):
             trigger.receive(message['data']['text']['raw'])
 
-    await answer.pure_text('Hi!', session, user=user)
-    await answer.pure_text('I\'m fine', session, user=user)
-    await answer.pure_text('Venus, as usual!', session, user=user)
+    await answer.pure_text('Hi!', session, user=user, s=story)
+    await answer.pure_text('I\'m fine', session, user=user, s=story)
+    await answer.pure_text('Venus, as usual!', session, user=user, s=story)
 
     assert trigger.value == 'Venus, as usual!'
 
@@ -126,6 +138,9 @@ async def test_parts_of_callable_story_can_be_sync():
     trigger_1 = SimpleTrigger()
     trigger_2 = SimpleTrigger()
     session = build_fake_session()
+
+    global story
+    story = Story()
 
     @story.callable()
     def one_story():
@@ -189,32 +204,35 @@ async def test_async_end_of_story():
     budget = SimpleTrigger(2)
     game_result = SimpleTrigger()
 
+    global story
+    story = Story()
+
     @story.callable()
     def flip_a_coin():
         @story.part()
         async def choose_side(user):
-            return await chat.ask('Please choose a side', user=user)
+            return await story.ask('Please choose a side', user=user)
 
         @story.part()
         async def flip(message):
             user_side = message['data']['text']['raw']
-            await chat.say('Thanks!', user=message['user'])
-            await chat.say('And I am flipping a Coin', user=message['user'])
+            await story.say('Thanks!', user=message['user'])
+            await story.say('And I am flipping a Coin', user=message['user'])
             coin_side = random.choice(sides)
-            await chat.say('and got {}'.format(coin_side), user=message['user'])
+            await story.say('and got {}'.format(coin_side), user=message['user'])
             if coin_side == user_side:
-                await chat.say('My greetings! You guessed!', user=message['user'])
+                await story.say('My greetings! You guessed!', user=message['user'])
                 budget.receive(budget.value + 1)
             else:
-                await chat.say('Sad but you loose!', user=message['user'])
+                await story.say('Sad but you loose!', user=message['user'])
                 budget.receive(budget.value - 1)
-            return story.SwitchOnValue(budget.value)
+            return SwitchOnValue(budget.value)
 
         @story.case(equal_to=0)
         def loose():
             @story.part()
             def end_of_story(message):
-                return story.EndOfStory({
+                return EndOfStory({
                     'game_result': 'loose'
                 })
 
@@ -222,7 +240,7 @@ async def test_async_end_of_story():
         def win():
             @story.part()
             def end_of_story(message):
-                return story.EndOfStory({
+                return EndOfStory({
                     'game_result': 'win'
                 })
 
@@ -230,7 +248,7 @@ async def test_async_end_of_story():
         def tail_recursion(message):
             # TODO: add test for recursion
             # return flip_a_coin(message['user'], session)
-            return story.EndOfStory({
+            return EndOfStory({
                 'game_result': 'in progress'
             })
 
@@ -247,7 +265,7 @@ async def test_async_end_of_story():
             game_result.receive(message['data']['game_result'])
 
     await answer.pure_text('enter to the saloon',
-                     session=session, user=user)
+                           session=session, user=user)
 
     await answer.pure_text(random.choice(sides), session, user)
 
@@ -262,6 +280,9 @@ async def test_sync_end_of_story():
     part_2 = SimpleTrigger()
     part_3 = SimpleTrigger()
 
+    global story
+    story = Story()
+
     @story.callable()
     def one_story():
         @story.part()
@@ -271,7 +292,7 @@ async def test_sync_end_of_story():
         @story.part()
         def story_part_2():
             part_2.passed()
-            return story.EndOfStory('Break Point')
+            return EndOfStory('Break Point')
 
         @story.part()
         def story_part_3():

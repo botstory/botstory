@@ -139,3 +139,35 @@ def forever(loop):
         pass
     finally:
         loop.run_until_complete(stop())
+
+
+class Story:
+    def on(self, receive):
+        return on(receive)
+
+    def part(self):
+        return part()
+
+    def callable(self):
+        return callable()
+
+    def case(self, default=forking.Undefined, equal_to=forking.Undefined, match=forking.Undefined):
+        return case(default, equal_to, match)
+
+    async def ask(self, body, options=None, user=None):
+        return await chat.ask(body, options, user)
+
+    async def say(self, body, user):
+        return await chat.say(body, user)
+
+    def use(self, middleware):
+        return use(middleware)
+
+    async def setup(self, event_loop=None):
+        return await setup(event_loop)
+
+    async def start(self, event_loop=None):
+        return await start(event_loop)
+
+    def clear(self):
+        return clear()
