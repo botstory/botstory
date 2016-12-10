@@ -109,9 +109,6 @@ async def test_integrate_mongodb_with_facebook(open_db, build_context):
 
         trigger = utils.SimpleTrigger()
 
-        global story
-        story = Story()
-
         @story.on('hello, world!')
         def correct_story():
             @story.part()
@@ -159,9 +156,6 @@ async def test_integrate_mongodb_with_facebook_with_none_session(open_db, build_
 
         trigger = utils.SimpleTrigger()
 
-        global story
-        story = Story()
-
         @story.on('hello, world!')
         def correct_story():
             @story.part()
@@ -201,9 +195,6 @@ async def test_story_on_start(open_db, build_context):
         facebook, http, story, _ = await build_context(mongodb)
 
         trigger = utils.SimpleTrigger()
-
-        global story
-        story = Story()
 
         @story.on_start()
         def just_meet():

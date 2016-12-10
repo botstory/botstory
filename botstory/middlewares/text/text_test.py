@@ -26,7 +26,7 @@ async def test_should_run_story_on_equal_message():
         def then(message):
             trigger.passed()
 
-    await answer.pure_text('hi there!', session, user)
+    await answer.pure_text('hi there!', session, user, story)
 
     assert trigger.is_triggered
 
@@ -46,7 +46,7 @@ async def test_should_not_run_story_on_non_equal_message():
         def then(message):
             trigger.passed()
 
-    await answer.pure_text('buy!', session, user)
+    await answer.pure_text('buy!', session, user, story)
 
     assert not trigger.is_triggered
 
@@ -66,7 +66,7 @@ async def test_should_catch_any_text_message():
         def then(message):
             trigger.passed()
 
-    await answer.pure_text('hi there!', session, user)
+    await answer.pure_text('hi there!', session, user, story)
 
     assert trigger.is_triggered
 
@@ -86,7 +86,7 @@ async def test_should_ignore_any_non_text_message():
         def then(message):
             trigger.passed()
 
-    await answer.location('some where', session, user)
+    await answer.location('some where', session, user, story)
 
     assert not trigger.is_triggered
 

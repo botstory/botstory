@@ -37,7 +37,7 @@ async def test_should_run_sequence_of_parts():
         def then(message):
             trigger_2.passed()
 
-    await answer.pure_text('hi there!', session, user, s=story)
+    await answer.pure_text('hi there!', session, user, story=story)
 
     assert trigger_1.is_triggered
     assert trigger_2.is_triggered
@@ -62,11 +62,11 @@ async def test_should_wait_for_answer_on_ask():
         def then(message):
             trigger.passed()
 
-    await answer.pure_text('hi there!', session, user, s=story)
+    await answer.pure_text('hi there!', session, user, story=story)
 
     assert not trigger.is_triggered
 
-    await answer.pure_text('Great!', session, user, s=story)
+    await answer.pure_text('Great!', session, user, story=story)
 
     assert trigger.is_triggered
 

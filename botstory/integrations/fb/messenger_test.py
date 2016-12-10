@@ -139,7 +139,6 @@ async def test_options():
 
 @pytest.mark.asyncio
 async def test_setup_webhook():
-
     global story
     story = Story()
 
@@ -343,20 +342,17 @@ def build_fb_interface():
         await storage.set_session(session)
         await storage.set_user(user)
 
-        return fb
+        return fb, story
 
     return builder
 
 
 @pytest.mark.asyncio
 async def test_handler_raw_text(build_fb_interface):
-    fb_interface = await build_fb_interface()
+    fb_interface, story = await build_fb_interface()
 
     correct_trigger = utils.SimpleTrigger()
     incorrect_trigger = utils.SimpleTrigger()
-
-    global story
-    story = Story()
 
     @story.on('hello, world!')
     def correct_story():
@@ -408,13 +404,10 @@ async def test_handler_raw_text(build_fb_interface):
 
 @pytest.mark.asyncio
 async def test_handler_selected_option(build_fb_interface):
-    fb_interface = await build_fb_interface()
+    fb_interface, story = await build_fb_interface()
 
     correct_trigger = utils.SimpleTrigger()
     incorrect_trigger = utils.SimpleTrigger()
-
-    global story
-    story = Story()
 
     @story.on(receive=option.Match('GREEN'))
     def correct_story():
@@ -468,13 +461,10 @@ async def test_handler_selected_option(build_fb_interface):
 
 @pytest.mark.asyncio
 async def test_handler_postback(build_fb_interface):
-    fb_interface = await build_fb_interface()
+    fb_interface, story = await build_fb_interface()
 
     correct_trigger = utils.SimpleTrigger()
     incorrect_trigger = utils.SimpleTrigger()
-
-    global story
-    story = Story()
 
     @story.on(receive=option.Match('GREEN'))
     def correct_story():
@@ -520,12 +510,9 @@ async def test_handler_postback(build_fb_interface):
 
 @pytest.mark.asyncio
 async def test_should_not_process_echo_delivery_and_read_messages_as_regular(build_fb_interface):
-    fb_interface = await build_fb_interface()
+    fb_interface, story = await build_fb_interface()
 
     echo_trigger = utils.SimpleTrigger()
-
-    global story
-    story = Story()
 
     @story.on(receive=any.Any())
     def one_story():

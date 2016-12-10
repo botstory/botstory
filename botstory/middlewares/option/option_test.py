@@ -48,8 +48,8 @@ async def test_should_ask_with_options():
         def get_health(message):
             trigger.receive(message['data']['option'])
 
-    await answer.pure_text('How are you?', session, user)
-    await answer.option({'health': 1}, session, user)
+    await answer.pure_text('How are you?', session, user, story)
+    await answer.option({'health': 1}, session, user, story)
     assert trigger.result() == {'health': 1}
 
 
@@ -69,7 +69,7 @@ async def test_validate_option():
         def store_option(message):
             trigger.passed()
 
-    await answer.option({'engine': 'start'}, session, user)
+    await answer.option({'engine': 'start'}, session, user, story)
     assert trigger.is_triggered
 
 
@@ -89,7 +89,7 @@ async def test_validate_only_option():
         def store_option(message):
             trigger.passed()
 
-    await answer.pure_text('Start engine!', session, user)
+    await answer.pure_text('Start engine!', session, user, story)
     assert not trigger.is_triggered
 
 
@@ -116,7 +116,7 @@ async def test_validate_only_option():
         def store_option(message):
             trigger.passed()
 
-    await answer.option('green', session, user)
+    await answer.option('green', session, user, story)
     assert trigger.is_triggered
 
 

@@ -80,8 +80,8 @@ async def test_parts_of_callable_story():
 
     await meet_ava_story(user, session=session)
 
-    await answer.pure_text('Eugene', session, user=user, s=story)
-    await answer.pure_text('13', session, user=user, s=story)
+    await answer.pure_text('Eugene', session, user=user, story=story)
+    await answer.pure_text('13', session, user=user, story=story)
 
     assert trigger_1.is_triggered
     assert trigger_2.is_triggered
@@ -126,9 +126,9 @@ async def test_call_story_from_common_story():
         def parse(message):
             trigger.receive(message['data']['text']['raw'])
 
-    await answer.pure_text('Hi!', session, user=user, s=story)
-    await answer.pure_text('I\'m fine', session, user=user, s=story)
-    await answer.pure_text('Venus, as usual!', session, user=user, s=story)
+    await answer.pure_text('Hi!', session, user=user, story=story)
+    await answer.pure_text('I\'m fine', session, user=user, story=story)
+    await answer.pure_text('Venus, as usual!', session, user=user, story=story)
 
     assert trigger.value == 'Venus, as usual!'
 
@@ -265,9 +265,9 @@ async def test_async_end_of_story():
             game_result.receive(message['data']['game_result'])
 
     await answer.pure_text('enter to the saloon',
-                           session=session, user=user)
+                           session=session, user=user, story=story)
 
-    await answer.pure_text(random.choice(sides), session, user)
+    await answer.pure_text(random.choice(sides), session, user, story=story)
 
     assert game_result.result() in ['loose', 'win', 'in progress']
 

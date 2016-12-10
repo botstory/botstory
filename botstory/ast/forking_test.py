@@ -56,8 +56,8 @@ async def test_cases():
         def after_switch(message):
             trigger_after_switch.passed()
 
-    await answer.pure_text('Hi there!', session, user)
-    await answer.location({'x': 123, 'y': 321}, session, user)
+    await answer.pure_text('Hi there!', session, user, story)
+    await answer.location({'x': 123, 'y': 321}, session, user, story)
 
     assert trigger_location.result() == {'x': 123, 'y': 321}
     assert not trigger_text.result()
@@ -100,7 +100,7 @@ async def test_sync_value():
                 assert not trigger_tails.is_triggered
                 trigger_tails.passed()
 
-    await answer.pure_text('Flip a coin!', session, user)
+    await answer.pure_text('Flip a coin!', session, user, story)
 
     assert trigger_heads.is_triggered != trigger_tails.is_triggered
 
@@ -154,7 +154,7 @@ async def test_few_switches_in_one_story():
             def store_tails(message):
                 trigger_tails.receive(trigger_tails.value + 1)
 
-    await answer.pure_text('Flip a coin!', session, user)
+    await answer.pure_text('Flip a coin!', session, user, story)
 
     assert trigger_heads.value + trigger_tails.value == 2
 
@@ -188,7 +188,7 @@ async def test_default_sync_value():
             def store_other(message):
                 trigger_default.passed()
 
-    await answer.pure_text('Roll the dice!', session, user)
+    await answer.pure_text('Roll the dice!', session, user, story)
 
     assert trigger_1.is_triggered != trigger_default.is_triggered
 
@@ -250,7 +250,7 @@ async def test_one_sync_switch_inside_of_another_sync_switch():
                 def next_room_2_2(message):
                     visited_rooms.receive(visited_rooms.value + 1)
 
-    await answer.pure_text('enter', session, user)
+    await answer.pure_text('enter', session, user, story)
 
     assert visited_rooms.value == 3
 
@@ -321,9 +321,9 @@ async def test_one_sync_switch_inside_of_another_async_switch():
                 def next_room_2_2(message):
                     visited_rooms.receive(visited_rooms.value + 1)
 
-    await answer.pure_text('enter', session, user)
-    await answer.pure_text(random.choice(['left', 'right']), session, user)
-    await answer.pure_text(random.choice(['left', 'right']), session, user)
+    await answer.pure_text('enter', session, user, story)
+    await answer.pure_text(random.choice(['left', 'right']), session, user, story)
+    await answer.pure_text(random.choice(['left', 'right']), session, user, story)
 
     assert visited_rooms.value == 3
 
@@ -401,10 +401,10 @@ async def test_switch_inside_of_callable_inside_of_switch():
             def store_end(message):
                 visited_rooms.receive(visited_rooms.value + 1)
 
-    await answer.pure_text('enter', session, user)
-    await answer.pure_text(random.choice(['left', 'right']), session, user)
-    await answer.pure_text(random.choice(['fireball', 'lightning']), session, user)
-    await answer.pure_text(random.choice(['light', 'strong']), session, user)
+    await answer.pure_text('enter', session, user, story)
+    await answer.pure_text(random.choice(['left', 'right']), session, user, story)
+    await answer.pure_text(random.choice(['fireball', 'lightning']), session, user, story)
+    await answer.pure_text(random.choice(['light', 'strong']), session, user, story)
 
     assert visited_rooms.value == 1
     assert spell_type.value in ['fireball', 'lightning']
@@ -447,8 +447,8 @@ async def test_switch_without_right_case():
             await story.say('Nice to see you!', user=message['user'])
             say_goodbay.passed()
 
-    await answer.pure_text('I do not know', session, user)
-    await answer.pure_text('No', session, user)
+    await answer.pure_text('I do not know', session, user, story)
+    await answer.pure_text('No', session, user, story)
 
     assert not get_help.is_triggered
     assert say_goodbay.is_triggered

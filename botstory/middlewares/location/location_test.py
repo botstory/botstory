@@ -1,12 +1,14 @@
 import pytest
 from . import location
-from ... import matchers, story
+from ... import matchers, Story
 from ...utils import answer, build_fake_session, build_fake_user, SimpleTrigger
+
+story = None
 
 
 def teardown_function(function):
     print('tear down!')
-    story.clear()
+    story and story.clear()
 
 
 @pytest.mark.asyncio
@@ -14,6 +16,9 @@ async def test_should_trigger_on_any_location(event_loop):
     trigger = SimpleTrigger()
     session = build_fake_session()
     user = build_fake_user()
+
+    global story
+    story = Story()
 
     @story.on(receive=location.Any())
     def one_story():
@@ -24,7 +29,7 @@ async def test_should_trigger_on_any_location(event_loop):
     assert not event_loop.is_closed()
     await story.start(event_loop)
 
-    await answer.location({'lat': 1, 'lng': 1}, session, user)
+    await answer.location({'lat': 1, 'lng': 1}, session, user, story)
     assert trigger.is_triggered
 
 
@@ -34,13 +39,16 @@ async def test_should_not_react_on_common_message():
     session = build_fake_session()
     user = build_fake_user()
 
+    global story
+    story = Story()
+
     @story.on(receive=location.Any())
     def one_story():
         @story.part()
         def then(message):
             trigger.passed()
 
-    await answer.pure_text('Hey!', session, user)
+    await answer.pure_text('Hey!', session, user, story)
 
     assert not trigger.is_triggered
 

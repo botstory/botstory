@@ -5,11 +5,14 @@ from . import AioHttpInterface
 from .. import aiohttp
 from ..commonhttp import errors
 from ..tests import fake_server
-from ... import di, story
+from ... import di, Story
+
+
+story = None
 
 
 def teardown_function(function):
-    story.clear()
+    story and story.clear()
 
 
 @pytest.fixture
@@ -190,6 +193,8 @@ async def test_pass_middleware(mocker, webhook_handler):
 
 
 def test_get_as_deps():
+    global story
+    story = Story()
     story.use(aiohttp.AioHttpInterface())
 
     with di.child_scope('http'):
