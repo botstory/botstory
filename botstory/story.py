@@ -127,10 +127,4 @@ class Story:
         :return:
         """
 
-        self.stories_library.clear()
-        self.chat.clear()
-        self.users.clear()
-
-        self.middlewares = []
-
         di.clear_instances()

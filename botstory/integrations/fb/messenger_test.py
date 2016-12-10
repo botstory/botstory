@@ -334,6 +334,9 @@ def build_fb_interface():
         user = utils.build_fake_user()
         session = utils.build_fake_session()
 
+        global story
+        story = Story()
+
         storage = story.use(mockdb.MockDB())
         fb = story.use(messenger.FBInterface(page_access_token='qwerty'))
 
