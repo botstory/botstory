@@ -6,14 +6,16 @@ import random
 logger = logging.getLogger(__name__)
 
 from . import forking
-from .. import chat, story, matchers
+from .. import matchers, Story
 from ..middlewares import location, text
 from ..utils import answer, build_fake_session, build_fake_user, SimpleTrigger
+
+story = None
 
 
 def teardown_function(function):
     logger.debug('tear down!')
-    story.stories_library.clear()
+    story.clear()
 
 
 @pytest.mark.asyncio
@@ -25,11 +27,14 @@ async def test_cases():
     trigger_text = SimpleTrigger()
     trigger_after_switch = SimpleTrigger()
 
+    global story
+    story = Story()
+
     @story.on('Hi there!')
     def one_story():
         @story.part()
         async def start(message):
-            await chat.say('Where do you go?', user=message['user'])
+            await story.say('Where do you go?', user=message['user'])
             return forking.Switch({
                 'location': location.Any(),
                 'text': text.Any(),
@@ -66,6 +71,9 @@ async def test_sync_value():
     trigger_start = SimpleTrigger()
     trigger_heads = SimpleTrigger()
     trigger_tails = SimpleTrigger()
+
+    global story
+    story = Story()
 
     @story.on('Flip a coin!')
     def one_story():
@@ -105,6 +113,9 @@ async def test_few_switches_in_one_story():
     trigger_heads.receive(0)
     trigger_tails = SimpleTrigger()
     trigger_tails.receive(0)
+
+    global story
+    story = Story()
 
     @story.on('Flip a coin!')
     def one_story():
@@ -155,6 +166,9 @@ async def test_default_sync_value():
     trigger_1 = SimpleTrigger()
     trigger_default = SimpleTrigger()
 
+    global story
+    story = Story()
+
     @story.on('Roll the dice!')
     def one_story_1():
         @story.part()
@@ -184,6 +198,9 @@ async def test_one_sync_switch_inside_of_another_sync_switch():
     user = build_fake_user()
     session = build_fake_session()
     visited_rooms = SimpleTrigger(0)
+
+    global story
+    story = Story()
 
     @story.on('enter')
     def labyrinth():
@@ -244,12 +261,15 @@ async def test_one_sync_switch_inside_of_another_async_switch():
     session = build_fake_session()
     visited_rooms = SimpleTrigger(0)
 
+    global story
+    story = Story()
+
     @story.on('enter')
     def labyrinth():
         @story.part()
         async def enter(message):
             visited_rooms.receive(visited_rooms.value + 1)
-            return await chat.ask('Which turn to choose?', user=message['user'])
+            return await story.ask('Which turn to choose?', user=message['user'])
 
         @story.part()
         def parse_direction_0(message):
@@ -260,7 +280,7 @@ async def test_one_sync_switch_inside_of_another_async_switch():
             @story.part()
             async def next_room_1(message):
                 visited_rooms.receive(visited_rooms.value + 1)
-                return await chat.ask('Which turn to choose?', user=message['user'])
+                return await story.ask('Which turn to choose?', user=message['user'])
 
             @story.part()
             def parse_direction_1(message):
@@ -283,7 +303,7 @@ async def test_one_sync_switch_inside_of_another_async_switch():
             @story.part()
             async def next_room_2(message):
                 visited_rooms.receive(visited_rooms.value + 1)
-                return await chat.ask('Which turn to choose?', user=message['user'])
+                return await story.ask('Which turn to choose?', user=message['user'])
 
             @story.part()
             def parse_direction_2(message):
@@ -316,12 +336,15 @@ async def test_switch_inside_of_callable_inside_of_switch():
     visited_rooms = SimpleTrigger(0)
     spell_type = SimpleTrigger()
     spell_power = SimpleTrigger()
+    
+    global story
+    story = Story()
 
     @story.callable()
     def cast_the_magic():
         @story.part()
         async def ask_kind_of_spell(user):
-            return await chat.ask('What kind of spell do you cast?', user=user)
+            return await story.ask('What kind of spell do you cast?', user=user)
 
         @story.part()
         def switch_by_kind_of_spell(message):
@@ -332,14 +355,14 @@ async def test_switch_inside_of_callable_inside_of_switch():
             @story.part()
             async def power_of_spell(message):
                 spell_type.receive(message['data']['text']['raw'])
-                return await chat.ask('What is the power of fireball?', user=message['user'])
+                return await story.ask('What is the power of fireball?', user=message['user'])
 
         @story.case(equal_to='lightning')
         def lightning():
             @story.part()
             async def power_of_spell(message):
                 spell_type.receive(message['data']['text']['raw'])
-                return await chat.ask('What is the power of lightning?', user=message['user'])
+                return await story.ask('What is the power of lightning?', user=message['user'])
 
         @story.part()
         def store_power(message):
@@ -349,7 +372,7 @@ async def test_switch_inside_of_callable_inside_of_switch():
     def dungeon():
         @story.part()
         async def ask_direction(message):
-            return await chat.ask(
+            return await story.ask(
                 'Where do you go?',
                 user=message['user']
             )
@@ -396,11 +419,14 @@ async def test_switch_without_right_case():
     get_help = SimpleTrigger()
     say_goodbay = SimpleTrigger()
 
+    global story
+    story = Story()
+
     @story.on('I do not know')
     def meet_someone():
         @story.part()
         async def ask(message):
-            return await chat.ask(
+            return await story.ask(
                 'Do you need a help?',
                 user=message['user'],
             )
@@ -413,12 +439,12 @@ async def test_switch_without_right_case():
         def yes():
             @story.part()
             async def lets_go(message):
-                await chat.say('Let\'s google together!', message['user'])
+                await story.say('Let\'s google together!', message['user'])
                 get_help.passed()
 
         @story.part()
         async def see_you(message):
-            await chat.say('Nice to see you!', user=message['user'])
+            await story.say('Nice to see you!', user=message['user'])
             say_goodbay.passed()
 
     await answer.pure_text('I do not know', session, user)
