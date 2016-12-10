@@ -5,14 +5,17 @@ import pytest
 
 from . import fake_server
 from .. import aiohttp, fb, mongodb, mockhttp
-from ... import chat, di, story, utils
+from ... import di, Story, utils
 
 logger = logging.getLogger(__name__)
 
 
+story = None
+
+
 def teardown_function(function):
     logger.debug('tear down!')
-    story.clear()
+    story and story.clear()
 
 
 @pytest.fixture
@@ -27,13 +30,15 @@ def build_context():
             session = utils.build_fake_session(user=user)
             await db.set_session(session)
 
+        global story
+        story = Story()
         story.use(db)
         fb_interface = story.use(fb.FBInterface(page_access_token='qwerty'))
         http = story.use(mockhttp.MockHttpInterface())
 
         await story.start()
 
-        return fb_interface, http, user
+        return fb_interface, http, story, user
 
     return builder
 
@@ -65,7 +70,10 @@ async def test_facebook_interface_should_use_aiohttp_to_post_message(event_loop)
         async with server.session() as server_session:
             # 1) setup app
 
-            # try:
+            global story
+            story = Story()
+
+            try:
                 story.use(fb.FBInterface(
                     webhook_url='/webhook',
                 ))
@@ -77,7 +85,7 @@ async def test_facebook_interface_should_use_aiohttp_to_post_message(event_loop)
 
                 user = utils.build_fake_user()
 
-                await chat.say('Pryvit!', user=user)
+                await story.say('Pryvit!', user=user)
 
                 assert len(server.history) > 0
                 req = server.history[-1]['request']
@@ -90,16 +98,19 @@ async def test_facebook_interface_should_use_aiohttp_to_post_message(event_loop)
                         'text': 'Pryvit!'
                     }
                 }
-            # finally:
-            #     await story.stop()
+            finally:
+                await story.stop()
 
 
 @pytest.mark.asyncio
 async def test_integrate_mongodb_with_facebook(open_db, build_context):
     async with open_db() as mongodb:
-        facebook, _, user = await build_context(mongodb)
+        facebook, _, story, user = await build_context(mongodb)
 
         trigger = utils.SimpleTrigger()
+
+        global story
+        story = Story()
 
         @story.on('hello, world!')
         def correct_story():
@@ -144,9 +155,12 @@ async def test_integrate_mongodb_with_facebook(open_db, build_context):
 @pytest.mark.asyncio
 async def test_integrate_mongodb_with_facebook_with_none_session(open_db, build_context):
     async with open_db() as mongodb:
-        facebook, _, _ = await build_context(mongodb, no_session=True, no_user=True)
+        facebook, _, story, _ = await build_context(mongodb, no_session=True, no_user=True)
 
         trigger = utils.SimpleTrigger()
+
+        global story
+        story = Story()
 
         @story.on('hello, world!')
         def correct_story():
@@ -184,9 +198,12 @@ async def test_integrate_mongodb_with_facebook_with_none_session(open_db, build_
 @pytest.mark.asyncio
 async def test_story_on_start(open_db, build_context):
     async with open_db() as mongodb:
-        facebook, http, _ = await build_context(mongodb)
+        facebook, http, story, _ = await build_context(mongodb)
 
         trigger = utils.SimpleTrigger()
+
+        global story
+        story = Story()
 
         @story.on_start()
         def just_meet():
@@ -251,7 +268,7 @@ async def test_story_on_start(open_db, build_context):
 @pytest.mark.asyncio
 async def test_should_not_setup_call_to_action_for_new_thread_if_we_dont_have_on_start(open_db, build_context):
     async with open_db() as mongodb:
-        facebook, http, _ = await build_context(mongodb)
+        facebook, http, story, _ = await build_context(mongodb)
 
         @story.on('hi')
         def one_story():

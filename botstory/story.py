@@ -145,6 +145,9 @@ class Story:
     def on(self, receive):
         return on(receive)
 
+    def on_start(self):
+        return common_stories_instance.on_start()
+
     def part(self):
         return part()
 
@@ -168,6 +171,9 @@ class Story:
 
     async def start(self, event_loop=None):
         return await start(event_loop)
+
+    async def stop(self, event_loop=None):
+        return await stop(event_loop)
 
     def clear(self):
         return clear()
