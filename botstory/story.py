@@ -41,6 +41,7 @@ class Story:
             parser_instance=self.parser_instance,
         )
         self.middlewares = []
+        self.chat = chat.Chat()
 
     def on(self, receive):
         return self.common_stories_instance.on(receive)
@@ -58,10 +59,10 @@ class Story:
         return self.forking_api.case(default, equal_to, match)
 
     async def ask(self, body, options=None, user=None):
-        return await chat.ask(body, options, user)
+        return await self.chat.ask(body, options, user)
 
     async def say(self, body, user):
-        return await chat.say(body, user)
+        return await self.chat.say(body, user)
 
     def use(self, middleware):
         """
@@ -81,7 +82,7 @@ class Story:
 
         # TODO: should use DI somehow
         if check_spec(['send_text_message'], middleware):
-            chat.add_interface(middleware)
+            self.chat.add_interface(middleware)
 
         return middleware
 
@@ -124,7 +125,7 @@ class Story:
         """
 
         self.stories_library.clear()
-        chat.clear()
+        self.chat.clear()
         users.clear()
 
         self.middlewares = []
