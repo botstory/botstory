@@ -261,7 +261,7 @@ class FBInterface:
             await self.remove_greeting_call_to_action_payload()
             await self.set_greeting_call_to_action_payload(option.OnStart.DEFAULT_OPTION_PAYLOAD)
 
-    async def start(self):
+    async def before_start(self):
         logger.debug('start')
         if self.webhook and self.http:
             self.http.webhook(self.webhook, self.handle, self.webhook_token)
