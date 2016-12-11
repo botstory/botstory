@@ -7,7 +7,6 @@ from ..commonhttp import errors
 from ..tests import fake_server
 from ... import di, Story
 
-
 story = None
 
 
@@ -215,3 +214,12 @@ async def test_shop_should_remove_app():
     assert http.has_app()
     await http.stop()
     assert not http.has_app()
+
+
+@pytest.mark.asyncio
+async def test_should_raise_exception_on_webhook_if_aiohttp_already_is_started(webhook_handler):
+    http = aiohttp.AioHttpInterface()
+    http.get_app()
+    await http.start()
+    with pytest.raises(aiohttp.WebhookException):
+        http.webhook(uri='/webhook', handler=webhook_handler, token='qwerty')

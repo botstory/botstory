@@ -25,6 +25,10 @@ def is_ok(status):
     return 200 <= status < 400
 
 
+class WebhookException(Exception):
+    pass
+
+
 @di.desc('http', reg=False)
 class AioHttpInterface:
     def __init__(self, host='0.0.0.0', port=None,
@@ -183,6 +187,9 @@ class AioHttpInterface:
     def webhook(self, uri, handler, token):
         logger.debug('register webhook {}'.format(uri))
         self.webhook_token = token
+        if self.get_app().frozen:
+            raise WebhookException('Aiohttp extension is already started. '
+                                   'We should change webhook before aiohttp is started.')
         self.get_app().router.add_get(uri, self.handle_webhook_validation)
         self.get_app().router.add_post(uri, WebhookHandler(handler).handle)
 

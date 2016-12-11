@@ -1,1 +1,1 @@
-from .aiohttp import AioHttpInterface
+from .aiohttp import AioHttpInterface, WebhookException
