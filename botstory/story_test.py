@@ -1,8 +1,10 @@
+from aiohttp import test_utils
 import asyncio
 import logging
 import pytest
+from unittest.mock import call
 
-from . import Story
+from . import di, Story
 from .integrations import mockdb, mockhttp
 from .middlewares import any, location, text
 from .utils import answer, build_fake_session, build_fake_user, SimpleTrigger
@@ -237,3 +239,31 @@ async def test_setup_should_config_facebook_options():
 
     db.setup.assert_called_once_with()
     http.setup.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+async def test_should_run_before_start_start_and_then_after_start(mocker):
+    with di.child_scope():
+        global story
+        story = Story()
+
+        @di.desc()
+        class MockExtension:
+            handler = mocker.stub()
+
+            async def before_start(self):
+                self.handler('before_start')
+
+            async def start(self):
+                self.handler('start')
+
+            async def after_start(self):
+                self.handler('after_start')
+
+        ext = story.use(MockExtension())
+        await story.start()
+        ext.handler.assert_has_calls([
+            call('before_start'),
+            call('start'),
+            call('after_start'),
+        ])

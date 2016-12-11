@@ -93,7 +93,9 @@ class Story:
 
     async def start(self, event_loop=None):
         self.register()
-        return await self._do_for_each_extension('start', event_loop)
+        await self._do_for_each_extension('before_start', event_loop)
+        await self._do_for_each_extension('start', event_loop)
+        await self._do_for_each_extension('after_start', event_loop)
 
     async def stop(self, event_loop=None):
         return await self._do_for_each_extension('stop', event_loop)
