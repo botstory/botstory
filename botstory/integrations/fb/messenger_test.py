@@ -4,11 +4,13 @@ from unittest import mock
 import pytest
 
 from . import messenger
-from .. import commonhttp, fb, mockdb, mockhttp
-from ... import chat, di, story, utils
+from .. import commonhttp, mockdb, mockhttp
+from ... import di, Story, utils
 from ...middlewares import any, option
 
 logger = logging.getLogger(__name__)
+
+story = None
 
 
 def teardown_function(function):
@@ -19,6 +21,9 @@ def teardown_function(function):
 @pytest.mark.asyncio
 async def test_send_text_message():
     user = utils.build_fake_user()
+
+    global story
+    story = Story()
 
     interface = story.use(messenger.FBInterface(page_access_token='qwerty1'))
     mock_http = story.use(mockhttp.MockHttpInterface())
@@ -49,11 +54,14 @@ async def test_send_text_message():
 async def test_integration():
     user = utils.build_fake_user()
 
+    global story
+    story = Story()
+
     story.use(messenger.FBInterface(page_access_token='qwerty2'))
     story.use(mockdb.MockDB())
     mock_http = story.use(mockhttp.MockHttpInterface())
 
-    await chat.say('hi there!', user=user)
+    await story.say('hi there!', user=user)
 
     mock_http.post.assert_called_with(
         'https://graph.facebook.com/v2.6/me/messages/',
@@ -75,11 +83,14 @@ async def test_integration():
 async def test_options():
     user = utils.build_fake_user()
 
+    global story
+    story = Story()
+
     story.use(messenger.FBInterface(page_access_token='qwerty3'))
     story.use(mockdb.MockDB())
     mock_http = story.use(mockhttp.MockHttpInterface())
 
-    await chat.ask(
+    await story.ask(
         'Which color do you like?',
         options=[{
             'title': 'Red',
@@ -128,6 +139,9 @@ async def test_options():
 
 @pytest.mark.asyncio
 async def test_setup_webhook():
+    global story
+    story = Story()
+
     fb_interface = story.use(messenger.FBInterface(
         webhook_url='/webhook',
         webhook_token='some-token',
@@ -145,6 +159,9 @@ async def test_setup_webhook():
 
 @pytest.mark.asyncio
 async def test_should_request_user_data_once_we_do_not_know_current_user():
+    global story
+    story = Story()
+
     fb_interface = story.use(messenger.FBInterface(
         page_access_token='qwerty4',
         webhook_url='/webhook',
@@ -194,6 +211,9 @@ async def test_should_request_user_data_once_we_do_not_know_current_user():
 
 @pytest.mark.asyncio
 async def test_should_request_user_data_and_fail():
+    global story
+    story = Story()
+
     fb_interface = story.use(messenger.FBInterface(
         page_access_token='qwerty5',
         webhook_url='/webhook',
@@ -232,6 +252,9 @@ async def test_should_request_user_data_and_fail():
 
 @pytest.mark.asyncio
 async def test_webhook_handler_should_return_ok_status_if_http_fail():
+    global story
+    story = Story()
+
     fb_interface = story.use(messenger.FBInterface(
         page_access_token='qwerty6',
         webhook_url='/webhook',
@@ -269,6 +292,9 @@ async def test_webhook_handler_should_return_ok_status_if_http_fail():
 
 @pytest.mark.asyncio
 async def test_webhook_handler_should_return_ok_status_in_any_case():
+    global story
+    story = Story()
+
     fb_interface = messenger.FBInterface()
     with mock.patch('botstory.integrations.fb.messenger.logger') as mock_logger:
         res = await fb_interface.handle({
@@ -308,6 +334,9 @@ def build_fb_interface():
         user = utils.build_fake_user()
         session = utils.build_fake_session()
 
+        global story
+        story = Story()
+
         storage = story.use(mockdb.MockDB())
         fb = story.use(messenger.FBInterface(page_access_token='qwerty'))
 
@@ -316,14 +345,14 @@ def build_fb_interface():
         await storage.set_session(session)
         await storage.set_user(user)
 
-        return fb
+        return fb, story
 
     return builder
 
 
 @pytest.mark.asyncio
 async def test_handler_raw_text(build_fb_interface):
-    fb_interface = await build_fb_interface()
+    fb_interface, story = await build_fb_interface()
 
     correct_trigger = utils.SimpleTrigger()
     incorrect_trigger = utils.SimpleTrigger()
@@ -378,7 +407,7 @@ async def test_handler_raw_text(build_fb_interface):
 
 @pytest.mark.asyncio
 async def test_handler_selected_option(build_fb_interface):
-    fb_interface = await build_fb_interface()
+    fb_interface, story = await build_fb_interface()
 
     correct_trigger = utils.SimpleTrigger()
     incorrect_trigger = utils.SimpleTrigger()
@@ -435,7 +464,7 @@ async def test_handler_selected_option(build_fb_interface):
 
 @pytest.mark.asyncio
 async def test_handler_postback(build_fb_interface):
-    fb_interface = await build_fb_interface()
+    fb_interface, story = await build_fb_interface()
 
     correct_trigger = utils.SimpleTrigger()
     incorrect_trigger = utils.SimpleTrigger()
@@ -484,7 +513,7 @@ async def test_handler_postback(build_fb_interface):
 
 @pytest.mark.asyncio
 async def test_should_not_process_echo_delivery_and_read_messages_as_regular(build_fb_interface):
-    fb_interface = await build_fb_interface()
+    fb_interface, story = await build_fb_interface()
 
     echo_trigger = utils.SimpleTrigger()
 
@@ -552,6 +581,9 @@ async def test_should_not_process_echo_delivery_and_read_messages_as_regular(bui
 
 @pytest.mark.asyncio
 async def test_set_greeting_text():
+    global story
+    story = Story()
+
     fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty7'))
     mock_http = story.use(mockhttp.MockHttpInterface())
 
@@ -573,6 +605,9 @@ async def test_set_greeting_text():
 
 @pytest.mark.asyncio
 async def test_can_set_greeting_text_before_inject_http():
+    global story
+    story = Story()
+
     fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty8'))
     await fb_interface.set_greeting_text('Hi there {{user_first_name}}!')
 
@@ -599,6 +634,9 @@ async def test_can_set_greeting_text_before_inject_http():
 
 @pytest.mark.asyncio
 async def test_can_set_greeting_text_in_constructor():
+    global story
+    story = Story()
+
     fb = story.use(messenger.FBInterface(
         greeting_text='Hi there {{user_first_name}}!',
         page_access_token='qwerty9',
@@ -637,6 +675,9 @@ async def test_can_set_greeting_text_in_constructor():
 
 @pytest.mark.asyncio
 async def test_remove_greeting_text():
+    global story
+    story = Story()
+
     fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty10'))
     mock_http = story.use(mockhttp.MockHttpInterface())
 
@@ -655,6 +696,9 @@ async def test_remove_greeting_text():
 
 @pytest.mark.asyncio
 async def test_set_greeting_call_to_action_payload():
+    global story
+    story = Story()
+
     fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty11'))
     mock_http = story.use(mockhttp.MockHttpInterface())
 
@@ -675,6 +719,9 @@ async def test_set_greeting_call_to_action_payload():
 
 @pytest.mark.asyncio
 async def test_remove_greeting_call_to_action_payload():
+    global story
+    story = Story()
+
     fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty12'))
     mock_http = story.use(mockhttp.MockHttpInterface())
 
@@ -694,6 +741,9 @@ async def test_remove_greeting_call_to_action_payload():
 
 @pytest.mark.asyncio
 async def test_set_persistent_menu():
+    global story
+    story = Story()
+
     fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty13'))
     mock_http = story.use(mockhttp.MockHttpInterface())
 
@@ -730,6 +780,9 @@ async def test_set_persistent_menu():
 
 @pytest.mark.asyncio
 async def test_can_set_persistent_menu_before_http():
+    global story
+    story = Story()
+
     fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty14'))
     await fb_interface.set_persistent_menu([{
         'type': 'postback',
@@ -771,6 +824,9 @@ async def test_can_set_persistent_menu_before_http():
 
 @pytest.mark.asyncio
 async def test_can_set_persistent_menu_inside_of_constructor():
+    global story
+    story = Story()
+
     story.use(messenger.FBInterface(
         page_access_token='qwerty15',
         persistent_menu=[{
@@ -825,6 +881,9 @@ async def test_can_set_persistent_menu_inside_of_constructor():
 
 @pytest.mark.asyncio
 async def test_remove_persistent_menu():
+    global story
+    story = Story()
+
     fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty16'))
     mock_http = story.use(mockhttp.MockHttpInterface())
 
@@ -843,6 +902,9 @@ async def test_remove_persistent_menu():
 
 
 def test_get_fb_as_deps():
+    global story
+    story = Story()
+
     story.use(messenger.FBInterface())
 
     with di.child_scope():
@@ -856,6 +918,9 @@ def test_get_fb_as_deps():
 
 
 def test_bind_fb_deps():
+    global story
+    story = Story()
+
     story.use(messenger.FBInterface())
     story.use(mockdb.MockDB())
     story.use(mockhttp.MockHttpInterface())

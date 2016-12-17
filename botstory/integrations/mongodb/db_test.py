@@ -5,14 +5,17 @@ import pytest
 from . import db
 from .. import mongodb
 from ..fb import messenger
-from ... import di, story, utils
+from ... import di, Story, utils
 
 logger = logging.getLogger(__name__)
 
 
+story = None
+
+
 def teardown_function(function):
     logger.debug('tear down!')
-    story.clear()
+    story and story.clear()
 
 
 @pytest.fixture
@@ -27,6 +30,8 @@ def build_context():
             session = utils.build_fake_session(user=user)
             await mongodb.set_session(session)
 
+        global story
+        story = Story()
         story.use(mongodb)
         fb = story.use(messenger.FBInterface(page_access_token='qwerty'))
 
@@ -123,6 +128,8 @@ async def test_start_should_open_connection_and_close_on_stop():
 
 
 def test_get_mongodb_as_dep():
+    global story
+    story = Story()
     story.use(mongodb.MongodbInterface())
 
     with di.child_scope():

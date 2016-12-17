@@ -5,11 +5,13 @@ from . import AioHttpInterface
 from .. import aiohttp
 from ..commonhttp import errors
 from ..tests import fake_server
-from ... import di, story
+from ... import di, Story
+
+story = None
 
 
 def teardown_function(function):
-    story.clear()
+    story and story.clear()
 
 
 @pytest.fixture
@@ -190,6 +192,8 @@ async def test_pass_middleware(mocker, webhook_handler):
 
 
 def test_get_as_deps():
+    global story
+    story = Story()
     story.use(aiohttp.AioHttpInterface())
 
     with di.child_scope('http'):
@@ -210,3 +214,12 @@ async def test_shop_should_remove_app():
     assert http.has_app()
     await http.stop()
     assert not http.has_app()
+
+
+@pytest.mark.asyncio
+async def test_should_raise_exception_on_webhook_if_aiohttp_already_is_started(webhook_handler):
+    http = aiohttp.AioHttpInterface()
+    http.get_app()
+    await http.start()
+    with pytest.raises(aiohttp.WebhookException):
+        http.webhook(uri='/webhook', handler=webhook_handler, token='qwerty')

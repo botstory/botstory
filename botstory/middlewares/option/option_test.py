@@ -1,32 +1,35 @@
 import logging
 import pytest
 from . import option
-from ... import chat, matchers, story
+from ... import matchers, Story
 from ...utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
 logger = logging.getLogger(__name__)
 
 
+story = None
+
+
 def setup_function(function):
     logger.debug('setup')
-    chat.interfaces = {}
-    story.stories_library.clear()
+    story and story.clear()
 
 
 @pytest.mark.asyncio
 async def test_should_ask_with_options():
-    logger.debug('chat.interfaces')
-    logger.debug(chat.interfaces)
     session = build_fake_session()
     user = build_fake_user()
 
     trigger = SimpleTrigger()
 
+    global story
+    story = Story()
+
     @story.on('How are you?')
     def one_story():
         @story.part()
         async def ask(message):
-            return await chat.ask(
+            return await story.ask(
                 'I feel fine. How about you?',
                 options=[{
                     'title': 'Good!',
@@ -45,8 +48,8 @@ async def test_should_ask_with_options():
         def get_health(message):
             trigger.receive(message['data']['option'])
 
-    await answer.pure_text('How are you?', session, user)
-    await answer.option({'health': 1}, session, user)
+    await answer.pure_text('How are you?', session, user, story)
+    await answer.option({'health': 1}, session, user, story)
     assert trigger.result() == {'health': 1}
 
 
@@ -57,13 +60,16 @@ async def test_validate_option():
 
     trigger = SimpleTrigger()
 
+    global story
+    story = Story()
+
     @story.on(receive=option.Any())
     def one_story():
         @story.part()
         def store_option(message):
             trigger.passed()
 
-    await answer.option({'engine': 'start'}, session, user)
+    await answer.option({'engine': 'start'}, session, user, story)
     assert trigger.is_triggered
 
 
@@ -74,13 +80,16 @@ async def test_validate_only_option():
 
     trigger = SimpleTrigger()
 
+    global story
+    story = Story()
+
     @story.on(receive=option.Any())
     def one_story():
         @story.part()
         def store_option(message):
             trigger.passed()
 
-    await answer.pure_text('Start engine!', session, user)
+    await answer.pure_text('Start engine!', session, user, story)
     assert not trigger.is_triggered
 
 
@@ -98,13 +107,16 @@ async def test_validate_only_option():
 
     trigger = SimpleTrigger()
 
+    global story
+    story = Story()
+
     @story.on(receive=option.Match('green'))
     def one_story():
         @story.part()
         def store_option(message):
             trigger.passed()
 
-    await answer.option('green', session, user)
+    await answer.option('green', session, user, story)
     assert trigger.is_triggered
 
 

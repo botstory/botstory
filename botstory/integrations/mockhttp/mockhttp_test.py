@@ -1,9 +1,10 @@
 import pytest
 from .. import mockhttp
-from ... import di, story
+from ... import di, Story
 
 
 def test_get_mockhttp_as_dep():
+    story = Story()
     story.use(mockhttp.MockHttpInterface())
 
     with di.child_scope():

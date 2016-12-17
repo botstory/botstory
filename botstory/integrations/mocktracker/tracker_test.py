@@ -2,11 +2,13 @@ import pytest
 
 from . import tracker
 from .. import mocktracker
-from ... import di, story
+from ... import di, Story
+
+story = None
 
 
 def teardown_function(function):
-    story.clear()
+    story and story.clear()
 
 
 def test_event():
@@ -30,6 +32,8 @@ def test_story():
 
 
 def test_get_mock_tracker_as_dep():
+    global story
+    story = Story()
     story.use(mocktracker.MockTracker())
 
     with di.child_scope():

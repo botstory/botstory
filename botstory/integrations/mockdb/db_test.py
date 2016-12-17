@@ -1,9 +1,11 @@
 import pytest
 from .. import mockdb
-from ... import di, story
+from ... import di, Story
 
 
 def test_get_mockdb_as_dep():
+    story = Story()
+
     story.use(mockdb.MockDB())
 
     with di.child_scope():
