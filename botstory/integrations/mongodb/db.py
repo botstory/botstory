@@ -84,6 +84,7 @@ class MongodbInterface:
             res = await self.user_collection.update({'_id': user._id}, user)
         return res
 
+    # TODO: should be able to process dictionary
     async def new_user(self, **kwargs):
         logger.debug('store new user {}'.format(kwargs))
         id = await self.user_collection.insert(kwargs)

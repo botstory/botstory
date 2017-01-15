@@ -86,17 +86,17 @@ async def test_should_prevent_other_story_to_start_until_we_waiting_for_answer()
     @story.on('hi there!')
     def one_story():
         @story.part()
-        async def then(message):
+        async def then_ask(message):
             return await story.ask('How are you?', user=message['user'])
 
         @story.part()
-        def then(message):
+        async def then_trigger_2(message):
             trigger_2.passed()
 
     @story.on('Great!')
     def one_story():
         @story.part()
-        def then(message):
+        def then_trigger_1(message):
             trigger_1.passed()
 
     await answer.pure_text('hi there!', session, user, story)
