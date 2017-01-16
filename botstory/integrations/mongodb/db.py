@@ -66,10 +66,11 @@ class MongodbInterface:
         return res
 
     async def new_session(self, user, **kwargs):
+        logger.info('new_session for {}'.format(user))
         kwargs['user_id'] = kwargs.get('user_id', user['_id'])
         kwargs['stack'] = kwargs.get('stack', [])
-        id = await self.session_collection.insert(kwargs)
-        return await self.session_collection.find_one({'_id': id})
+        _id = await self.session_collection.insert(kwargs)
+        return await self.session_collection.find_one({'_id': _id})
 
     async def get_user(self, **kwargs):
         if 'id' in kwargs:
@@ -78,11 +79,21 @@ class MongodbInterface:
         return await self.user_collection.find_one(kwargs)
 
     async def set_user(self, user):
-        if not getattr(user, '_id', None):
-            res = await self.user_collection.insert(user)
-        else:
-            res = await self.user_collection.update({'_id': user._id}, user)
-        return res
+        logger.info('set_user {}'.format(user))
+        if '_id' in user:
+            _id = user['_id']
+            res = await self.user_collection.update_one(
+                {'_id': _id},
+                {
+                    '$set': user,
+                    '$currentDate': {
+                        'lastModified': True
+                    },
+                },
+            )
+            if res.matched_count != 0:
+                return _id
+        return await self.user_collection.insert(user)
 
     # TODO: should be able to process dictionary
     async def new_user(self, **kwargs):
