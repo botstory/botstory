@@ -232,6 +232,11 @@ class FBInterface:
                     else:
                         logger.warning('(!) unknown case {}'.format(e))
 
+                    # after message were processed session and user information could change
+                    # so we should store it for the next usage
+                    await self.storage.set_session(message['session'])
+                    await self.storage.set_user(message['user'])
+
         except BaseException as err:
             logger.exception(err)
 
