@@ -18,6 +18,30 @@ def teardown_function(function):
     story and story.clear()
 
 
+def build_message(facebook_user_id, msg):
+    return {
+        'object': 'page',
+        'entry': [{
+            'id': 'PAGE_ID',
+            'time': 1473204787206,
+            'messaging': [{
+                'sender': {
+                    'id': facebook_user_id,
+                },
+                'recipient': {
+                    'id': 'PAGE_ID'
+                },
+                'timestamp': 1458692752478,
+                'message': {
+                    'mid': 'mid.1457764197618:41d102a3e1ae206a38',
+                    'seq': 73,
+                    **msg,
+                }
+            }]
+        }]
+    }
+
+
 @pytest.fixture
 def build_context():
     async def builder(db, no_session=False, no_user=False):
@@ -115,28 +139,11 @@ async def test_integrate_mongodb_with_facebook(open_db, build_context):
             def store_result(message):
                 trigger.receive(message)
 
-        await facebook.handle({
-            'object': 'page',
-            'entry': [{
-                'id': 'PAGE_ID',
-                'time': 1473204787206,
-                'messaging': [{
-                    'sender': {
-                        'id': user['facebook_user_id'],
-                    },
-                    'recipient': {
-                        'id': 'PAGE_ID'
-                    },
-                    'timestamp': 1458692752478,
-                    'message': {
-                        'mid': 'mid.1457764197618:41d102a3e1ae206a38',
-                        'seq': 73,
-                        'text': 'hello, world!'
-                    }
-                }
-                ]
-            }]
-        })
+        await facebook.handle(build_message(
+            user['facebook_user_id'], {
+                'text': 'hello, world!'
+            }
+        ))
 
         del trigger.value['session']
         assert trigger.value == {
@@ -162,27 +169,9 @@ async def test_integrate_mongodb_with_facebook_with_none_session(open_db, build_
             def store_result_for_new_user(message):
                 trigger.receive(message)
 
-        await facebook.handle({
-            'object': 'page',
-            'entry': [{
-                'id': 'PAGE_ID',
-                'time': 1473204787206,
-                'messaging': [{
-                    'sender': {
-                        'id': 'some-facebook-id',
-                    },
-                    'recipient': {
-                        'id': 'PAGE_ID'
-                    },
-                    'timestamp': 1458692752478,
-                    'message': {
-                        'mid': 'mid.1457764197618:41d102a3e1ae206a38',
-                        'seq': 73,
-                        'text': 'hello, world!'
-                    }
-                }]
-            }]
-        })
+        await facebook.handle(build_message('some-facebook-id', {
+            'text': 'hello, world!'
+        }))
 
         assert trigger.value
         assert trigger.value['data']['text']['raw'] == 'hello, world!'
@@ -254,6 +243,43 @@ async def test_story_on_start(open_db, build_context):
         })
 
         assert trigger.is_triggered
+
+
+@pytest.mark.asyncio
+async def test_should_prevent_other_story_to_start_until_we_waiting_for_answer(open_db, build_context):
+    async with open_db() as mongodb:
+        facebook, http, story, user = await build_context(mongodb)
+
+        trigger_1 = utils.SimpleTrigger()
+        trigger_2 = utils.SimpleTrigger()
+
+        @story.on('hi there!')
+        def one_story():
+            @story.part()
+            async def then_ask(message):
+                return await story.ask('How are you?', user=message['user'])
+
+            @story.part()
+            async def then_trigger_2(message):
+                trigger_2.passed()
+
+        @story.on('Great!')
+        def one_story():
+            @story.part()
+            def then_trigger_1(message):
+                trigger_1.passed()
+
+        await story.start()
+
+        await facebook.handle(build_message(user['facebook_user_id'], {
+            'text': 'hi there!'
+        }))
+        await facebook.handle(build_message(user['facebook_user_id'], {
+            'text': 'Great!'
+        }))
+
+        assert trigger_2.is_triggered
+        assert not trigger_1.is_triggered
 
 
 @pytest.mark.asyncio

@@ -9,7 +9,6 @@ from ... import di, Story, utils
 
 logger = logging.getLogger(__name__)
 
-
 story = None
 
 
@@ -62,20 +61,34 @@ def open_db():
 
 @pytest.mark.asyncio
 async def test_store_restore_session(open_db):
+    EXCLUDE_FIELDS = ['lastModified']
+
+    def compare_sessions(s1, s2):
+        if s1 == s2:
+            return True
+
+        for (key, value) in s2.items():
+            if key not in ['_id'] and key not in EXCLUDE_FIELDS:
+                assert s1[key] == s2[key]
+
     async with open_db() as db_interface:
         session = utils.build_fake_session()
         session_id = await db_interface.set_session(session)
-        logger.debug('session_id')
-        logger.debug(session_id)
-        restored_session = await db_interface.get_session(session_id=session_id)
-        logger.debug('restored_session')
-        logger.debug(restored_session)
-        restored_session = await db_interface.get_session(user_id=session['user_id'])
 
-        for (key, value) in restored_session.items():
-            if key not in ['_id']:
-                logger.debug('key {} '.format(key))
-                assert session[key] == restored_session[key]
+        logger.info('session_id')
+        logger.info(session_id)
+
+        restored_session = await db_interface.get_session(_id=session_id)
+        logger.info('restored_session {}'.format(restored_session))
+        compare_sessions(session, restored_session)
+
+        restored_session = await db_interface.get_session(user_id=session['user_id'])
+        compare_sessions(session, restored_session)
+
+        session['facebook_user_id'] = utils.uniq_id()
+        await db_interface.set_session(session)
+        restored_session = await db_interface.get_session(user_id=session['user_id'])
+        compare_sessions(session, restored_session)
 
 
 @pytest.mark.asyncio
