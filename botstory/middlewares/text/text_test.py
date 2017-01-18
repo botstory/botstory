@@ -120,6 +120,10 @@ async def test_should_catch_equal_text_message():
     assert trigger_see_you.is_triggered
 
 
+def test_equal_handle_should_create_right_type():
+    assert isinstance(text.Equal.handle(''), text.Equal)
+
+
 @pytest.mark.asyncio
 async def test_should_catch_equal_text_message_case_in_sensitive():
     trigger_hi_there = SimpleTrigger()
@@ -147,6 +151,10 @@ async def test_should_catch_equal_text_message_case_in_sensitive():
 
     assert not trigger_hi_there.is_triggered
     assert trigger_see_you.is_triggered
+
+
+def test_equal_case_ignore_handle_should_create_right_type():
+    assert isinstance(text.EqualCaseIgnore.handle(''), text.EqualCaseIgnore)
 
 
 def test_serialize_text_any():

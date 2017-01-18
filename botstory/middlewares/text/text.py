@@ -40,7 +40,7 @@ class Equal:
 
     @staticmethod
     def handle(data):
-        return Match(data)
+        return Equal(data)
 
 
 @matchers.matcher()
@@ -68,7 +68,7 @@ class EqualCaseIgnore:
 
     @staticmethod
     def handle(data):
-        return Match(data)
+        return EqualCaseIgnore(data)
 
 
 @matchers.matcher()
