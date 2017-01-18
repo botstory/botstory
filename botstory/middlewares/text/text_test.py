@@ -166,6 +166,13 @@ async def test_should_catch_equal_text_message_case_in_sensitive():
     assert trigger_see_you.is_triggered
 
 
+def test_serialize_text_equal_case_ignore():
+    m_old = text.EqualCaseIgnore('hats off')
+    m_new = matchers.deserialize(matchers.serialize(m_old))
+    assert isinstance(m_new, text.EqualCaseIgnore)
+    assert m_new.test_string == 'hats off'
+
+
 @pytest.mark.asyncio
 async def test_should_catch_text_message_that_match_regex():
     trigger_buy = SimpleTrigger()

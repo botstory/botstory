@@ -61,8 +61,9 @@ class EqualCaseIgnore:
     def serialize(self):
         return self.test_string
 
-    def deserialize(self, state):
-        self.test_string = state
+    @classmethod
+    def deserialize(cls, state):
+        return cls(state)
 
 
 @matchers.matcher()
