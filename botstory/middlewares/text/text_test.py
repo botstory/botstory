@@ -91,6 +91,12 @@ async def test_should_ignore_any_non_text_message():
     assert not trigger.is_triggered
 
 
+def test_serialize_text_any():
+    m_old = text.Any()
+    m_new = matchers.deserialize(matchers.serialize(m_old))
+    assert isinstance(m_new, text.Any)
+
+
 @pytest.mark.asyncio
 async def test_should_catch_equal_text_message():
     trigger_hi_there = SimpleTrigger()
@@ -124,6 +130,13 @@ def test_equal_handle_should_create_right_type():
     assert isinstance(text.Equal.handle(''), text.Equal)
 
 
+def test_serialize_text_equal():
+    m_old = text.Equal('hats off')
+    m_new = matchers.deserialize(matchers.serialize(m_old))
+    assert isinstance(m_new, text.Equal)
+    assert m_new.test_string == 'hats off'
+
+
 @pytest.mark.asyncio
 async def test_should_catch_equal_text_message_case_in_sensitive():
     trigger_hi_there = SimpleTrigger()
@@ -151,10 +164,6 @@ async def test_should_catch_equal_text_message_case_in_sensitive():
 
     assert not trigger_hi_there.is_triggered
     assert trigger_see_you.is_triggered
-
-
-def test_equal_case_ignore_handle_should_create_right_type():
-    assert isinstance(text.EqualCaseIgnore.handle(''), text.EqualCaseIgnore)
 
 
 @pytest.mark.asyncio
@@ -185,9 +194,3 @@ async def test_should_catch_text_message_that_match_regex():
 
     assert trigger_buy.result() == '700'
     assert trigger_sell.result() == '600'
-
-
-def test_serialize_text_any():
-    m_old = text.Any()
-    m_new = matchers.deserialize(matchers.serialize(m_old))
-    assert isinstance(m_new, text.Any)

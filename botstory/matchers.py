@@ -51,4 +51,6 @@ def serialize(m):
 
 def deserialize(data):
     matcher_type = matchers[data['type']]
+    print('matcher_type')
+    print(help(matcher_type.deserialize))
     return matcher_type.deserialize(data['data'])

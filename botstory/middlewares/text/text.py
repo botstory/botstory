@@ -32,8 +32,9 @@ class Equal:
     def serialize(self):
         return self.test_string
 
-    def deserialize(self, state):
-        self.test_string = state
+    @classmethod
+    def deserialize(cls, state):
+        return cls(state)
 
     @staticmethod
     def can_handle(data):
@@ -63,14 +64,6 @@ class EqualCaseIgnore:
     def deserialize(self, state):
         self.test_string = state
 
-    @staticmethod
-    def can_handle(data):
-        return utils.is_string(data)
-
-    @staticmethod
-    def handle(data):
-        return EqualCaseIgnore(data)
-
 
 @matchers.matcher()
 class Match:
@@ -91,11 +84,3 @@ class Match:
 
     def deserialize(self, state):
         self.matcher = re.compile(state)
-
-    @staticmethod
-    def can_handle(data):
-        return utils.is_string(data)
-
-    @staticmethod
-    def handle(data):
-        return Match(data)
