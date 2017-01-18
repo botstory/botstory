@@ -46,9 +46,9 @@ class Equal:
 @matchers.matcher()
 class EqualCaseIgnore:
     """
-    filter equal raw text (case sensitive)
+    filter equal raw text (case in-sensitive)
     """
-    type = 'text.Equal'
+    type = 'text.EqualCaseIgnore'
 
     def __init__(self, test_string):
         self.test_string = test_string.lower()
