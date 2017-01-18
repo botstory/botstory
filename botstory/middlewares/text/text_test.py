@@ -157,6 +157,36 @@ def test_equal_case_ignore_handle_should_create_right_type():
     assert isinstance(text.EqualCaseIgnore.handle(''), text.EqualCaseIgnore)
 
 
+@pytest.mark.asyncio
+async def test_should_catch_text_message_that_match_regex():
+    trigger_buy = SimpleTrigger()
+    trigger_sell = SimpleTrigger()
+
+    session = build_fake_session()
+    user = build_fake_user()
+
+    global story
+    story = Story()
+
+    @story.on(text.Match('buy (.*)btc'))
+    def one_story():
+        @story.part()
+        def then(ctx):
+            trigger_buy.receive(ctx['data']['text']['matches'][0])
+
+    @story.on(text.Match('sell (.*)btc'))
+    def one_story():
+        @story.part()
+        def then(ctx):
+            trigger_sell.receive(ctx['data']['text']['matches'][0])
+
+    await answer.pure_text('buy 700btc', session, user, story)
+    await answer.pure_text('sell 600btc', session, user, story)
+
+    assert trigger_buy.result() == '700'
+    assert trigger_sell.result() == '600'
+
+
 def test_serialize_text_any():
     m_old = text.Any()
     m_new = matchers.deserialize(matchers.serialize(m_old))
