@@ -90,6 +90,7 @@ async def test_should_ignore_any_non_text_message():
 
     assert not trigger.is_triggered
 
+
 @pytest.mark.asyncio
 async def test_should_catch_equal_text_message():
     trigger_hi_there = SimpleTrigger()
@@ -114,6 +115,35 @@ async def test_should_catch_equal_text_message():
             trigger_see_you.passed()
 
     await answer.pure_text('see you!', session, user, story)
+
+    assert not trigger_hi_there.is_triggered
+    assert trigger_see_you.is_triggered
+
+
+@pytest.mark.asyncio
+async def test_should_catch_equal_text_message_case_in_sensitive():
+    trigger_hi_there = SimpleTrigger()
+    trigger_see_you = SimpleTrigger()
+
+    session = build_fake_session()
+    user = build_fake_user()
+
+    global story
+    story = Story()
+
+    @story.on(text.EqualCaseIgnore('hi there!'))
+    def one_story():
+        @story.part()
+        def then(ctx):
+            trigger_hi_there.passed()
+
+    @story.on(text.EqualCaseIgnore('see you!'))
+    def one_story():
+        @story.part()
+        def then(ctx):
+            trigger_see_you.passed()
+
+    await answer.pure_text('See You!', session, user, story)
 
     assert not trigger_hi_there.is_triggered
     assert trigger_see_you.is_triggered
