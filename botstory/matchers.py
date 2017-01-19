@@ -10,7 +10,10 @@ def build_serializer():
 
 def build_deserialize(cls):
     def default_deserialize(data):
-        return cls()
+        try:
+            return cls(data)
+        except TypeError as e:
+            return cls()
 
     return default_deserialize
 

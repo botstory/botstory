@@ -32,10 +32,6 @@ class Equal:
     def serialize(self):
         return self.test_string
 
-    @classmethod
-    def deserialize(cls, state):
-        return cls(state)
-
     @staticmethod
     def can_handle(data):
         return utils.is_string(data)
@@ -61,10 +57,6 @@ class EqualCaseIgnore:
     def serialize(self):
         return self.test_string
 
-    @classmethod
-    def deserialize(cls, state):
-        return cls(state)
-
 
 @matchers.matcher()
 class Match:
@@ -83,6 +75,3 @@ class Match:
     def serialize(self):
         return self.matcher.pattern
 
-    @classmethod
-    def deserialize(cls, state):
-        return cls(state)
