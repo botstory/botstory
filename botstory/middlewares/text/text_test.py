@@ -208,3 +208,7 @@ def test_serialize_text_match():
     m_new = matchers.deserialize(matchers.serialize(m_old))
     assert isinstance(m_new, text.Match)
     assert m_new.matcher.match('hello Piter!')
+
+
+def test_text_qual_should_handle_text():
+    assert isinstance(matchers.get_validator('just pure text'), text.Equal)
