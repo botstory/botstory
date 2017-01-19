@@ -62,8 +62,8 @@ class EqualCaseIgnore:
 class Match:
     type = 'text.Match'
 
-    def __init__(self, pattern):
-        self.matcher = re.compile(pattern)
+    def __init__(self, pattern, flags=0):
+        self.matcher = re.compile(pattern, flags=flags)
 
     def validate(self, message):
         matches = self.matcher.findall(utils.safe_get(message, 'data', 'text', 'raw'))
@@ -73,5 +73,7 @@ class Match:
         return True
 
     def serialize(self):
-        return self.matcher.pattern
-
+        return {
+            'pattern': self.matcher.pattern,
+            'flags': self.matcher.flags,
+        }

@@ -1,4 +1,5 @@
 import pytest
+import re
 from . import text
 from ... import matchers, Story
 from ...utils import answer, build_fake_session, build_fake_user, SimpleTrigger
@@ -202,12 +203,32 @@ async def test_should_catch_text_message_that_match_regex():
     assert trigger_buy.result() == '700'
     assert trigger_sell.result() == '600'
 
+@pytest.mark.asyncio
+async def test_should_catch_text_message_that_match_regex_with_flags():
+    trigger_destination = SimpleTrigger()
+
+    session = build_fake_session()
+    user = build_fake_user()
+
+    global story
+    story = Story()
+
+    @story.on(text.Match('going to (.*)', re.IGNORECASE))
+    def one_story():
+        @story.part()
+        def then(ctx):
+            trigger_destination.receive(ctx['data']['text']['matches'][0])
+
+    await answer.pure_text('Going to Pripyat', session, user, story)
+
+    assert trigger_destination.result() == 'Pripyat'
+
 
 def test_serialize_text_match():
-    m_old = text.Match('hello (.*)')
+    m_old = text.Match('hello (.*)', re.IGNORECASE)
     m_new = matchers.deserialize(matchers.serialize(m_old))
     assert isinstance(m_new, text.Match)
-    assert m_new.matcher.match('hello Piter!')
+    assert m_new.matcher.match('Hello Piter!')
 
 
 def test_text_qual_should_handle_text():

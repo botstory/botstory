@@ -13,7 +13,10 @@ def build_deserialize(cls):
         try:
             return cls(data)
         except TypeError:
-            return cls()
+            try:
+                return cls(**data)
+            except TypeError:
+                return cls()
 
     return default_deserialize
 
