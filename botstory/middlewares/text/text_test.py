@@ -201,3 +201,10 @@ async def test_should_catch_text_message_that_match_regex():
 
     assert trigger_buy.result() == '700'
     assert trigger_sell.result() == '600'
+
+
+def test_serialize_text_match():
+    m_old = text.Match('hello (.*)')
+    m_new = matchers.deserialize(matchers.serialize(m_old))
+    assert isinstance(m_new, text.Match)
+    assert m_new.matcher.match('hello Piter!')

@@ -83,5 +83,6 @@ class Match:
     def serialize(self):
         return self.matcher.pattern
 
-    def deserialize(self, state):
-        self.matcher = re.compile(state)
+    @classmethod
+    def deserialize(cls, state):
+        return cls(state)
