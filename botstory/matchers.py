@@ -10,7 +10,13 @@ def build_serializer():
 
 def build_deserialize(cls):
     def default_deserialize(data):
-        return cls()
+        try:
+            return cls(data)
+        except TypeError:
+            try:
+                return cls(**data)
+            except TypeError:
+                return cls()
 
     return default_deserialize
 
@@ -51,4 +57,6 @@ def serialize(m):
 
 def deserialize(data):
     matcher_type = matchers[data['type']]
+    print('matcher_type')
+    print(help(matcher_type.deserialize))
     return matcher_type.deserialize(data['data'])

@@ -30,6 +30,15 @@ def build_fake_session(user=None):
     }
 
 
+def safe_get(dct, *keys, default=None):
+    for key in keys:
+        try:
+            dct = dct[key]
+        except KeyError:
+            return default
+    return dct
+
+
 class SimpleTrigger:
     def __init__(self, value=None):
         self.is_triggered = False
