@@ -42,8 +42,8 @@ def send_text_message(text, options):
     :param options:
     :return:
     """
-    if len(text) > 320:
-        raise Invalid('send message text should not exceed 320 character limit')
+    if len(text) > 640:
+        raise Invalid('send message text should not exceed 640 character limit')
 
     if isinstance(options, list):
         if len(options) > 10:
