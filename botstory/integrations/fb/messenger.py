@@ -82,7 +82,6 @@ class FBInterface:
         """
         async send message to the facebook user (recipient)
 
-        :param session:
         :param recipient:
         :param text:
         :param options:
