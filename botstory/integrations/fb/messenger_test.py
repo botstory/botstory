@@ -31,7 +31,7 @@ async def test_send_text_message():
     await story.start()
 
     await interface.send_text_message(
-        recipient=user, text='hi!', options=None
+        recipient=user, text='hi!', quick_replies=None
     )
 
     mock_http.post.assert_called_with(

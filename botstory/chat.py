@@ -10,18 +10,18 @@ class Chat:
     def __init__(self):
         self.interfaces = {}
 
-    async def ask(self, body, options=None, user=None):
+    async def ask(self, body, quick_replies=None, user=None):
         """
-        simple ask with predefined options
+        simple ask with predefined quick replies
 
         :param body:
-        :param options: (optional)  in form of
+        :param quick_replies: (optional) in form of
         {'title': <message>, 'payload': <any json>}
         :param user:
         :return:
         """
         await self.send_text_message_to_all_interfaces(
-            recipient=user, text=body, options=options)
+            recipient=user, text=body, quick_replies=quick_replies)
         return any.Any()
 
     # TODO: move to middlewares/location/location.py and make async

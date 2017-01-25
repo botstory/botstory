@@ -78,19 +78,19 @@ class FBInterface:
         logger.debug(users)
         self.users = users
 
-    async def send_text_message(self, recipient, text, options=None):
+    async def send_text_message(self, recipient, text, quick_replies=None):
         """
         async send message to the facebook user (recipient)
 
         :param recipient:
         :param text:
-        :param options:
+        :param quick_replies:
 
         :return:
         """
 
         try:
-            validate.send_text_message(text, options)
+            validate.send_text_message(text, quick_replies)
         except validate.ExceedLengthException as i:
             # TODO: take first part of message show option `more`
             # store last part until user press `more`
@@ -105,14 +105,14 @@ class FBInterface:
         except validate.Invalid as i:
             logger.warn(str(i))
 
-        if not options:
-            options = []
+        if not quick_replies:
+            quick_replies = []
 
         message = {
             'text': text,
         }
 
-        quick_replies = [{**reply, 'content_type': 'text'} for reply in options]
+        quick_replies = [{**reply, 'content_type': 'text'} for reply in quick_replies]
         if len(quick_replies) > 0:
             message['quick_replies'] = quick_replies
 
