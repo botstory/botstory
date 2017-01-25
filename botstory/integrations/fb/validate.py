@@ -2,6 +2,10 @@ class Invalid(BaseException):
     pass
 
 
+class ExceedLengthException(Invalid):
+    pass
+
+
 def greeting_text(message):
     """
     more: https://developers.facebook.com/docs/messenger-platform/thread-settings/greeting-text
@@ -43,7 +47,7 @@ def send_text_message(text, options):
     :return:
     """
     if len(text) > 640:
-        raise Invalid('send message text should not exceed 640 character limit')
+        raise ExceedLengthException('send message text should not exceed 640 character limit')
 
     if isinstance(options, list):
         if len(options) > 10:

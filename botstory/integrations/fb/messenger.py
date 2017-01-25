@@ -91,6 +91,17 @@ class FBInterface:
 
         try:
             validate.send_text_message(text, options)
+        except validate.ExceedLengthException as i:
+            # TODO: take first part of message show option `more`
+            # store last part until user press `more`
+
+            # TODO: register dynamic `quick answer` handler
+            # with the rest of message
+
+            # TODO: or handle it on application level?
+            # motivation: if we're working with dynamic data or endless
+            # we could just pass text. It should be generator
+            logger.warn(str(i))
         except validate.Invalid as i:
             logger.warn(str(i))
 
