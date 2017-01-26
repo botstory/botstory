@@ -46,6 +46,7 @@ async def test_should_say(mock_interface):
     mock_interface.send_text_message.assert_called_once_with(
         recipient=user,
         text='Nice to see you!',
+        options=None,
     )
 
 

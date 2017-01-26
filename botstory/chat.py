@@ -36,7 +36,7 @@ class Chat:
         # 4 ask details once we not sure
         return [location.Any(), text.Any()]
 
-    async def say(self, body, user):
+    async def say(self, body, user, options):
         """
         say something to user
 
@@ -45,7 +45,7 @@ class Chat:
         :return:
         """
         return await self.send_text_message_to_all_interfaces(
-            recipient=user, text=body)
+            recipient=user, text=body, options=options)
 
     async def send_text_message_to_all_interfaces(self, *args, **kwargs):
         """

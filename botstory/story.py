@@ -62,8 +62,8 @@ class Story:
     async def ask(self, body, options=None, user=None):
         return await self.chat.ask(body, options, user)
 
-    async def say(self, body, user):
-        return await self.chat.say(body, user)
+    async def say(self, body, user, options=None):
+        return await self.chat.say(body, user, options)
 
     def use(self, middleware):
         """

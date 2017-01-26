@@ -78,13 +78,16 @@ class FBInterface:
         logger.debug(users)
         self.users = users
 
-    async def send_text_message(self, recipient, text, quick_replies=None):
+    async def send_text_message(self, recipient, text,
+                                quick_replies=None,
+                                options=None):
         """
         async send message to the facebook user (recipient)
 
         :param recipient:
         :param text:
         :param quick_replies:
+        :param options
 
         :return:
         """
