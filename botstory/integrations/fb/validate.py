@@ -3,7 +3,9 @@ class Invalid(BaseException):
 
 
 class ExceedLengthException(Invalid):
-    pass
+    def __init__(self, *args, limit=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.limit = limit
 
 
 def greeting_text(message):
@@ -47,7 +49,10 @@ def send_text_message(text, quick_replies):
     :return:
     """
     if len(text) > 640:
-        raise ExceedLengthException('send message text should not exceed 640 character limit')
+        raise ExceedLengthException(
+            'send message text should not exceed 640 character limit',
+            limit=640,
+        )
 
     if isinstance(quick_replies, list):
         if len(quick_replies) > 10:

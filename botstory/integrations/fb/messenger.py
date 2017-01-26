@@ -105,6 +105,9 @@ class FBInterface:
             # motivation: if we're working with dynamic data or endless
             # we could just pass text. It should be generator
             logger.warn(str(i))
+
+            if options and options.get('overflow', None) == 'cut':
+                text = text[:i.limit]
         except validate.Invalid as i:
             logger.warn(str(i))
 
