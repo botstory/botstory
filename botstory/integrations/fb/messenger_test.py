@@ -49,6 +49,7 @@ async def test_send_text_message():
         }
     )
 
+
 @pytest.mark.asyncio
 async def test_truncate_long_message():
     user = utils.build_fake_user()
@@ -85,6 +86,42 @@ async def test_truncate_long_message():
             },
         }
     )
+
+
+@pytest.mark.asyncio
+async def test_truncate_with_ellipsis_long_message_by_default():
+    user = utils.build_fake_user()
+
+    global story
+    story = Story()
+
+    interface = story.use(messenger.FBInterface(page_access_token='qwerty1'))
+    mock_http = story.use(mockhttp.MockHttpInterface())
+
+    await story.start()
+
+    very_long_message = 'very_long_message' * 100
+    await interface.send_text_message(
+        recipient=user,
+        text=very_long_message,
+        quick_replies=None,
+    )
+
+    mock_http.post.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/messages/',
+        params={
+            'access_token': 'qwerty1',
+        },
+        json={
+            'message': {
+                'text': very_long_message[:638] + '\u2026',
+            },
+            'recipient': {
+                'id': user['facebook_user_id'],
+            },
+        }
+    )
+
 
 @pytest.mark.asyncio
 async def test_integration():

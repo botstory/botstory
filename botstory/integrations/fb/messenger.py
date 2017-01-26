@@ -108,6 +108,8 @@ class FBInterface:
 
             if options and options.get('overflow', None) == 'cut':
                 text = text[:i.limit]
+            else:
+                text = text[:i.limit - 2] + '\u2026'
         except validate.Invalid as i:
             logger.warn(str(i))
 
