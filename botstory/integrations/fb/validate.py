@@ -2,6 +2,12 @@ class Invalid(BaseException):
     pass
 
 
+class ExceedLengthException(Invalid):
+    def __init__(self, *args, limit=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.limit = limit
+
+
 def greeting_text(message):
     """
     more: https://developers.facebook.com/docs/messenger-platform/thread-settings/greeting-text
@@ -31,7 +37,7 @@ def persistent_menu(menu):
             raise Invalid('menu item payload should not exceed 1000 characters')
 
 
-def send_text_message(text, options):
+def send_text_message(text, quick_replies):
     """
     more:
     https://developers.facebook.com/docs/messenger-platform/send-api-reference/text-message
@@ -39,17 +45,20 @@ def send_text_message(text, options):
     https://developers.facebook.com/docs/messenger-platform/send-api-reference/quick-replies
 
     :param text:
-    :param options:
+    :param quick_replies:
     :return:
     """
-    if len(text) > 320:
-        raise Invalid('send message text should not exceed 320 character limit')
+    if len(text) > 640:
+        raise ExceedLengthException(
+            'send message text should not exceed 640 character limit',
+            limit=640,
+        )
 
-    if isinstance(options, list):
-        if len(options) > 10:
+    if isinstance(quick_replies, list):
+        if len(quick_replies) > 10:
             raise Invalid('send message quick replies should not exceed 10 limit')
 
-        for item in options:
+        for item in quick_replies:
             if len(item['title']) > 20:
                 raise Invalid('send message quick replies title should not exceed 20 character limit')
             if 'content_type' not in item:

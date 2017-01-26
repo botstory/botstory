@@ -78,31 +78,49 @@ class FBInterface:
         logger.debug(users)
         self.users = users
 
-    async def send_text_message(self, recipient, text, options=None):
+    async def send_text_message(self, recipient, text,
+                                quick_replies=None,
+                                options=None):
         """
         async send message to the facebook user (recipient)
 
-        :param session:
         :param recipient:
         :param text:
-        :param options:
+        :param quick_replies:
+        :param options
 
         :return:
         """
 
         try:
-            validate.send_text_message(text, options)
+            validate.send_text_message(text, quick_replies)
+        except validate.ExceedLengthException as i:
+            # TODO: take first part of message show option `more`
+            # store last part until user press `more`
+
+            # TODO: register dynamic `quick answer` handler
+            # with the rest of message
+
+            # TODO: or handle it on application level?
+            # motivation: if we're working with dynamic data or endless
+            # we could just pass text. It should be generator
+            logger.warn(str(i))
+
+            if options and options.get('overflow', None) == 'cut':
+                text = text[:i.limit]
+            else:
+                text = text[:i.limit - 2] + '\u2026'
         except validate.Invalid as i:
             logger.warn(str(i))
 
-        if not options:
-            options = []
+        if not quick_replies:
+            quick_replies = []
 
         message = {
             'text': text,
         }
 
-        quick_replies = [{**reply, 'content_type': 'text'} for reply in options]
+        quick_replies = [{**reply, 'content_type': 'text'} for reply in quick_replies]
         if len(quick_replies) > 0:
             message['quick_replies'] = quick_replies
 

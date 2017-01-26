@@ -68,7 +68,7 @@ async def test_validate_persistent_menu(mocker, menu, invalid_message):
 @pytest.mark.parametrize('text,options,invalid_message', [
     ('hi there!', None, False),
 
-    ('very long message ' * 20, None, 'send message text should not exceed 320 character limit'),
+    ('very long message ' * 40, None, 'send message text should not exceed 640 character limit'),
 
     ('short message', [{
         'content_type': 'text',
