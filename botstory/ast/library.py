@@ -10,7 +10,9 @@ logger = logging.getLogger(__name__)
 @di.desc(reg=False)
 class StoriesLibrary:
     """
-    storage of all available stories
+    storage of
+     - top scope stories
+     - callable stories
     """
 
     def __init__(self):
