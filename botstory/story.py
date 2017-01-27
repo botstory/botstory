@@ -3,7 +3,7 @@ import logging
 
 from . import chat, di
 from .ast import callable as callable_module, common, \
-    forking, library, parser, processor, scope, users
+    forking, library, loop, parser, processor, users
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ class Story:
         self.forking_api = forking.ForkingStoriesAPI(
             parser_instance=self.parser_instance,
         )
-        self.stories_scope = scope.StoriesScope(
+        self.story_loop = loop.StoryLoop(
             library=self.stories_library,
         )
         self.middlewares = []
@@ -48,6 +48,13 @@ class Story:
         self.users = users.Users()
 
     # Facade
+    def loop(self):
+        """
+        close loop/scope of sub-stories
+        :return:
+        """
+        return self.story_loop.loop()
+
     def on(self, receive):
         return self.common_stories_instance.on(receive)
 
@@ -56,13 +63,6 @@ class Story:
 
     def part(self):
         return self.common_stories_instance.part()
-
-    def scope(self):
-        """
-        close scope of sub-stories
-        :return:
-        """
-        return self.stories_scope.scope()
 
     def callable(self):
         return self.callable_stories_instance.callable()

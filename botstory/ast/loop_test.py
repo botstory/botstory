@@ -11,7 +11,7 @@ def teardown_function(function):
 
 # @pytest.mark.skip()
 @pytest.mark.asyncio
-async def test_jump_in_scope():
+async def test_jump_in_a_loop():
     global story
     story = botstory.Story()
 
@@ -33,11 +33,16 @@ async def test_jump_in_scope():
         def show_do_job(ctx):
             pass
 
-        @story.scope()
+        @story.loop()
         def job_scope():
             @story.on('?')
             def show_local_help(ctx):
                 trigger_show_local_help.passed()
+
+            @story.on('work')
+            def make_job(ctx):
+                # do some job...
+                pass
 
     await answer.pure_text('start job', session, user, story)
     await answer.pure_text('?', session, user, story)

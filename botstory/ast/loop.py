@@ -1,9 +1,16 @@
-class StoriesScope:
+class StoryLoop:
+    """
+    loop (scope) concept similar to switch (forking)
+    the main difference is that after case switch jump to the next part
+    after last case. But in scope it loop until
+    - we get receive unmatched message
+    - or break loop explicitly
+    """
     def __init__(self, library):
         self.library = library
 
-    def scope(self):
-        def fn(one_scope):
+    def loop(self):
+        def fn(one_loop):
             # TODO: crawl scope for matchers and handlers
 
             # 1) we already have hierarchy of stories and stack of execution
@@ -16,6 +23,6 @@ class StoriesScope:
 
             # 4) if we match scope-validator we should choose one of its story
 
-            return one_scope
+            return one_loop
 
         return fn
