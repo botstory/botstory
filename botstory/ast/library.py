@@ -44,7 +44,7 @@ class StoriesLibrary:
         :param stack:
         :return:
         """
-        options = [s for s in [*self.callable_stories, *self.message_handling_stories] if s.topic == topic]
+        options = [s for s in self.callable_stories + self.message_handling_stories if s.topic == topic]
 
         if len(options) > 0:
             return options[0]
