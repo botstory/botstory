@@ -12,8 +12,8 @@ def story_library():
     story_1.append(parser.StoryPartFork())
     story_1.add_child(story_4)
 
-    l.add_message_handler(story_1)
-    l.add_message_handler(story_2)
+    l.add_global_scope_story(story_1)
+    l.add_global_scope_story(story_2)
     l.add_callable(story_3)
     return l
 

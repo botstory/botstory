@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class StoriesLibrary:
     """
     storage of
-     - top scope stories
+     - global scope stories
      - callable stories
     """
 
@@ -23,7 +23,7 @@ class StoriesLibrary:
         self.message_handling_stories = []
         self.callable_stories = []
 
-    def add_message_handler(self, story):
+    def add_global_scope_story(self, story):
         self.message_handling_stories.append(story)
 
     def add_callable(self, story):
