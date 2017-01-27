@@ -9,6 +9,7 @@ def teardown_function(function):
     story.clear()
 
 
+# @pytest.mark.skip()
 @pytest.mark.asyncio
 async def test_jump_in_scope():
     global story
@@ -21,7 +22,7 @@ async def test_jump_in_scope():
     trigger_show_local_help = SimpleTrigger()
 
     @story.on('?')
-    def one_story():
+    def global_help_story():
         @story.part()
         def show_global_help(ctx):
             trigger_show_global_help.passed()

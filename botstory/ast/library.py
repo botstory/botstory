@@ -52,6 +52,9 @@ class StoriesLibrary:
         if not stack or len(stack) == 0:
             return None
 
+        # Or it seems that we are somewhere on a leaves
+        # so we're trying to find root of last story and than
+        # get right sub story
         parent = self.get_story_by_topic(stack[-1]['topic'], stack[:-2])
         if not parent:
             return None

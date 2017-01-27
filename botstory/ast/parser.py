@@ -72,12 +72,14 @@ class ASTNode:
 
     def to_json(self):
         return {
-            'type': 'leaf',
+            'type': 'ASTNode',
             'topic': self.topic,
-            'story_names': list(self.story_names),
+            'story_line': list(
+                [l.to_json() if hasattr(l, 'to_json') else 'part: {}'.format(l.__name__) for l in self.story_line]
+            ),
         }
 
-    def __str__(self):
+    def __repr__(self):
         return json.dumps(self.to_json())
 
 
@@ -88,17 +90,18 @@ class StoryPartLeaf:
     def __call__(self, *args, **kwargs):
         return self.fn(*args, **kwargs)
 
-    def __str__(self):
-        return {
+    def __repr__(self):
+        return json.dumps({
             'type': 'StoryPartLeaf',
             'name': self.__name__,
-        }
+        })
 
 
 class StoryPartFork:
     def __init__(self):
         self.children = []
 
+    @property
     def __name__(self):
         return 'StoryPartFork'
 
@@ -106,10 +109,10 @@ class StoryPartFork:
         self.children.append(child_story_line)
 
     def to_json(self):
-        return {
-            'type': self.__name__,
-            'children': list(self.children),
-        }
+            return {
+                'type': 'StoryPartFork',
+                'children': list(map(lambda c: c.to_json(), self.children))
+            }
 
-    def __str__(self):
+    def __repr__(self):
         return json.dumps(self.to_json())
