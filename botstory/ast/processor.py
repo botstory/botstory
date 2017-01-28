@@ -149,24 +149,29 @@ class StoryProcessor:
                 story_part_name=story_part.__name__,
             )
 
+            idx += 1
+            session['stack'][current_stack_level]['step'] = idx
+
             # TODO: just should skip story part
             # but it should be done in process_next_part_of_story
-            if not isinstance(story_part, parser.StoryPartFork):
-                if message:
-                    # process common story part
-                    waiting_for = story_part(message)
-                else:
-                    # process startpoint of callable story
-                    waiting_for = story_part(*story_args, **story_kwargs)
+            if isinstance(story_part, parser.StoryPartFork):
+                # looking for story part after StoryPartFork
+                # it possible because previous story part result
+                # didn't match any StoryPartFork cases or
+                # match and already played it
+                continue
 
-                if inspect.iscoroutinefunction(story_part):
-                    waiting_for = await waiting_for
+            if message:
+                # process common story part
+                waiting_for = story_part(message)
+            else:
+                # process startpoint of callable story
+                waiting_for = story_part(*story_args, **story_kwargs)
 
-                logger.debug('  got result {}'.format(waiting_for))
+            if inspect.iscoroutinefunction(story_part):
+                waiting_for = await waiting_for
 
-            idx += 1
-            if len(session['stack']) > current_stack_level:
-                session['stack'][current_stack_level]['step'] = idx
+            logger.debug('  got result {}'.format(waiting_for))
 
             # TODO: should be refactor and put somewhere
             if waiting_for:

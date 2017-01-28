@@ -1,4 +1,5 @@
 import logging
+import json
 
 from . import parser
 from .. import di
@@ -21,6 +22,15 @@ class StoriesScope:
 
     def by_topic(self, topic):
         return [s for s in self.stories if s.topic == topic]
+
+    def to_json(self):
+        return {
+            'type': 'StoriesScope',
+            'stories': [s.to_json() for s in self.stories]
+        }
+
+    def __repr__(self):
+        return json.dumps(self.to_json())
 
 
 @di.desc(reg=False)

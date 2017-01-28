@@ -16,12 +16,13 @@ class Parser:
     def compile(self, one_story, middlewares=[]):
         topic = one_story.__name__
         self.middlewares = middlewares
+        previous_node = self.current_node
         self.current_node = ASTNode(topic=topic)
 
         one_story()
 
         res = self.current_node
-        self.current_node = None
+        self.current_node = previous_node
         return res
 
     def compile_scope(self, scope_node, scope_func):

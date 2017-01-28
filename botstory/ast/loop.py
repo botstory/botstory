@@ -1,4 +1,6 @@
 from botstory.ast import library
+import json
+
 
 class StoryLoopAPI:
     """
@@ -15,7 +17,8 @@ class StoryLoopAPI:
 
     def loop(self):
         def fn(one_loop):
-            self.parser_instance.compile_scope(StoriesScopeNode(one_loop), one_loop)
+            self.parser_instance.compile_scope(
+                StoriesScopeNode(one_loop), one_loop)
             # TODO: crawl scope for matchers and handlers
 
             # 1) we already have hierarchy of stories and stack of execution
@@ -41,3 +44,13 @@ class StoriesScopeNode:
     @property
     def __name__(self):
         return self.target.__name__
+
+    def to_json(self):
+        return {
+            'type': 'StoriesScopeNode',
+            'name': self.__name__,
+            'local_scope': self.local_scope.to_json()
+        }
+
+    def __repr__(self):
+        return json.dumps(self.to_json())
