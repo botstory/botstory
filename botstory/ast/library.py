@@ -1,10 +1,26 @@
 import logging
-import itertools
 
 from . import parser
 from .. import di
 
 logger = logging.getLogger(__name__)
+
+
+class StoriesScope:
+    def __init__(self):
+        self.stories = []
+
+    def add(self, story):
+        self.stories.append(story)
+
+    def match(self, message):
+        matched_stories = [
+            story for story in self.stories
+            if story.extensions['validator'].validate(message)]
+        return matched_stories[0] if len(matched_stories) > 0 else None
+
+    def by_topic(self, topic):
+        return [s for s in self.stories if s.topic == topic]
 
 
 @di.desc(reg=False)
@@ -16,26 +32,24 @@ class StoriesLibrary:
     """
 
     def __init__(self):
-        self.message_handling_stories = []
-        self.callable_stories = []
+        self.callable_scope = StoriesScope()
+        self.global_scope = StoriesScope()
 
     def clear(self):
-        self.message_handling_stories = []
-        self.callable_stories = []
+        self.callable_scope = StoriesScope()
+        self.global_scope = StoriesScope()
 
     def add_global_scope_story(self, story):
-        self.message_handling_stories.append(story)
+        self.global_scope.add(story)
 
     def add_callable(self, story):
-        self.callable_stories.append(story)
+        self.callable_scope.add(story)
 
     def get_callable_by_topic(self, topic):
-        return [s for s in self.callable_stories if s.topic == topic][0]
+        return self.callable_scope.by_topic(topic)[0]
 
     def get_right_story(self, message):
-        matched_stories = [story for story in self.message_handling_stories
-                           if story.extensions['validator'].validate(message)]
-        return matched_stories[0] if len(matched_stories) > 0 else None
+        return self.global_scope.match(message)
 
     def get_story_by_topic(self, topic, stack=None):
         """
@@ -44,7 +58,7 @@ class StoriesLibrary:
         :param stack:
         :return:
         """
-        options = [s for s in self.callable_stories + self.message_handling_stories if s.topic == topic]
+        options = self.callable_scope.by_topic(topic) + self.global_scope.by_topic(topic)
 
         if len(options) > 0:
             return options[0]
@@ -60,7 +74,7 @@ class StoriesLibrary:
             return None
         inner_stories = [
             story.children for story in parent.story_line if isinstance(story, parser.StoryPartFork)
-        ]
+            ]
 
         inner_stories = [item for sublist in inner_stories for item in sublist]
 

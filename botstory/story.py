@@ -42,6 +42,7 @@ class Story:
         )
         self.story_loop = loop.StoryLoop(
             library=self.stories_library,
+            parser_instance=self.parser_instance,
         )
         self.middlewares = []
         self.chat = chat.Chat()

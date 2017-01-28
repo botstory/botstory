@@ -9,7 +9,7 @@ def teardown_function(function):
     story.clear()
 
 
-# @pytest.mark.skip()
+@pytest.mark.skip
 @pytest.mark.asyncio
 async def test_jump_in_a_loop():
     global story

@@ -6,11 +6,14 @@ class StoryLoop:
     - we get receive unmatched message
     - or break loop explicitly
     """
-    def __init__(self, library):
+
+    def __init__(self, library, parser_instance):
         self.library = library
+        self.parser_instance = parser_instance
 
     def loop(self):
         def fn(one_loop):
+            self.parser_instance.add_scope(StoriesScope(one_loop), one_loop)
             # TODO: crawl scope for matchers and handlers
 
             # 1) we already have hierarchy of stories and stack of execution
@@ -26,3 +29,12 @@ class StoryLoop:
             return one_loop
 
         return fn
+
+
+class StoriesScope:
+    def __init__(self, target):
+        self.target = target
+
+    @property
+    def __name__(self):
+        return self.target.__name__

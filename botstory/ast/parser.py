@@ -21,6 +21,17 @@ class Parser:
         self.current_node = None
         return res
 
+    def add_scope(self, stories_scope, one_scope):
+        self.current_node.append(stories_scope)
+        parent_scope = self.current_scope
+        self.current_scope = stories_scope
+
+        one_scope()
+
+        self.current_scope = parent_scope
+        # with self.attach_scope():
+        #     one_scope()
+
     def go_deeper(self, one_story):
         if len(self.current_node.story_line) == 0 or \
                 inspect.isfunction(self.current_node.story_line[-1]):
@@ -109,10 +120,10 @@ class StoryPartFork:
         self.children.append(child_story_line)
 
     def to_json(self):
-            return {
-                'type': 'StoryPartFork',
-                'children': list(map(lambda c: c.to_json(), self.children))
-            }
+        return {
+            'type': 'StoryPartFork',
+            'children': list(map(lambda c: c.to_json(), self.children))
+        }
 
     def __repr__(self):
         return json.dumps(self.to_json())
