@@ -39,7 +39,7 @@ class StoriesLibrary:
         self.callable_scope = StoriesScope()
         self.global_scope = StoriesScope()
 
-    def add_global_scope_story(self, story):
+    def add_global(self, story):
         self.global_scope.add(story)
 
     def add_callable(self, story):

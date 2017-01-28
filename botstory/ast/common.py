@@ -12,7 +12,7 @@ class CommonStoriesAPI:
                 one_story,
             )
             compiled_story.extensions['validator'] = matchers.get_validator(receive)
-            self.library.add_global_scope_story(compiled_story)
+            self.library.add_global(compiled_story)
 
             return one_story
 
@@ -24,7 +24,7 @@ class CommonStoriesAPI:
                 one_story,
             )
             compiled_story.extensions['validator'] = middlewares.option.OnStart()
-            self.library.add_global_scope_story(compiled_story)
+            self.library.add_global(compiled_story)
 
             return one_story
 

@@ -13,8 +13,8 @@ def story_library():
     story_2 = parser.ASTNode('bye!')
     story_3 = parser.ASTNode('where to go?')
 
-    l.add_global_scope_story(story_1)
-    l.add_global_scope_story(story_2)
+    l.add_global(story_1)
+    l.add_global(story_2)
     l.add_callable(story_3)
     return l
 
