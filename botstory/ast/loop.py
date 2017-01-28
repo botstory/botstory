@@ -1,4 +1,6 @@
-class StoryLoop:
+from botstory.ast import library
+
+class StoryLoopAPI:
     """
     loop (scope) concept similar to switch (forking)
     the main difference is that after case switch jump to the next part
@@ -13,7 +15,7 @@ class StoryLoop:
 
     def loop(self):
         def fn(one_loop):
-            self.parser_instance.add_scope(StoriesScope(one_loop), one_loop)
+            self.parser_instance.compile_scope(StoriesScopeNode(one_loop), one_loop)
             # TODO: crawl scope for matchers and handlers
 
             # 1) we already have hierarchy of stories and stack of execution
@@ -31,9 +33,10 @@ class StoryLoop:
         return fn
 
 
-class StoriesScope:
+class StoriesScopeNode:
     def __init__(self, target):
         self.target = target
+        self.local_scope = library.StoriesScope()
 
     @property
     def __name__(self):

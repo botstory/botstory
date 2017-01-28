@@ -1,3 +1,4 @@
+from botstory import di
 import logging
 import json
 import inspect
@@ -5,9 +6,11 @@ import inspect
 logger = logging.getLogger(__name__)
 
 
+@di.desc(reg=False)
 class Parser:
-    def __init__(self):
+    def __init__(self, library):
         self.current_node = None
+        self.current_scope = library.global_scope
         self.middlewares = []
 
     def compile(self, one_story, middlewares=[]):
@@ -21,14 +24,16 @@ class Parser:
         self.current_node = None
         return res
 
-    def add_scope(self, stories_scope, one_scope):
-        self.current_node.append(stories_scope)
+    def compile_scope(self, scope_node, scope_func):
+        self.current_node.append(scope_node)
         parent_scope = self.current_scope
-        self.current_scope = stories_scope
+        self.current_scope = scope_node.local_scope
 
-        one_scope()
+        scope_func()
 
+        res = self.current_scope
         self.current_scope = parent_scope
+        return res
         # with self.attach_scope():
         #     one_scope()
 

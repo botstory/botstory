@@ -19,7 +19,7 @@ class Story:
     def __init__(self):
         self.stories_library = library.StoriesLibrary()
 
-        self.parser_instance = parser.Parser()
+        self.parser_instance = parser.Parser(self.stories_library)
 
         self.story_processor_instance = processor.StoryProcessor(
             self.parser_instance,
@@ -40,7 +40,7 @@ class Story:
         self.forking_api = forking.ForkingStoriesAPI(
             parser_instance=self.parser_instance,
         )
-        self.story_loop = loop.StoryLoop(
+        self.story_loop = loop.StoryLoopAPI(
             library=self.stories_library,
             parser_instance=self.parser_instance,
         )
@@ -121,9 +121,11 @@ class Story:
             loop.run_until_complete(self.stop())
 
     def register(self):
+        di.injector.register(instance=self.parser_instance)
         di.injector.register(instance=self.story_processor_instance)
         di.injector.register(instance=self.stories_library)
         di.injector.register(instance=self.users)
+        di.injector.bind(self.parser_instance, auto=True)
         di.injector.bind(self.story_processor_instance, auto=True)
         di.injector.bind(self.stories_library, auto=True)
         di.injector.bind(self.users, auto=True)

@@ -2,17 +2,17 @@ from .. import matchers, middlewares
 
 
 class CommonStoriesAPI:
-    def __init__(self, parser_instance, library):
-        self.parser_instance = parser_instance
+    def __init__(self, parser, library):
+        self.parser = parser
         self.library = library
 
     def on(self, receive):
         def fn(one_story):
-            compiled_story = self.parser_instance.compile(
+            compiled_story = self.parser.compile(
                 one_story,
             )
             compiled_story.extensions['validator'] = matchers.get_validator(receive)
-            self.library.add_global(compiled_story)
+            self.parser.current_scope.add(compiled_story)
 
             return one_story
 
@@ -20,7 +20,7 @@ class CommonStoriesAPI:
 
     def on_start(self):
         def fn(one_story):
-            compiled_story = self.parser_instance.compile(
+            compiled_story = self.parser.compile(
                 one_story,
             )
             compiled_story.extensions['validator'] = middlewares.option.OnStart()
@@ -32,7 +32,7 @@ class CommonStoriesAPI:
 
     def part(self):
         def fn(part_of_story):
-            self.parser_instance.part(part_of_story)
+            self.parser.part(part_of_story)
             return part_of_story
 
         return fn
