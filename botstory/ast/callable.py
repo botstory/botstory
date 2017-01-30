@@ -49,13 +49,14 @@ class CallableNodeWrapper:
         # we are going deeper so prepare one more item in stack
         logger.debug('  action: extend stack by +1')
         session['stack'].append(processor.build_empty_stack_item())
-        res = await self.processor_instance.process_story(session,
+        res = await self.processor_instance.process_story(session=session,
                                                           # we don't have message yet
                                                           message=None,
                                                           compiled_story=self.ast_node,
                                                           idx=0,
                                                           story_args=args,
-                                                          story_kwargs=kwargs)
+                                                          story_kwargs=kwargs,
+                                                          )
 
         if isinstance(res, EndOfStory):
             return res.data

@@ -2,7 +2,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from . import callable, parser, processor
+from . import callable, parser
 from .. import matchers
 
 
@@ -30,6 +30,12 @@ class Middleware:
         pass
 
     def process(self, data, validation_result):
+        """
+        process switch result before run certain case
+        :param data:
+        :param validation_result:
+        :return:
+        """
         logger.debug('process_switch')
         logger.debug('  data: {}'.format(data))
         logger.debug('  validation_result: {}'.format(validation_result))
@@ -55,12 +61,15 @@ class Middleware:
             'data': matchers.serialize(callable.WaitForReturn()),
         }
 
+        # it's new story so it should start from step = 0
         return {
             'step': 0,
             'story': case_story[0],
             'stack_tail':
             # data['stack_tail'][:-1] +
-                [new_stack_item, processor.build_empty_stack_item()],  # we are going deeper
+                [new_stack_item, None],  # we are going deeper
+            # last item will be overwritten in process_next_part_of_story
+            # so value doesn't matter
         }
 
 
@@ -97,25 +106,6 @@ class SwitchOnValue:
     def __init__(self, value):
         self.value = value
         self.immediately = True
-
-
-async def process_switch_on_value(compiled_story, idx, message, processor, session, waiting_for):
-    # ... without waiting for user feedback
-    logger.debug('  process immediately')
-
-    waiting_for = await processor.process_next_part_of_story({
-        'step': idx,
-        'story': compiled_story,
-        'stack_tail': [session['stack'].pop()],
-    },
-        waiting_for.value, session, message,
-        bubble_up=False)
-
-    logger.debug('  after process_next_part_of_story')
-    logger.debug('      waiting_for = {}'.format(waiting_for))
-    logger.debug('      session.stack = {}'.format(session['stack']))
-
-    return waiting_for
 
 
 class ForkingStoriesAPI:

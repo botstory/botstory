@@ -42,34 +42,60 @@ class StoryProcessor:
             user=message and message['user'],
             data=message['data'],
         )
-        return await self._match_message(message)
+
+        waiting_for = await self._match_message(message)
+
+        session = message['session']
+        while (not waiting_for or isinstance(waiting_for, callable.EndOfStory)) \
+                and len(session['stack']) > 1:
+            # if len(session['stack']) > 1:
+            logger.debug('  we can bobble by stack')
+            logger.debug('  session.stack = {}'.format(session['stack']))
+            # but it seems that we have hierarchy of callable
+            # stories so we should drop current stack element
+            # because it is over and return to the previous story
+
+            session['stack'].pop()
+
+            if message:
+                waiting_for = await self._match_message(message)
+
+        return waiting_for
 
     async def _match_message(self, message):
         session = message['session']
+        logger.debug('_match_message')
         if len(session['stack']) > 0:
             logger.debug('  check stack')
             logger.debug('    session.stack = {}'.format(session['stack']))
             stack_tail = None
+
+            # looking for first valid matcher
             while True:
                 if len(session['stack']) == 0:
                     # we have reach the bottom of stack
-                    # if stack_tail and stack_tail['data']:
-                    #     validator = matchers.deserialize(stack_tail['data'])
-                    #     if validator.validate(message):
-                    #         # it seems that last callee in a stack should receive
-                    #         # this message but it doesn't have more story parts
-                    #         # so we just skip this message
-                    #         return
-                    # stack_tail = None
                     logger.debug('  we have reach the bottom of stack '
                                  'so no once has receive this message')
                     return None
                 stack_tail = session['stack'].pop()
+                logger.debug('stack_tail {}'.format(stack_tail))
                 if not stack_tail['data']:
                     break
                 validator = matchers.deserialize(stack_tail['data'])
+                logger.debug('validator {}'.format(validator))
                 if hasattr(validator, 'immediately') and validator.immediately:
-                    return
+                    logger.debug('return from  _match_message')
+                    return True
+
+                if getattr(validator, 'new_scope', False):
+                    # we are start new story line here
+                    # so we don't need to check whether we still have tail of story
+                    break
+
+                logger.debug("stack_tail['topic'] {}".format(stack_tail['topic']))
+                logger.debug("session['stack'] {}".format(session['stack']))
+                logger.debug("self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack'])")
+                logger.debug(self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack']))
                 if stack_tail['step'] < len(
                         self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack']).story_line
                 ):
@@ -87,35 +113,35 @@ class StoryProcessor:
                 validation_result = validator.validate(message)
                 logger.debug('      validation_result {}'.format(validation_result))
                 if not not validation_result:
-                    return await self.process_next_part_of_story({
+                    _, waiting_for = await self.process_next_part_of_story({
                         'step': stack_tail['step'],
                         'story': self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack']),
                         'stack_tail': [stack_tail],
                     },
-                        validation_result, session, message,
-                        bubble_up=True)
+                        validation_result, session, message)
+                    return waiting_for
 
         if len(session['stack']) == 0:
             session['stack'] = [build_empty_stack_item()]
 
         compiled_story = self.library.get_right_story(message)
         if not compiled_story:
-            return
+            return True
+
         return await self.process_story(
             idx=0,
             message=message,
             compiled_story=compiled_story,
             session=session,
-            bubble_up=True,
         )
 
-    async def process_story(self, session, message, compiled_story, idx=0, story_args=[], story_kwargs={},
-                            bubble_up=True):
+    async def process_story(self, session, message, compiled_story,
+                            idx=0, story_args=[], story_kwargs={},
+                            ):
         logger.debug('')
         logger.debug('process_story')
         logger.debug('')
 
-        logger.debug('  bubble_up {}'.format(bubble_up))
         logger.debug('! topic {}'.format(compiled_story.topic))
         logger.debug('! step {}'.format(idx))
         logger.debug('  story {}'.format(compiled_story))
@@ -126,11 +152,12 @@ class StoryProcessor:
 
         story_line = compiled_story.story_line
 
-        current_stack_level = len(session['stack']) - 1
+        current_story = session['stack'][-1]
         session['stack'][-1]['topic'] = compiled_story.topic
 
         waiting_for = None
 
+        # integrate over parts of story
         while idx < len(story_line):
             logger.debug('')
             logger.debug('  next iteration of {}'.format(compiled_story.topic))
@@ -150,7 +177,7 @@ class StoryProcessor:
             )
 
             idx += 1
-            session['stack'][current_stack_level]['step'] = idx
+            session['stack'][-1]['step'] = idx
 
             # TODO: just should skip story part
             # but it should be done in process_next_part_of_story
@@ -179,46 +206,35 @@ class StoryProcessor:
                 if isinstance(waiting_for, forking.SwitchOnValue):
                     # SwitchOnValue is so special because it is the only result
                     # that doesn't async.
-                    waiting_for = await forking.process_switch_on_value(compiled_story,
-                                                                        idx, message, self, session, waiting_for)
 
-                    if waiting_for:
-                        logger.debug('  bubble up')
-                        if bubble_up and isinstance(waiting_for, callable.EndOfStory):
-                            break
-                        else:
-                            # if processed story part is waiting for result
-                            # neither this story should continue working
-                            return waiting_for
+                    processed_story, waiting_for = await self.process_next_part_of_story({
+                        'step': idx,
+                        'story': compiled_story,
+                        'stack_tail': [session['stack'].pop()],
+                    },
+                        waiting_for.value, session, message)
 
-                elif isinstance(waiting_for, callable.EndOfStory):
-                    if bubble_up:
-                        break
-                    return callable.process_end_of_story(message, waiting_for)
-                else:
-                    return process_async_operation(compiled_story, current_stack_level,
-                                                   idx, self, session, waiting_for)
+                    # we have more stories in a stack and we've already reached the end of last story
+                    if len(session['stack']) > 1 and \
+                                    session['stack'][-1]['step'] == len(processed_story.story_line) and \
+                            not isinstance(waiting_for, callable.EndOfStory):
+                        logger.debug('popup')
+                        session['stack'].pop()
 
-        # current story line is over
-        if len(session['stack']) > 1:
-            logger.debug('  we can bobble by stack')
-            # but it seems that we have hierarchy of callable
-            # stories so we should drop current stack element
-            # because it is over and return to the previous story
-
-            logger.debug('  action: reduce stack -1')
-            session['stack'].pop()
-            logger.debug('  session.stack = {}'.format(session['stack']))
-
-            if message:
-                if bubble_up:
-                    waiting_for = await self._match_message(message)
-                else:
-                    logger.debug('  we reject bubbling in this call')
+                if waiting_for:
+                    if isinstance(waiting_for, callable.EndOfStory):
+                        if message:
+                            message['data'] = {**message['data'], **waiting_for.data}
+                    else:
+                        current_story['data'] = matchers.serialize(
+                            matchers.get_validator(waiting_for)
+                        )
+                    logger.debug('return from process_story')
+                    return waiting_for
 
         return waiting_for
 
-    async def process_next_part_of_story(self, received_data, validation_result, session, message, bubble_up=True):
+    async def process_next_part_of_story(self, received_data, validation_result, session, message):
         logger.debug('')
         logger.debug('process_next_part_of_story')
         logger.debug('')
@@ -233,8 +249,9 @@ class StoryProcessor:
         logger.debug('  session.stack = {}'.format(session['stack']))
         logger.debug('  action: extend stack by +{}'.format(len(received_data['stack_tail'])))
 
-        session['stack'].extend(received_data['stack_tail'])
-        session['stack'][-1] = build_empty_stack_item()
+        session['stack'].extend(
+            received_data['stack_tail'][:-1] + [build_empty_stack_item()]
+        )
 
         logger.debug('  session.stack = {}'.format(session['stack']))
         logger.debug('! after topic {}'.format(received_data['story'].topic))
@@ -242,33 +259,14 @@ class StoryProcessor:
 
         # we shouldn't bubble up because we inside other story
         # that under control
-        return await self.process_story(
+        waiting_for = await self.process_story(
             idx=received_data['step'],
             message=message,
             compiled_story=received_data['story'],
             session=session,
-            bubble_up=bubble_up,
         )
 
-
-def process_async_operation(compiled_story, current_stack_level, idx, processor, session, waiting_for):
-    # should wait result of async operation
-    # (for example answer from user)
-    for m in processor.middlewares:
-        if hasattr(m, 'process_validator'):
-            waiting_for = m.process_validator(processor, waiting_for, compiled_story)
-
-    validator = matchers.get_validator(waiting_for)
-
-    logger.debug('  before serialize validator')
-
-    session['stack'][current_stack_level] = {
-        'type': validator.type,
-        'data': matchers.serialize(validator),
-        'step': idx,
-        'topic': compiled_story.topic,
-    }
-    return waiting_for
+        return received_data['story'], waiting_for
 
 
 def build_empty_stack_item():

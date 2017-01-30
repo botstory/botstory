@@ -16,9 +16,11 @@ class AnyOf:
         self.list_of_matchers = list_of_matchers
 
     def validate(self, message):
-        return len(
-            [m for m in self.list_of_matchers if m.validate(message)]
-        ) > 0
+        list_of_valid = [m for m in self.list_of_matchers if m.validate(message)]
+        if len(list_of_valid) == 0:
+            return None
+
+        return list_of_valid[0]
 
     def serialize(self):
         return [matchers.serialize(m) for m in self.list_of_matchers]

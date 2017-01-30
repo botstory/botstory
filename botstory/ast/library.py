@@ -14,6 +14,9 @@ class StoriesScope:
     def add(self, story):
         self.stories.append(story)
 
+    def all_filters(self):
+        return [s.extensions['validator'] for s in self.stories]
+
     def match(self, message):
         matched_stories = [
             story for story in self.stories

@@ -1,4 +1,5 @@
 import pytest
+
 import botstory
 from botstory.utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 

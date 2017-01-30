@@ -1,5 +1,8 @@
-from botstory.ast import library
+from botstory import ast, matchers, middlewares
+import logging
 import json
+
+logger = logging.getLogger(__name__)
 
 
 class StoryLoopAPI:
@@ -36,14 +39,42 @@ class StoryLoopAPI:
         return fn
 
 
+@matchers.matcher()
+class ScopeMatcher:
+    def __init__(self, all_filters):
+        # TODO: It's not good name
+        # but better what we have for this moment
+        # so it could be renamed very soon
+        self.new_scope = True
+        self.all_filters = all_filters
+
+    def validate(self, message):
+        return self.all_filters.validate(message)
+
+    def serialize(self):
+        return self.all_filters.serialize()
+
+    def process(self):
+        return True
+
+    @classmethod
+    def deserialize(cls, data):
+        return cls(middlewares.any.AnyOf.deserialize(data))
+
+
 class StoriesScopeNode:
     def __init__(self, target):
         self.target = target
-        self.local_scope = library.StoriesScope()
+        self.local_scope = ast.library.StoriesScope()
 
     @property
     def __name__(self):
         return self.target.__name__
+
+    def __call__(self, *args, **kwargs):
+        return ScopeMatcher(
+            middlewares.any.AnyOf(self.local_scope.all_filters())
+        )
 
     def to_json(self):
         return {

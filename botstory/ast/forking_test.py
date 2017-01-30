@@ -120,7 +120,7 @@ async def test_few_switches_in_one_story():
     @story.on('Flip a coin!')
     def one_story():
         @story.part()
-        def start(message):
+        def start_0(message):
             coin = random.choice(['heads', 'tails'])
             return forking.SwitchOnValue(coin)
 
@@ -137,7 +137,7 @@ async def test_few_switches_in_one_story():
                 trigger_tails.receive(trigger_tails.value + 1)
 
         @story.part()
-        def start(message):
+        def start_1(message):
             assert trigger_heads.value + trigger_tails.value == 1
             coin = random.choice(['heads', 'tails'])
             return forking.SwitchOnValue(coin)
