@@ -158,7 +158,7 @@ class StoryProcessor:
         waiting_for = None
 
         # integrate over parts of story
-        while idx < len(story_line):
+        while idx < len(story_line) and not waiting_for:
             logger.debug('')
             logger.debug('  next iteration of {}'.format(compiled_story.topic))
             logger.debug('      idx = {} ({})'.format(idx, len(story_line)))
@@ -201,36 +201,33 @@ class StoryProcessor:
             logger.debug('  got result {}'.format(waiting_for))
 
             # TODO: should be refactor and put somewhere
-            if waiting_for:
-                # story part return value so we should somehow react on it
-                if isinstance(waiting_for, forking.SwitchOnValue):
-                    # SwitchOnValue is so special because it is the only result
-                    # that doesn't async.
+            # story part return value so we should somehow react on it
+            if isinstance(waiting_for, forking.SwitchOnValue):
+                # SwitchOnValue is so special because it is the only result
+                # that doesn't async.
 
-                    processed_story, waiting_for = await self.process_next_part_of_story({
-                        'step': idx,
-                        'story': compiled_story,
-                        'stack_tail': [session['stack'].pop()],
-                    },
-                        waiting_for.value, session, message)
+                processed_story, waiting_for = await self.process_next_part_of_story({
+                    'step': idx,
+                    'story': compiled_story,
+                    'stack_tail': [session['stack'].pop()],
+                },
+                    waiting_for.value, session, message)
 
-                    # we have more stories in a stack and we've already reached the end of last story
-                    if len(session['stack']) > 1 and \
-                                    session['stack'][-1]['step'] == len(processed_story.story_line) and \
-                            not isinstance(waiting_for, callable.EndOfStory):
-                        logger.debug('popup')
-                        session['stack'].pop()
+                # we have more stories in a stack and we've already reached the end of last story
+                if len(session['stack']) > 1 and \
+                                session['stack'][-1]['step'] == len(processed_story.story_line) and \
+                        not isinstance(waiting_for, callable.EndOfStory):
+                    logger.debug('popup')
+                    session['stack'].pop()
 
-                if waiting_for:
-                    if isinstance(waiting_for, callable.EndOfStory):
-                        if message:
-                            message['data'] = {**message['data'], **waiting_for.data}
-                    else:
-                        current_story['data'] = matchers.serialize(
-                            matchers.get_validator(waiting_for)
-                        )
-                    logger.debug('return from process_story')
-                    return waiting_for
+        if waiting_for:
+            if isinstance(waiting_for, callable.EndOfStory):
+                if message:
+                    message['data'] = {**message['data'], **waiting_for.data}
+            else:
+                current_story['data'] = matchers.serialize(
+                    matchers.get_validator(waiting_for)
+                )
 
         return waiting_for
 
