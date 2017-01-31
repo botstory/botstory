@@ -255,6 +255,222 @@ async def test_one_sync_switch_inside_of_another_sync_switch():
     assert visited_rooms.value == 3
 
 
+# TODO: fix switch
+@pytest.mark.asyncio
+@pytest.mark.skip
+async def test_one_sync_switch_inside_of_another_sync_switch_alt_0():
+    user = build_fake_user()
+    session = build_fake_session()
+    exit_trigger = SimpleTrigger()
+    wrong_way = SimpleTrigger()
+
+    global story
+    story = Story()
+
+    @story.on('enter')
+    def labyrinth():
+        @story.part()
+        def enter(ctx):
+            return forking.SwitchOnValue('left')
+
+        @story.case(equal_to='left')
+        def room_1():
+            @story.part()
+            def next_room_1(ctx):
+                return forking.SwitchOnValue('left')
+
+            @story.case(equal_to='left')
+            def room_1_1():
+                @story.part()
+                def next_room_1_1(ctx):
+                    return forking.Switch({
+                        'no-exit': text.Match('no-exit'),
+                    })
+
+                @story.case(match='no-exit')
+                def room_1_1_1():
+                    @story.part()
+                    def next_room_1_1_1(ctx):
+                        wrong_way.passed()
+
+            @story.part()
+            def room_1_2(ctx):
+                exit_trigger.passed()
+                return [text.Any()]
+
+    @story.on('right-way')
+    def alt_labyrinth():
+        @story.part()
+        def next_room_2(ctx):
+            wrong_way.passed()
+
+    await answer.pure_text('enter', session, user, story)
+    # should fail switch next_room_1_1 and drop to room_1_2
+    # and should be catched by alt_labyrinth
+
+    # but seems something wrong with processor right now
+    await answer.pure_text('right-way', session, user, story)
+
+    assert not wrong_way.is_triggered
+    assert exit_trigger.is_triggered
+
+
+# TODO: simplify syntax
+@pytest.mark.asyncio
+@pytest.mark.skip
+async def test_simplify_syntax_0():
+    user = build_fake_user()
+    session = build_fake_session()
+    left_trigger = SimpleTrigger()
+    right_trigger = SimpleTrigger()
+
+    global story
+    story = Story()
+
+    @story.on('enter')
+    def labyrinth():
+        @story.part()
+        def enter(ctx):
+            # TODO: !!!!!!!!!!!
+            return [text.Any()]
+
+        @story.case(equal_to='left')
+        def left_room():
+            @story.part()
+            def left_room_passed(ctx):
+                return left_trigger.passed()
+
+        @story.case(equal_to='right')
+        def right_room():
+            @story.part()
+            def right_room_passed(ctx):
+                return right_trigger.passed()
+
+    await answer.pure_text('enter', session, user, story)
+    await answer.pure_text('right', session, user, story)
+
+    assert not left_trigger.is_triggered
+    assert right_trigger.is_triggered
+
+
+# TODO: simplify syntax
+@pytest.mark.asyncio
+@pytest.mark.skip
+async def test_simplify_syntax_1():
+    user = build_fake_user()
+    session = build_fake_session()
+    left_trigger = SimpleTrigger()
+    right_trigger = SimpleTrigger()
+
+    global story
+    story = Story()
+
+    @story.on('enter')
+    def labyrinth():
+        @story.part()
+        def enter(ctx):
+            return [text.Any()]
+
+        # TODO: !!!!!!!!!!!
+        @story.case('left')
+        def left_room():
+            @story.part()
+            def left_room_passed(ctx):
+                return left_trigger.passed()
+
+        # TODO: !!!!!!!!!!!
+        @story.case('right')
+        def right_room():
+            @story.part()
+            def right_room_passed(ctx):
+                return right_trigger.passed()
+
+    await answer.pure_text('enter', session, user, story)
+    await answer.pure_text('right', session, user, story)
+
+    assert not left_trigger.is_triggered
+    assert right_trigger.is_triggered
+
+
+# TODO: simplify syntax
+@pytest.mark.asyncio
+@pytest.mark.skip
+async def test_simplify_syntax_2():
+    user = build_fake_user()
+    session = build_fake_session()
+    left_trigger = SimpleTrigger()
+    right_trigger = SimpleTrigger()
+
+    global story
+    story = Story()
+
+    @story.on('enter')
+    def labyrinth():
+        @story.part()
+        def enter(ctx):
+            # TODO: !!!!!!!!!!!
+            return 'right'
+
+        @story.case('left')
+        def left_room():
+            @story.part()
+            def left_room_passed(ctx):
+                return left_trigger.passed()
+
+        @story.case('right')
+        def right_room():
+            @story.part()
+            def right_room_passed(ctx):
+                return right_trigger.passed()
+
+    await answer.pure_text('enter', session, user, story)
+
+    assert not left_trigger.is_triggered
+    assert right_trigger.is_triggered
+
+
+# TODO: simplify syntax
+@pytest.mark.asyncio
+@pytest.mark.skip
+async def test_warn_on_incorrect_syntax_user_forgot_add_switch_value():
+    user = build_fake_user()
+    session = build_fake_session()
+    left_trigger = SimpleTrigger()
+    right_trigger = SimpleTrigger()
+
+    global story
+    story = Story()
+
+    @story.on('enter')
+    def labyrinth():
+        @story.part()
+        def enter(ctx):
+            # TODO: !!!!!!!!!!!
+            # user forgot to add switch value like:
+            # return 'right'
+            pass
+
+        # TODO: !!!!!!!!!!!
+        @story.case('left')
+        def left_room():
+            @story.part()
+            def left_room_passed(ctx):
+                return left_trigger.passed()
+
+        # TODO: !!!!!!!!!!!
+        @story.case('right')
+        def right_room():
+            @story.part()
+            def right_room_passed(ctx):
+                return right_trigger.passed()
+
+    await answer.pure_text('enter', session, user, story)
+
+    assert not left_trigger.is_triggered
+    assert not right_trigger.is_triggered
+    # TODO: test warn message here
+
+
 @pytest.mark.asyncio
 async def test_one_sync_switch_inside_of_another_async_switch():
     user = build_fake_user()
