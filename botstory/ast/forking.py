@@ -67,8 +67,9 @@ class Middleware:
             'story': case_story[0],
             'stack_tail':
             # data['stack_tail'][:-1] +
-                [new_stack_item, None],  # we are going deeper
-            # last item will be overwritten in process_next_part_of_story
+                [new_stack_item, None],
+            # we are going deeper so we just add extra stack item
+            # that will drop out in process_next_part_of_story
             # so value doesn't matter
         }
 
