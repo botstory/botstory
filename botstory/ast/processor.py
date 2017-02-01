@@ -152,7 +152,7 @@ class StoryProcessor:
             'step': stack_tail['step'],
             'story': compiled_story,
             'stack_tail': [stack_tail],
-        }, validation_result, session, message)
+        }, validation_result, message)
 
         return waiting_for
 
@@ -163,6 +163,44 @@ class StoryProcessor:
         #     compiled_story=compiled_story,
         #     session=session,
         # )
+
+    async def process_next_part_of_story(self, received_data, validation_result, message):
+        logger.debug('')
+        logger.debug('process_next_part_of_story')
+        logger.debug('')
+        logger.debug('  topic {}'.format(received_data['story'].topic))
+        logger.debug('  step {} ({})'.format(received_data['step'], len(received_data['story'].story_line)))
+
+        session = message['session']
+
+        for m in self.middlewares:
+            if hasattr(m, 'process'):
+                received_data = m.process(received_data, validation_result)
+
+        logger.debug('  len(session.stack) = {}'.format(len(session['stack'])))
+        logger.debug('  session.stack = {}'.format(session['stack']))
+        logger.debug('  action: extend stack by +{}'.format(len(received_data['stack_tail'])))
+
+        session['stack'].extend(received_data['stack_tail'][:-1])
+
+        logger.debug('  session.stack = {}'.format(session['stack']))
+        logger.debug('! after topic {}'.format(received_data['story'].topic))
+        logger.debug('! after step {}'.format(received_data['step']))
+
+        # TODO: maybe can put inside of process_story
+        # because right now only one point where process_story is called
+
+        session['stack'].append(build_empty_stack_item())
+        # we shouldn't bubble up because we inside other story
+        # that under control
+        waiting_for = await self.process_story(
+            idx=received_data['step'],
+            message=message,
+            compiled_story=received_data['story'],
+            session=session,
+        )
+
+        return received_data['story'], waiting_for
 
     async def process_story(self, session, message, compiled_story,
                             idx=0, story_args=[], story_kwargs={},
@@ -243,7 +281,7 @@ class StoryProcessor:
                     'step': idx,
                     'story': compiled_story,
                     'stack_tail': [session['stack'].pop()],
-                }, waiting_for.value, session, message)
+                }, waiting_for.value, message)
 
                 # we have more stories in a stack and we've already reached the end of last story
                 if len(session['stack']) > 1 and \
@@ -262,42 +300,6 @@ class StoryProcessor:
                 )
 
         return waiting_for
-
-    async def process_next_part_of_story(self, received_data, validation_result, session, message):
-        logger.debug('')
-        logger.debug('process_next_part_of_story')
-        logger.debug('')
-        logger.debug('  topic {}'.format(received_data['story'].topic))
-        logger.debug('  step {} ({})'.format(received_data['step'], len(received_data['story'].story_line)))
-
-        for m in self.middlewares:
-            if hasattr(m, 'process'):
-                received_data = m.process(received_data, validation_result)
-
-        logger.debug('  len(session.stack) = {}'.format(len(session['stack'])))
-        logger.debug('  session.stack = {}'.format(session['stack']))
-        logger.debug('  action: extend stack by +{}'.format(len(received_data['stack_tail'])))
-
-        session['stack'].extend(received_data['stack_tail'][:-1])
-
-        logger.debug('  session.stack = {}'.format(session['stack']))
-        logger.debug('! after topic {}'.format(received_data['story'].topic))
-        logger.debug('! after step {}'.format(received_data['step']))
-
-        # TODO: maybe can put inside of process_story
-        # because right now only one point where process_story is called
-
-        session['stack'].append(build_empty_stack_item())
-        # we shouldn't bubble up because we inside other story
-        # that under control
-        waiting_for = await self.process_story(
-            idx=received_data['step'],
-            message=message,
-            compiled_story=received_data['story'],
-            session=session,
-        )
-
-        return received_data['story'], waiting_for
 
 
 def build_empty_stack_item():
