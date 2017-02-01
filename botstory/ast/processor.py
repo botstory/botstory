@@ -129,17 +129,11 @@ class StoryProcessor:
 
                 stack_tail = None
 
-        # if len(session['stack']) == 0:
-        #     session['stack'] = [build_empty_stack_item()]
-
         if not compiled_story:
             compiled_story = self.library.get_right_story(message)
 
         if not compiled_story:
             return True
-
-        # TODO: try to have single process_next_part_of_story
-        # and simplify loop in general
 
         if not stack_tail:
             session['stack'].append(stack_utils.build_empty_stack_item())
@@ -156,28 +150,14 @@ class StoryProcessor:
 
         return waiting_for
 
-        # TODO: still here to show how it could be simplified
-        # return await self.process_story(
-        #     idx=0,
-        #     message=message,
-        #     compiled_story=compiled_story,
-        #     session=session,
-        # )
-
     async def process_next_part_of_story(self, received_data, validation_result, message):
         logger.debug('')
         logger.debug('process_next_part_of_story')
         logger.debug('')
-        logger.debug('  topic {}'.format(received_data['story'].topic))
-        logger.debug('  step {} ({})'.format(received_data['step'], len(received_data['story'].story_line)))
 
         for m in self.middlewares:
             if hasattr(m, 'process'):
                 received_data = m.process(received_data, validation_result)
-
-        logger.debug('  session.stack = {}'.format(message['session']['stack']))
-        logger.debug('! after topic {}'.format(received_data['story'].topic))
-        logger.debug('! after step {}'.format(received_data['step']))
 
         waiting_for = await self.process_story(
             idx=received_data['step'],
