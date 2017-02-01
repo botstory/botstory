@@ -142,16 +142,20 @@ class StoryProcessor:
 
         if not stack_tail:
             if len(session['stack']) > 0:
-                stack_tail = session['stack'].pop()
+                pass
+                # stack_tail = session['stack'].pop()
             else:
-                stack_tail = build_empty_stack_item()
+                session['stack'].append(build_empty_stack_item())
+                # stack_tail = build_empty_stack_item()
+        else:
+            session['stack'].append(stack_tail)
 
         # TODO: very likely that we won't use `stack_tail`
         # for example in case when we don't have right switch case
         _, waiting_for = await self.process_next_part_of_story({
-            'step': stack_tail['step'],
+            'step': session['stack'][-1]['step'],
             'story': compiled_story,
-            'stack_tail': [stack_tail],
+            'stack': message['session']['stack'],
         }, validation_result, message)
 
         return waiting_for
@@ -171,33 +175,34 @@ class StoryProcessor:
         logger.debug('  topic {}'.format(received_data['story'].topic))
         logger.debug('  step {} ({})'.format(received_data['step'], len(received_data['story'].story_line)))
 
-        session = message['session']
+        stack = received_data['stack']
 
         for m in self.middlewares:
             if hasattr(m, 'process'):
                 received_data = m.process(received_data, validation_result)
 
-        logger.debug('  len(session.stack) = {}'.format(len(session['stack'])))
-        logger.debug('  session.stack = {}'.format(session['stack']))
-        logger.debug('  action: extend stack by +{}'.format(len(received_data['stack_tail'])))
+        logger.debug('  len(session.stack) = {}'.format(len(stack)))
+        logger.debug('  session.stack = {}'.format(stack))
+        # logger.debug('  action: extend stack by +{}'.format(len(received_data['stack_tail'])))
 
-        session['stack'].extend(received_data['stack_tail'][:-1])
+        # session['stack'].extend(received_data['stack_tail'][:-1])
 
-        logger.debug('  session.stack = {}'.format(session['stack']))
+        logger.debug('  session.stack = {}'.format(stack))
         logger.debug('! after topic {}'.format(received_data['story'].topic))
         logger.debug('! after step {}'.format(received_data['step']))
 
         # TODO: maybe can put inside of process_story
         # because right now only one point where process_story is called
 
-        session['stack'].append(build_empty_stack_item())
+        stack.pop()
+        stack.append(build_empty_stack_item())
         # we shouldn't bubble up because we inside other story
         # that under control
         waiting_for = await self.process_story(
             idx=received_data['step'],
             message=message,
             compiled_story=received_data['story'],
-            session=session,
+            session=message['session'],
         )
 
         return received_data['story'], waiting_for
@@ -280,7 +285,7 @@ class StoryProcessor:
                 processed_story, waiting_for = await self.process_next_part_of_story({
                     'step': idx,
                     'story': compiled_story,
-                    'stack_tail': [session['stack'].pop()],
+                    'stack': message['session']['stack'],
                 }, waiting_for.value, message)
 
                 # we have more stories in a stack and we've already reached the end of last story

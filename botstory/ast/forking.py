@@ -17,7 +17,7 @@ class Undefined:
 
 
 def match_children(data, key, value):
-    step_id = data['stack_tail'][-1]['step']
+    step_id = data['stack'][-1]['step']
     fork = data['story'].story_line[step_id]
     if not isinstance(fork, parser.StoryPartFork):
         return []
@@ -52,7 +52,7 @@ class Middleware:
 
         logger.debug('  got case_story {}'.format(case_story[0]))
 
-        last_stack_item = data['stack_tail'][-1]
+        last_stack_item = data['stack'][-1]
         logger.debug('iterate {} step further'.format(last_stack_item['topic']))
         new_stack_item = {
             'step': last_stack_item['step'] + 1,
@@ -61,16 +61,16 @@ class Middleware:
             'data': matchers.serialize(callable.WaitForReturn()),
         }
 
+        # we are going deeper so we just add extra stack item
+        # that will drop out in process_next_part_of_story
+        # so value doesn't matter
+        data['stack'].pop()
+        data['stack'].extend([new_stack_item, None])
+
         # it's new story so it should start from step = 0
         return {
             'step': 0,
             'story': case_story[0],
-            'stack_tail':
-            # data['stack_tail'][:-1] +
-                [new_stack_item, None],
-            # we are going deeper so we just add extra stack item
-            # that will drop out in process_next_part_of_story
-            # so value doesn't matter
         }
 
 
