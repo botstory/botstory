@@ -43,25 +43,24 @@ class StoryProcessor:
             data=message['data'],
         )
 
-        waiting_for = await self._match_message(message)
+        stack = message['session']['stack']
 
-        session = message['session']
+        waiting_for = None
 
         # TODO: it seems that it could be merge with loop in _match_message
         # because they do similar things - bubble up the stack
-        while (not waiting_for or isinstance(waiting_for, callable.EndOfStory)) \
-                and len(session['stack']) > 1:
-            # if len(session['stack']) > 1:
-            logger.debug('  we can bobble by stack')
-            logger.debug('  session.stack = {}'.format(session['stack']))
+        while True:
             # but it seems that we have hierarchy of callable
             # stories so we should drop current stack element
             # because it is over and return to the previous story
+            waiting_for = await self._match_message(message)
 
-            session['stack'].pop()
+            if waiting_for and \
+                    not isinstance(waiting_for, callable.EndOfStory) or \
+                            len(stack) <= 1:
+                break
 
-            if message:
-                waiting_for = await self._match_message(message)
+            stack.pop()
 
         return waiting_for
 
