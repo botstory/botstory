@@ -2,6 +2,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from botstory.ast import stack_utils
 from . import callable, parser
 from .. import matchers
 
@@ -65,7 +66,7 @@ class Middleware:
         # that will drop out in process_next_part_of_story
         # so value doesn't matter
         data['stack'].pop()
-        data['stack'].extend([new_stack_item, None])
+        data['stack'].extend([new_stack_item, stack_utils.build_empty_stack_item()])
 
         # it's new story so it should start from step = 0
         return {

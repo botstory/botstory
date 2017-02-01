@@ -1,6 +1,7 @@
 import logging
 import inspect
 
+from botstory.ast import stack_utils
 from . import parser, callable, forking
 from .. import di, matchers
 from ..integrations import mocktracker
@@ -145,7 +146,7 @@ class StoryProcessor:
                 pass
                 # stack_tail = session['stack'].pop()
             else:
-                session['stack'].append(build_empty_stack_item())
+                session['stack'].append(stack_utils.build_empty_stack_item())
                 # stack_tail = build_empty_stack_item()
         else:
             session['stack'].append(stack_tail)
@@ -175,29 +176,14 @@ class StoryProcessor:
         logger.debug('  topic {}'.format(received_data['story'].topic))
         logger.debug('  step {} ({})'.format(received_data['step'], len(received_data['story'].story_line)))
 
-        stack = received_data['stack']
-
         for m in self.middlewares:
             if hasattr(m, 'process'):
                 received_data = m.process(received_data, validation_result)
 
-        logger.debug('  len(session.stack) = {}'.format(len(stack)))
-        logger.debug('  session.stack = {}'.format(stack))
-        # logger.debug('  action: extend stack by +{}'.format(len(received_data['stack_tail'])))
-
-        # session['stack'].extend(received_data['stack_tail'][:-1])
-
-        logger.debug('  session.stack = {}'.format(stack))
+        logger.debug('  session.stack = {}'.format(message['session']['stack']))
         logger.debug('! after topic {}'.format(received_data['story'].topic))
         logger.debug('! after step {}'.format(received_data['step']))
 
-        # TODO: maybe can put inside of process_story
-        # because right now only one point where process_story is called
-
-        stack.pop()
-        stack.append(build_empty_stack_item())
-        # we shouldn't bubble up because we inside other story
-        # that under control
         waiting_for = await self.process_story(
             idx=received_data['step'],
             message=message,
@@ -225,9 +211,9 @@ class StoryProcessor:
         story_line = compiled_story.story_line
 
         current_story = session['stack'][-1]
-
-        current_story['idx'] = idx
+        current_story['step'] = idx
         current_story['topic'] = compiled_story.topic
+        current_story['data'] = None
 
         waiting_for = None
 
@@ -305,11 +291,3 @@ class StoryProcessor:
                 )
 
         return waiting_for
-
-
-def build_empty_stack_item():
-    return {
-        'data': None,
-        'step': 0,
-        'topic': None,
-    }
