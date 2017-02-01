@@ -142,12 +142,7 @@ class StoryProcessor:
         # and simplify loop in general
 
         if not stack_tail:
-            if len(session['stack']) > 0:
-                pass
-                # stack_tail = session['stack'].pop()
-            else:
-                session['stack'].append(stack_utils.build_empty_stack_item())
-                # stack_tail = build_empty_stack_item()
+            session['stack'].append(stack_utils.build_empty_stack_item())
         else:
             session['stack'].append(stack_tail)
 
