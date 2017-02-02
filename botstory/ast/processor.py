@@ -87,12 +87,17 @@ class StoryProcessor:
                 stack_tail = session['stack'].pop()
                 logger.debug('stack_tail {}'.format(stack_tail))
                 if not stack_tail['data']:
+                    # TODO: we shouldn't get such case
+                    # because it shows that we have stack that can't catch incoming message
+                    # (?) maybe possible case when it is in a middle of hierarchy
+                    # and comes because the top one didn't match message
+
+                    # assert stack_tail is None
+
+                    stack_tail = None
                     break
                 validator = matchers.deserialize(stack_tail['data'])
                 logger.debug('validator {}'.format(validator))
-                if hasattr(validator, 'immediately') and validator.immediately:
-                    logger.debug('return from  _match_message')
-                    return True
 
                 if getattr(validator, 'new_scope', False):
                     # we are start new story line here
@@ -119,15 +124,6 @@ class StoryProcessor:
                 if not not validation_result:
                     # it seems we find stack item that matches our message
                     compiled_story = self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack'])
-            else:
-                # TODO: we shouldn't get such case
-                # because it shows that we have stack that can't catch incoming message
-                # (?) maybe possible case when it is in a middle of hierarchy
-                # and comes because the top one didn't match message
-
-                # assert stack_tail is None
-
-                stack_tail = None
 
         if not compiled_story:
             compiled_story = self.library.get_right_story(message)

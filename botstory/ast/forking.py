@@ -107,7 +107,6 @@ class SwitchOnValue:
 
     def __init__(self, value):
         self.value = value
-        self.immediately = True
 
 
 class ForkingStoriesAPI:
