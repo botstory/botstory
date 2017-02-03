@@ -1,6 +1,6 @@
-def build_empty_stack_item():
+def build_empty_stack_item(topic):
     return {
         'data': None,
         'step': 0,
-        'topic': None,
+        'topic': topic,
     }

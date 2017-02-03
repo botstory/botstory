@@ -64,7 +64,9 @@ class Middleware:
         last_stack_item['data'] = matchers.serialize(callable.WaitForReturn())
 
         # we are going deeper
-        data['stack'].append(stack_utils.build_empty_stack_item())
+        data['stack'].append(stack_utils.build_empty_stack_item(
+            case_story.topic
+        ))
 
         # it's new story so it should start from step = 0
         return {

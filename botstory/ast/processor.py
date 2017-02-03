@@ -128,7 +128,7 @@ class StoryProcessor:
             if not compiled_story:
                 # there is no stories for such message
                 return True
-            stack_tail = stack_utils.build_empty_stack_item()
+            stack_tail = stack_utils.build_empty_stack_item(compiled_story.topic)
 
         session['stack'].append(stack_tail)
 
@@ -172,21 +172,17 @@ class StoryProcessor:
         logger.debug(
             '  previous_topics: {}'.format(session['stack'][-2]['topic'] if len(session['stack']) > 1 else None))
 
-        story_line = compiled_story.story_line
-
         current_story = session['stack'][-1]
         idx = current_story['step']
-        current_story['topic'] = compiled_story.topic
-        current_story['data'] = None
-
         waiting_for = None
+        story_line = compiled_story.story_line
 
         logger.debug('current_story {} ({})'.format(current_story, len(story_line)))
 
         # integrate over parts of story
         while idx < len(story_line) and not waiting_for:
             logger.debug('')
-            logger.debug('  next iteration of {}'.format(compiled_story.topic))
+            logger.debug('  next iteration of {}'.format(current_story['topic']))
             logger.debug('      idx = {} ({})'.format(idx, len(story_line)))
             logger.debug('      session {}'.format(session['stack']))
 
@@ -196,12 +192,12 @@ class StoryProcessor:
             logger.debug(self.tracker)
             self.tracker.story(
                 user=message and message['user'],
-                story_name=compiled_story.topic,
+                story_name=current_story['topic'],
                 story_part_name=story_part.__name__,
             )
 
             idx += 1
-            session['stack'][-1]['step'] = idx
+            current_story['step'] = idx
 
             # TODO: just should skip story part
             # but it should be done in process_next_part_of_story
