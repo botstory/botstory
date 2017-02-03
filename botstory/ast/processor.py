@@ -27,8 +27,9 @@ class StoryProcessor:
 
     async def match_message(self, message):
         """
-        because match_message is recursive we split function to
-        public match_message and private _match_message
+
+        match bot message to existing stories
+        and take into account context of current user
 
         :param message:
         :return:
@@ -44,7 +45,6 @@ class StoryProcessor:
             data=message['data'],
         )
 
-        session = message['session']
         stack = message['session']['stack']
 
         waiting_for = None
@@ -53,27 +53,26 @@ class StoryProcessor:
             compiled_story = None
             validation_result = None
 
-            if len(session['stack']) == 0:
+            if len(stack) == 0:
                 compiled_story = self.library.get_global_story(message)
                 logger.debug('get_global_story {}'.format(compiled_story))
                 if not compiled_story:
                     # there is no stories for such message
                     return None
-                session['stack'].append(stack_utils.build_empty_stack_item(compiled_story.topic))
+                stack.append(stack_utils.build_empty_stack_item(compiled_story.topic))
             else:
                 stack_tail = None
                 logger.debug('  check stack')
-                logger.debug('  session = {}'.format(session))
-                logger.debug('    session.stack = {}'.format(session['stack']))
+                logger.debug('  session = {}'.format(message['session']))
 
                 # looking for first valid matcher
                 while True:
-                    if len(session['stack']) == 0:
+                    if len(stack) == 0:
                         # we have reach the bottom of stack
                         logger.debug('  we have reach the bottom of stack '
                                      'so no once has receive this message')
                         return None
-                    stack_tail = session['stack'][-1]
+                    stack_tail = stack[-1]
                     logger.debug('stack_tail {}'.format(stack_tail))
                     if not stack_tail['data']:
                         # TODO: we shouldn't get such case
@@ -94,18 +93,18 @@ class StoryProcessor:
                         break
 
                     logger.debug("stack_tail['topic'] {}".format(stack_tail['topic']))
-                    logger.debug("session['stack'] {}".format(session['stack']))
-                    logger.debug("self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack'])")
-                    logger.debug(self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack']))
+                    logger.debug("stack {}".format(stack))
+                    logger.debug("self.library.get_story_by_topic(stack_tail['topic'], stack=stack)")
+                    logger.debug(self.library.get_story_by_topic(stack_tail['topic'], stack=stack))
                     if stack_tail['step'] < len(
-                            self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack'][:-1]).story_line
+                            self.library.get_story_by_topic(stack_tail['topic'], stack=stack[:-1]).story_line
                     ):
                         # if we haven't reach last step in list of story so we can parse result
                         break
 
-                    session['stack'].pop()
+                    stack.pop()
 
-                logger.debug('    after check session.stack = {}'.format(session['stack']))
+                logger.debug('    after check session.stack = {}'.format(stack))
                 logger.debug('      stack_tail = {}'.format(stack_tail))
                 if stack_tail and stack_tail['data']:
                     logger.debug('  got it!')
@@ -114,18 +113,17 @@ class StoryProcessor:
                     logger.debug('      validation_result {}'.format(validation_result))
                     if not not validation_result:
                         # it seems we find stack item that matches our message
-                        compiled_story = self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack'][:-1])
+                        compiled_story = self.library.get_story_by_topic(stack_tail['topic'], stack=stack[:-1])
 
             received_data = await self.process_next_part_of_story({
-                'step': session['stack'][-1]['step'],
+                'step': stack[-1]['step'],
                 'story': compiled_story,
-                'stack': message['session']['stack'],
+                'stack': stack,
             }, validation_result)
 
             waiting_for = await self.process_story(
                 message=message,
                 compiled_story=received_data['story'],
-                session=message['session'],
             )
 
             if len(stack) == 0:
@@ -147,8 +145,9 @@ class StoryProcessor:
 
         return received_data
 
-    async def process_story(self, session, message, compiled_story,
+    async def process_story(self, message, compiled_story,
                             story_args=[], story_kwargs={},
+                            session=None,
                             ):
         logger.debug('')
         logger.debug('process_story')
@@ -157,10 +156,9 @@ class StoryProcessor:
         logger.debug('! topic {}'.format(compiled_story.topic))
         logger.debug('  story {}'.format(compiled_story))
         logger.debug('  message {}'.format(message))
-        logger.debug('  session.stack {} ({})'.format(session['stack'], len(session['stack'])))
-        logger.debug(
-            '  previous_topics: {}'.format(session['stack'][-2]['topic'] if len(session['stack']) > 1 else None))
 
+        if message:
+            session = message['session']
         current_story = session['stack'][-1]
         idx = current_story['step']
         waiting_for = None
@@ -229,7 +227,6 @@ class StoryProcessor:
                         waiting_for = await self.process_story(
                             message=message,
                             compiled_story=received_data['story'],
-                            session=message['session'],
                         )
 
                         logger.debug('[<] return')
