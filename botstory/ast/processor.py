@@ -75,6 +75,7 @@ class StoryProcessor:
 
         if len(session['stack']) > 0:
             logger.debug('  check stack')
+            logger.debug('  session = {}'.format(session))
             logger.debug('    session.stack = {}'.format(session['stack']))
 
             # looking for first valid matcher
@@ -92,14 +93,14 @@ class StoryProcessor:
                     # (?) maybe possible case when it is in a middle of hierarchy
                     # and comes because the top one didn't match message
 
-                    # assert stack_tail is None
-
-                    stack_tail = None
+                    # one case - dangling of last part of story
+                    # we don't clear stack after returning from story
                     break
                 validator = matchers.deserialize(stack_tail['data'])
                 logger.debug('validator {}'.format(validator))
 
                 if getattr(validator, 'new_scope', False):
+                    # TODO:
                     # we are start new story line here
                     # so we don't need to check whether we still have tail of story
                     break
@@ -126,15 +127,14 @@ class StoryProcessor:
                     compiled_story = self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack'])
 
         if not compiled_story:
-            compiled_story = self.library.get_right_story(message)
+            compiled_story = self.library.get_global_story(message)
+            logger.debug('get_global_story {}'.format(compiled_story))
+            if not compiled_story:
+                # there is no stories for such message
+                return True
+            stack_tail = stack_utils.build_empty_stack_item()
 
-        if not compiled_story:
-            return True
-
-        if not stack_tail:
-            session['stack'].append(stack_utils.build_empty_stack_item())
-        else:
-            session['stack'].append(stack_tail)
+        session['stack'].append(stack_tail)
 
         # TODO: very likely that we won't use `stack_tail`
         # for example in case when we don't have right switch case

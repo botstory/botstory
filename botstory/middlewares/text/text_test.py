@@ -192,7 +192,7 @@ async def test_should_catch_text_message_that_match_regex():
             trigger_buy.receive(ctx['data']['text']['matches'][0])
 
     @story.on(text.Match('sell (.*)btc'))
-    def one_story():
+    def another_story():
         @story.part()
         def then(ctx):
             trigger_sell.receive(ctx['data']['text']['matches'][0])
@@ -202,6 +202,7 @@ async def test_should_catch_text_message_that_match_regex():
 
     assert trigger_buy.result() == '700'
     assert trigger_sell.result() == '600'
+
 
 @pytest.mark.asyncio
 async def test_should_catch_text_message_that_match_regex_with_flags():

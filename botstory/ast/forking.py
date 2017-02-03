@@ -19,6 +19,9 @@ class Undefined:
 
 def match_children(data, key, value):
     step_id = data['stack'][-1]['step']
+    if step_id >= len(data['story'].story_line):
+        return []
+
     fork = data['story'].story_line[step_id]
     if not isinstance(fork, parser.StoryPartFork):
         return []

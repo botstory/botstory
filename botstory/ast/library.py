@@ -61,7 +61,7 @@ class StoriesLibrary:
     def get_callable_by_topic(self, topic):
         return self.callable_scope.by_topic(topic)[0]
 
-    def get_right_story(self, message):
+    def get_global_story(self, message):
         return self.global_scope.match(message)
 
     def get_story_by_topic(self, topic, stack=None):

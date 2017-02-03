@@ -277,7 +277,7 @@ class FBInterface:
             )
 
         # check whether we have `On Start Story`
-        have_on_start_story = not not self.library.get_right_story({
+        have_on_start_story = not not self.library.get_global_story({
             'data': {'option': option.OnStart.DEFAULT_OPTION_PAYLOAD}
         })
         if have_on_start_story:
