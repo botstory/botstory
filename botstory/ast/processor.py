@@ -50,15 +50,13 @@ class StoryProcessor:
 
         # TODO: it seems that it could be merge with loop in _match_message
         # because they do similar things - bubble up the stack
-        while True:
+        while not waiting_for or isinstance(waiting_for, callable.EndOfStory):
             # but it seems that we have hierarchy of callable
             # stories so we should drop current stack element
             # because it is over and return to the previous story
             waiting_for = await self._match_message(message)
 
-            if waiting_for and \
-                    not isinstance(waiting_for, callable.EndOfStory) or \
-                            len(stack) < 1:
+            if len(stack) == 0:
                 break
 
         return waiting_for
