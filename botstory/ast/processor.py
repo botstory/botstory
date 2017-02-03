@@ -58,10 +58,8 @@ class StoryProcessor:
 
             if waiting_for and \
                     not isinstance(waiting_for, callable.EndOfStory) or \
-                            len(stack) <= 1:
+                            len(stack) < 1:
                 break
-
-            stack.pop()
 
         return waiting_for
 
@@ -138,22 +136,11 @@ class StoryProcessor:
 
         # TODO: very likely that we won't use `stack_tail`
         # for example in case when we don't have right switch case
-        _, waiting_for = await self.process_next_part_of_story({
+        received_data = await self.process_next_part_of_story({
             'step': session['stack'][-1]['step'],
             'story': compiled_story,
             'stack': message['session']['stack'],
         }, validation_result, message)
-
-        return waiting_for
-
-    async def process_next_part_of_story(self, received_data, validation_result, message):
-        logger.debug('')
-        logger.debug('process_next_part_of_story')
-        logger.debug('')
-
-        for m in self.middlewares:
-            if hasattr(m, 'process'):
-                received_data = m.process(received_data, validation_result)
 
         waiting_for = await self.process_story(
             idx=received_data['step'],
@@ -162,7 +149,29 @@ class StoryProcessor:
             session=message['session'],
         )
 
-        return received_data['story'], waiting_for
+        return waiting_for
+
+    async def process_next_part_of_story(self, received_data, validation_result, message):
+        logger.debug('')
+        logger.debug('process_next_part_of_story')
+        logger.debug('')
+
+        received_data['going-deeper'] = False
+
+        for m in self.middlewares:
+            if hasattr(m, 'process'):
+                received_data = m.process(received_data, validation_result)
+
+        return received_data
+
+        # waiting_for = await self.process_story(
+        #     idx=received_data['step'],
+        #     message=message,
+        #     compiled_story=received_data['story'],
+        #     session=message['session'],
+        # )
+        #
+        # return received_data['story'], waiting_for
 
     async def process_story(self, session, message, compiled_story,
                             idx=0, story_args=[], story_kwargs={},
@@ -199,8 +208,6 @@ class StoryProcessor:
 
             story_part = story_line[idx]
 
-            logger.debug('  going to call: {}'.format(story_part.__name__))
-
             logger.debug('self.tracker')
             logger.debug(self.tracker)
             self.tracker.story(
@@ -219,7 +226,10 @@ class StoryProcessor:
                 # it possible because previous story part result
                 # didn't match any StoryPartFork cases or
                 # match and already played it
+                logger.debug('  skip StoryPartFork')
                 continue
+
+            logger.debug('  going to call: {}'.format(story_part.__name__))
 
             if message:
                 # process common story part
@@ -238,19 +248,33 @@ class StoryProcessor:
             if isinstance(waiting_for, forking.SwitchOnValue):
                 # SwitchOnValue is so special because it is the only result
                 # that doesn't async.
-
-                processed_story, waiting_for = await self.process_next_part_of_story({
+                logger.debug('try to go deeper')
+                received_data = await self.process_next_part_of_story({
                     'step': idx,
                     'story': compiled_story,
                     'stack': message['session']['stack'],
                 }, waiting_for.value, message)
 
-                # we have more stories in a stack and we've already reached the end of last story
-                if len(session['stack']) > 1 and \
-                                session['stack'][-1]['step'] == len(processed_story.story_line) and \
-                        not isinstance(waiting_for, callable.EndOfStory):
-                    logger.debug('popup')
-                    session['stack'].pop()
+                if received_data['going-deeper']:
+                    logger.debug('[>] going deeper')
+                    processed_story = received_data['story']
+                    waiting_for = await self.process_story(
+                        idx=received_data['step'],
+                        message=message,
+                        compiled_story=received_data['story'],
+                        session=message['session'],
+                    )
+
+                    logger.debug('[<] return')
+
+                    # we have more stories in a stack and we've already reached the end of last story
+                    if len(session['stack']) > 1 and \
+                                    session['stack'][-1]['step'] == len(processed_story.story_line) and \
+                            not isinstance(waiting_for, callable.EndOfStory):
+                        session['stack'].pop()
+                else:
+                    # we aren't going deeper to switch
+                    waiting_for = None
 
         if waiting_for:
             if isinstance(waiting_for, callable.EndOfStory):
@@ -260,5 +284,9 @@ class StoryProcessor:
                 current_story['data'] = matchers.serialize(
                     matchers.get_validator(waiting_for)
                 )
+
+        if idx == len(story_line):
+            logger.debug('[!] drop first')
+            session['stack'].pop()
 
         return waiting_for

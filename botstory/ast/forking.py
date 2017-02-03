@@ -75,6 +75,7 @@ class Middleware:
         return {
             'step': 0,
             'story': case_story[0],
+            'going-deeper': True,
         }
 
 
