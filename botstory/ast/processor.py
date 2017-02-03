@@ -115,15 +115,16 @@ class StoryProcessor:
                         # it seems we find stack item that matches our message
                         compiled_story = self.library.get_story_by_topic(stack_tail['topic'], stack=stack[:-1])
 
-            received_data = await self.process_next_part_of_story({
-                'step': stack[-1]['step'],
-                'story': compiled_story,
-                'stack': stack,
-            }, validation_result)
+                received_data = await self.process_next_part_of_story({
+                    'step': stack[-1]['step'],
+                    'story': compiled_story,
+                    'stack': stack,
+                }, validation_result)
+                compiled_story = received_data['story']
 
             waiting_for = await self.process_story(
                 message=message,
-                compiled_story=received_data['story'],
+                compiled_story=compiled_story,
             )
 
             if len(stack) == 0:
