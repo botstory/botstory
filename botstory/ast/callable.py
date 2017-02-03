@@ -54,7 +54,6 @@ class CallableNodeWrapper:
                                                           # we don't have message yet
                                                           message=None,
                                                           compiled_story=self.ast_node,
-                                                          idx=0,
                                                           story_args=args,
                                                           story_kwargs=kwargs,
                                                           )

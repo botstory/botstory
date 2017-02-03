@@ -139,7 +139,6 @@ class StoryProcessor:
         }, validation_result)
 
         return await self.process_story(
-            idx=received_data['step'],
             message=message,
             compiled_story=received_data['story'],
             session=message['session'],
@@ -160,14 +159,13 @@ class StoryProcessor:
         return received_data
 
     async def process_story(self, session, message, compiled_story,
-                            idx=0, story_args=[], story_kwargs={},
+                            story_args=[], story_kwargs={},
                             ):
         logger.debug('')
         logger.debug('process_story')
         logger.debug('')
 
         logger.debug('! topic {}'.format(compiled_story.topic))
-        logger.debug('! step {}'.format(idx))
         logger.debug('  story {}'.format(compiled_story))
         logger.debug('  message {}'.format(message))
         logger.debug('  session.stack {} ({})'.format(session['stack'], len(session['stack'])))
@@ -177,7 +175,7 @@ class StoryProcessor:
         story_line = compiled_story.story_line
 
         current_story = session['stack'][-1]
-        current_story['step'] = idx
+        idx = current_story['step']
         current_story['topic'] = compiled_story.topic
         current_story['data'] = None
 
@@ -244,7 +242,6 @@ class StoryProcessor:
                         logger.debug('[>] going deeper')
                         processed_story = received_data['story']
                         waiting_for = await self.process_story(
-                            idx=received_data['step'],
                             message=message,
                             compiled_story=received_data['story'],
                             session=message['session'],
