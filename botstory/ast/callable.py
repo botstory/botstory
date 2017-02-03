@@ -52,6 +52,8 @@ class CallableNodeWrapper:
         session['stack'].append(stack_utils.build_empty_stack_item(self.ast_node.topic))
         res = await self.processor_instance.process_story(session=session,
                                                           # we don't have message yet
+                                                          # TODO: 1st it should be context
+                                                          # and it should be ever for callable
                                                           message=None,
                                                           compiled_story=self.ast_node,
                                                           story_args=args,
