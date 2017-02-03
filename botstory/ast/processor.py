@@ -52,9 +52,16 @@ class StoryProcessor:
         while not waiting_for or isinstance(waiting_for, callable.EndOfStory):
             compiled_story = None
             validation_result = None
-            stack_tail = None
 
-            if len(session['stack']) > 0:
+            if len(session['stack']) == 0:
+                compiled_story = self.library.get_global_story(message)
+                logger.debug('get_global_story {}'.format(compiled_story))
+                if not compiled_story:
+                    # there is no stories for such message
+                    return None
+                session['stack'].append(stack_utils.build_empty_stack_item(compiled_story.topic))
+            else:
+                stack_tail = None
                 logger.debug('  check stack')
                 logger.debug('  session = {}'.format(session))
                 logger.debug('    session.stack = {}'.format(session['stack']))
@@ -66,7 +73,7 @@ class StoryProcessor:
                         logger.debug('  we have reach the bottom of stack '
                                      'so no once has receive this message')
                         return None
-                    stack_tail = session['stack'].pop()
+                    stack_tail = session['stack'][-1]
                     logger.debug('stack_tail {}'.format(stack_tail))
                     if not stack_tail['data']:
                         # TODO: we shouldn't get such case
@@ -91,10 +98,12 @@ class StoryProcessor:
                     logger.debug("self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack'])")
                     logger.debug(self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack']))
                     if stack_tail['step'] < len(
-                            self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack']).story_line
+                            self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack'][:-1]).story_line
                     ):
                         # if we haven't reach last step in list of story so we can parse result
                         break
+
+                    session['stack'].pop()
 
                 logger.debug('    after check session.stack = {}'.format(session['stack']))
                 logger.debug('      stack_tail = {}'.format(stack_tail))
@@ -105,17 +114,7 @@ class StoryProcessor:
                     logger.debug('      validation_result {}'.format(validation_result))
                     if not not validation_result:
                         # it seems we find stack item that matches our message
-                        compiled_story = self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack'])
-
-            if not compiled_story:
-                compiled_story = self.library.get_global_story(message)
-                logger.debug('get_global_story {}'.format(compiled_story))
-                if not compiled_story:
-                    # there is no stories for such message
-                    return True
-                stack_tail = stack_utils.build_empty_stack_item(compiled_story.topic)
-
-            session['stack'].append(stack_tail)
+                        compiled_story = self.library.get_story_by_topic(stack_tail['topic'], stack=session['stack'][:-1])
 
             received_data = await self.process_next_part_of_story({
                 'step': session['stack'][-1]['step'],
