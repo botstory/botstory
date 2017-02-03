@@ -231,48 +231,45 @@ class StoryProcessor:
 
             logger.debug('  got result {}'.format(waiting_for))
 
-            # TODO: should be refactor and put somewhere
-            # story part return value so we should somehow react on it
-            if isinstance(waiting_for, forking.SwitchOnValue):
-                # SwitchOnValue is so special because it is the only result
-                # that doesn't async.
-                logger.debug('try to go deeper')
-                received_data = await self.process_next_part_of_story({
-                    'step': idx,
-                    'story': compiled_story,
-                    'stack': message['session']['stack'],
-                }, waiting_for.value, message)
+            if waiting_for:
+                if isinstance(waiting_for, forking.SwitchOnValue):
+                    # SwitchOnValue is so special because it is the only result
+                    # that doesn't async.
+                    logger.debug('try to go deeper')
+                    received_data = await self.process_next_part_of_story({
+                        'step': idx,
+                        'story': compiled_story,
+                        'stack': message['session']['stack'],
+                    }, waiting_for.value, message)
 
-                if received_data['going-deeper']:
-                    logger.debug('[>] going deeper')
-                    processed_story = received_data['story']
-                    waiting_for = await self.process_story(
-                        idx=received_data['step'],
-                        message=message,
-                        compiled_story=received_data['story'],
-                        session=message['session'],
-                    )
+                    if received_data['going-deeper']:
+                        logger.debug('[>] going deeper')
+                        processed_story = received_data['story']
+                        waiting_for = await self.process_story(
+                            idx=received_data['step'],
+                            message=message,
+                            compiled_story=received_data['story'],
+                            session=message['session'],
+                        )
 
-                    logger.debug('[<] return')
+                        logger.debug('[<] return')
 
-                    # we have more stories in a stack and we've already reached the end of last story
-                    if len(session['stack']) > 1 and \
-                                    session['stack'][-1]['step'] == len(processed_story.story_line) and \
-                            not isinstance(waiting_for, callable.EndOfStory):
-                        session['stack'].pop()
+                        # we have more stories in a stack and we've already reached the end of last story
+                        if len(session['stack']) > 1 and \
+                                        session['stack'][-1]['step'] == len(processed_story.story_line) and \
+                                not isinstance(waiting_for, callable.EndOfStory):
+                            session['stack'].pop()
+                    else:
+                        # we just skip this waiting for result
+                        # and aren't going deeper to switch
+                        waiting_for = None
+                elif isinstance(waiting_for, callable.EndOfStory):
+                    if message:
+                        message['data'] = {**message['data'], **waiting_for.data}
                 else:
-                    # we just skip this waiting for result
-                    # and aren't going deeper to switch
-                    waiting_for = None
-
-        if waiting_for:
-            if isinstance(waiting_for, callable.EndOfStory):
-                if message:
-                    message['data'] = {**message['data'], **waiting_for.data}
-            else:
-                current_story['data'] = matchers.serialize(
-                    matchers.get_validator(waiting_for)
-                )
+                    current_story['data'] = matchers.serialize(
+                        matchers.get_validator(waiting_for)
+                    )
 
         if idx == len(story_line):
             logger.debug('[!] played story line through')
