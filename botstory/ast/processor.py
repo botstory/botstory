@@ -136,7 +136,7 @@ class StoryProcessor:
             'step': session['stack'][-1]['step'],
             'story': compiled_story,
             'stack': message['session']['stack'],
-        }, validation_result, message)
+        }, validation_result)
 
         return await self.process_story(
             idx=received_data['step'],
@@ -145,7 +145,7 @@ class StoryProcessor:
             session=message['session'],
         )
 
-    async def process_next_part_of_story(self, received_data, validation_result, message):
+    async def process_next_part_of_story(self, received_data, validation_result):
         logger.debug('')
         logger.debug('process_next_part_of_story')
         logger.debug('')
@@ -238,7 +238,7 @@ class StoryProcessor:
                         'step': idx,
                         'story': compiled_story,
                         'stack': message['session']['stack'],
-                    }, waiting_for.value, message)
+                    }, waiting_for.value)
 
                     if received_data['going-deeper']:
                         logger.debug('[>] going deeper')

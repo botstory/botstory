@@ -44,37 +44,32 @@ class Middleware:
         logger.debug('  data: {}'.format(data))
         logger.debug('  validation_result: {}'.format(validation_result))
         # logger.debug('  children len {}'.format(len(data['story'].children)))
-        case_story = match_children(data, 'case_id', validation_result)
-        if len(case_story) == 0:
-            case_story = match_children(data, 'case_equal', validation_result)
-        if len(case_story) == 0:
-            case_story = match_children(data, 'default_case', True)
+        case_stories = match_children(data, 'case_id', validation_result)
+        if len(case_stories) == 0:
+            case_stories = match_children(data, 'case_equal', validation_result)
+        if len(case_stories) == 0:
+            case_stories = match_children(data, 'default_case', True)
 
-        if len(case_story) == 0:
+        if len(case_stories) == 0:
             logger.debug('   do not have any fork here')
             return data
 
-        logger.debug('  got case_story {}'.format(case_story[0]))
-
+        case_story = case_stories[0]
         last_stack_item = data['stack'][-1]
-        logger.debug('iterate {} step further'.format(last_stack_item['topic']))
-        new_stack_item = {
-            'step': last_stack_item['step'] + 1,
-            # 'step': last_stack_item['step'],
-            'topic': last_stack_item['topic'],
-            'data': matchers.serialize(callable.WaitForReturn()),
-        }
 
-        # we are going deeper so we just add extra stack item
-        # that will drop out in process_next_part_of_story
-        # so value doesn't matter
-        data['stack'].pop()
-        data['stack'].extend([new_stack_item, stack_utils.build_empty_stack_item()])
+        logger.debug('  got case_story {}'.format(case_story))
+        logger.debug('iterate {} step further'.format(last_stack_item['topic']))
+
+        last_stack_item['step'] += 1
+        last_stack_item['data'] = matchers.serialize(callable.WaitForReturn())
+
+        # we are going deeper
+        data['stack'].append(stack_utils.build_empty_stack_item())
 
         # it's new story so it should start from step = 0
         return {
             'step': 0,
-            'story': case_story[0],
+            'story': case_story,
             'going-deeper': True,
         }
 
