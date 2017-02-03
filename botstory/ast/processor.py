@@ -134,22 +134,18 @@ class StoryProcessor:
 
         session['stack'].append(stack_tail)
 
-        # TODO: very likely that we won't use `stack_tail`
-        # for example in case when we don't have right switch case
         received_data = await self.process_next_part_of_story({
             'step': session['stack'][-1]['step'],
             'story': compiled_story,
             'stack': message['session']['stack'],
         }, validation_result, message)
 
-        waiting_for = await self.process_story(
+        return await self.process_story(
             idx=received_data['step'],
             message=message,
             compiled_story=received_data['story'],
             session=message['session'],
         )
-
-        return waiting_for
 
     async def process_next_part_of_story(self, received_data, validation_result, message):
         logger.debug('')
@@ -158,20 +154,12 @@ class StoryProcessor:
 
         received_data['going-deeper'] = False
 
+        # map-reduce process
         for m in self.middlewares:
             if hasattr(m, 'process'):
                 received_data = m.process(received_data, validation_result)
 
         return received_data
-
-        # waiting_for = await self.process_story(
-        #     idx=received_data['step'],
-        #     message=message,
-        #     compiled_story=received_data['story'],
-        #     session=message['session'],
-        # )
-        #
-        # return received_data['story'], waiting_for
 
     async def process_story(self, session, message, compiled_story,
                             idx=0, story_args=[], story_kwargs={},
@@ -273,7 +261,8 @@ class StoryProcessor:
                             not isinstance(waiting_for, callable.EndOfStory):
                         session['stack'].pop()
                 else:
-                    # we aren't going deeper to switch
+                    # we just skip this waiting for result
+                    # and aren't going deeper to switch
                     waiting_for = None
 
         if waiting_for:
@@ -286,7 +275,7 @@ class StoryProcessor:
                 )
 
         if idx == len(story_line):
-            logger.debug('[!] drop first')
+            logger.debug('[!] played story line through')
             session['stack'].pop()
 
         return waiting_for
