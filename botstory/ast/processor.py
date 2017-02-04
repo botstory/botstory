@@ -79,17 +79,10 @@ class StoryProcessor:
 
                 stack_tail = stack[-1]
                 logger.debug('stack_tail {}'.format(stack_tail))
+                logger.debug("stack {}".format(stack))
 
                 validator = matchers.deserialize(stack_tail['data'])
                 logger.debug('validator {}'.format(validator))
-
-                if getattr(validator, 'new_scope', False):
-                    # TODO:
-                    # we are start new story line here
-                    # so we don't need to check whether we still have tail of story
-                    break
-
-                logger.debug("stack {}".format(stack))
                 logger.debug("self.library.get_story_by_topic(stack_tail['topic'], stack=stack)")
                 logger.debug(self.library.get_story_by_topic(stack_tail['topic'], stack=stack))
                 if stack_tail['step'] < len(
