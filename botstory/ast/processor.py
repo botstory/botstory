@@ -62,11 +62,6 @@ class StoryProcessor:
             )
 
         while (not waiting_for or isinstance(waiting_for, callable.EndOfStory)) and len(stack) > 0:
-            # compiled_story = None
-            validation_result = None
-
-            stack_tail = None
-            logger.debug('  check stack')
             logger.debug('  session = {}'.format(message['session']))
 
             # looking for first valid matcher
@@ -78,26 +73,15 @@ class StoryProcessor:
                     return None
 
                 stack_tail = stack[-1]
-                logger.debug('stack_tail {}'.format(stack_tail))
-                logger.debug("stack {}".format(stack))
-
-                validator = matchers.deserialize(stack_tail['data'])
-                logger.debug('validator {}'.format(validator))
-                logger.debug("self.library.get_story_by_topic(stack_tail['topic'], stack=stack)")
-                logger.debug(self.library.get_story_by_topic(stack_tail['topic'], stack=stack))
-                if stack_tail['step'] < len(
-                        self.library.get_story_by_topic(stack_tail['topic'], stack=stack[:-1]).story_line
-                ):
+                compiled_story = self.library.get_story_by_topic(stack_tail['topic'], stack=stack[:-1])
+                if stack_tail['step'] < len(compiled_story.story_line):
                     # if we haven't reach last step in list of story so we can parse result
                     break
 
                 stack.pop()
 
+            validator = matchers.deserialize(stack_tail['data'])
             validation_result = validator.validate(message)
-            logger.debug('      validation_result {}'.format(validation_result))
-            if not not validation_result:
-                # it seems we find stack item that matches our message
-                compiled_story = self.library.get_story_by_topic(stack_tail['topic'], stack=stack[:-1])
 
             received_data = await self.process_next_part_of_story({
                 'step': stack[-1]['step'],
