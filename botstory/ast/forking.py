@@ -27,6 +27,9 @@ class StoryPartFork:
     def __name__(self):
         return 'StoryPartFork'
 
+    def __call__(self, *args, **kwargs):
+        return None
+
     def add_child(self, child_story_line):
         self.children.append(child_story_line)
 

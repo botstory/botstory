@@ -79,8 +79,8 @@ class StoryProcessor:
                 stack.pop()
 
             validator = matchers.deserialize(stack_tail['data'])
-            new_ctx_story = await self.process_next_part_of_story(compiled_story.story_line[stack_tail['step']],
-                                                                  validator.validate(message))
+            new_ctx_story = await self.get_deeper_story(compiled_story.story_line[stack_tail['step']],
+                                                        validator.validate(message))
 
             if new_ctx_story:
                 compiled_story = new_ctx_story
@@ -93,18 +93,13 @@ class StoryProcessor:
 
         return waiting_for
 
-    async def process_next_part_of_story(self, story_part, validation_result):
+    async def get_deeper_story(self, story_part, validation_result):
         """
 
-        :param step:
-        :param story_line:
+        :param story_part:
         :param validation_result:
         :return:
         """
-        logger.debug('')
-        logger.debug('process_next_part_of_story')
-        logger.debug('')
-
         if hasattr(story_part, 'get_child_by_validation_result'):
             return story_part.get_child_by_validation_result(validation_result)
         else:
@@ -132,7 +127,7 @@ class StoryProcessor:
         logger.debug('current_story {} ({})'.format(current_story, len(story_line)))
 
         # integrate over parts of story
-        while idx < len(story_line) and not waiting_for:
+        while idx < len(story_line):
             logger.debug('')
             logger.debug('  next iteration of {}'.format(current_story['topic']))
             logger.debug('      idx = {} ({})'.format(idx, len(story_line)))
@@ -148,18 +143,32 @@ class StoryProcessor:
                 story_part_name=story_part.__name__,
             )
 
+            # check whether it could be new scope
+            # TODO: it could be done at StoryPartFork.__call__
+            if isinstance(story_part, forking.StoryPartFork):
+                logger.debug('  it could be new scope')
+                new_ctx_story = None
+                if isinstance(waiting_for, forking.SwitchOnValue):
+                    new_ctx_story = await self.get_deeper_story(story_part, waiting_for.value)
+                if new_ctx_story:
+                    logger.debug('[>] going deeper')
+                    self.build_new_scope(message['session']['stack'], new_ctx_story)
+                    waiting_for = await self.process_story(
+                        message=message,
+                        compiled_story=new_ctx_story,
+                    )
+
+                    logger.debug('[<] return')
+
+                    # we have more stories in a stack and we've already reached the end of last story
+                    if len(session['stack']) > 1 and \
+                                    session['stack'][-1]['step'] == len(new_ctx_story.story_line) and \
+                            not isinstance(waiting_for, callable.EndOfStory):
+                        session['stack'].pop()
+                    break
+
             idx += 1
             current_story['step'] = idx
-
-            # TODO: just should skip story part
-            # but it should be done in process_next_part_of_story
-            if isinstance(story_part, forking.StoryPartFork):
-                # looking for story part after StoryPartFork
-                # it possible because previous story part result
-                # didn't match any StoryPartFork cases or
-                # match and already played it
-                logger.debug('  skip StoryPartFork')
-                continue
 
             logger.debug('  going to call: {}'.format(story_part.__name__))
 
@@ -175,40 +184,15 @@ class StoryProcessor:
 
             logger.debug('  got result {}'.format(waiting_for))
 
-            if waiting_for:
-                if isinstance(waiting_for, forking.SwitchOnValue):
-                    # SwitchOnValue is so special because it is the only result
-                    # that doesn't async.
-                    logger.debug('try to go deeper')
-                    new_ctx_story = await self.process_next_part_of_story(compiled_story.story_line[idx],
-                                                                          waiting_for.value)
-
-                    if new_ctx_story:
-                        logger.debug('[>] going deeper')
-                        self.build_new_scope(message['session']['stack'], new_ctx_story)
-                        waiting_for = await self.process_story(
-                            message=message,
-                            compiled_story=new_ctx_story,
-                        )
-
-                        logger.debug('[<] return')
-
-                        # we have more stories in a stack and we've already reached the end of last story
-                        if len(session['stack']) > 1 and \
-                                        session['stack'][-1]['step'] == len(new_ctx_story.story_line) and \
-                                not isinstance(waiting_for, callable.EndOfStory):
-                            session['stack'].pop()
-                    else:
-                        # we just skip this waiting for result
-                        # and aren't going deeper to switch
-                        waiting_for = None
-                elif isinstance(waiting_for, callable.EndOfStory):
+            if waiting_for and not isinstance(waiting_for, forking.SwitchOnValue):
+                if isinstance(waiting_for, callable.EndOfStory):
                     if message:
                         message['data'] = {**message['data'], **waiting_for.data}
                 else:
                     current_story['data'] = matchers.serialize(
                         matchers.get_validator(waiting_for)
                     )
+                break
 
         if idx == len(story_line):
             logger.debug('[!] played story line through')
