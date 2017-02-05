@@ -52,28 +52,9 @@ class Middleware:
 
         if len(case_stories) == 0:
             logger.debug('   do not have any fork here')
-            return data
+            return None
 
-        case_story = case_stories[0]
-        last_stack_item = data['stack'][-1]
-
-        logger.debug('  got case_story {}'.format(case_story))
-        logger.debug('iterate {} step further'.format(last_stack_item['topic']))
-
-        last_stack_item['step'] += 1
-        last_stack_item['data'] = matchers.serialize(callable.WaitForReturn())
-
-        # we are going deeper
-        data['stack'].append(stack_utils.build_empty_stack_item(
-            case_story.topic
-        ))
-
-        # it's new story so it should start from step = 0
-        return {
-            'step': 0,
-            'story': case_story,
-            'going-deeper': True,
-        }
+        return case_stories[0]
 
 
 @matchers.matcher()

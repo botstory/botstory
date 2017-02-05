@@ -38,8 +38,7 @@ class StoryProcessor:
         logger.debug('> match_message <')
         logger.debug('')
         logger.debug('  {} '.format(message))
-        logger.debug('self.tracker')
-        logger.debug(self.tracker)
+
         self.tracker.new_message(
             user=message and message['user'],
             data=message['data'],
@@ -83,12 +82,15 @@ class StoryProcessor:
             validator = matchers.deserialize(stack_tail['data'])
             validation_result = validator.validate(message)
 
-            received_data = await self.process_next_part_of_story({
+            new_ctx_story = await self.process_next_part_of_story({
                 'step': stack[-1]['step'],
                 'story': compiled_story,
                 'stack': stack,
             }, validation_result)
-            compiled_story = received_data['story']
+
+            if new_ctx_story:
+                compiled_story = new_ctx_story
+                self.build_new_scope(stack, new_ctx_story)
 
             waiting_for = await self.process_story(
                 message=message,
@@ -98,6 +100,17 @@ class StoryProcessor:
         return waiting_for
 
     async def process_next_part_of_story(self, received_data, validation_result):
+        """
+        1. check whether we are going to dive in the deeper context
+        2. get new story - `case_story`
+        3. current stack item move one step farther and get status `wait for return`
+        4. stack gets new item: step 0, with case_story topic.
+        5. return: case_story.
+
+        :param received_data:
+        :param validation_result:
+        :return:
+        """
         logger.debug('')
         logger.debug('process_next_part_of_story')
         logger.debug('')
@@ -181,25 +194,25 @@ class StoryProcessor:
                     # SwitchOnValue is so special because it is the only result
                     # that doesn't async.
                     logger.debug('try to go deeper')
-                    received_data = await self.process_next_part_of_story({
+                    new_ctx_story = await self.process_next_part_of_story({
                         'step': idx,
                         'story': compiled_story,
                         'stack': message['session']['stack'],
                     }, waiting_for.value)
 
-                    if received_data['going-deeper']:
+                    if new_ctx_story:
                         logger.debug('[>] going deeper')
-                        processed_story = received_data['story']
+                        self.build_new_scope(message['session']['stack'], new_ctx_story)
                         waiting_for = await self.process_story(
                             message=message,
-                            compiled_story=received_data['story'],
+                            compiled_story=new_ctx_story,
                         )
 
                         logger.debug('[<] return')
 
                         # we have more stories in a stack and we've already reached the end of last story
                         if len(session['stack']) > 1 and \
-                                        session['stack'][-1]['step'] == len(processed_story.story_line) and \
+                                        session['stack'][-1]['step'] == len(new_ctx_story.story_line) and \
                                 not isinstance(waiting_for, callable.EndOfStory):
                             session['stack'].pop()
                     else:
@@ -219,3 +232,18 @@ class StoryProcessor:
             session['stack'].pop()
 
         return waiting_for
+
+    def build_new_scope(self, stack, new_ctx_story):
+        """
+        build new scope on the top of stack and wait for it result
+
+        :param stack:
+        :param new_ctx_story:
+        :return:
+        """
+        last_stack_item = stack[-1]
+        last_stack_item['step'] += 1
+        last_stack_item['data'] = matchers.serialize(callable.WaitForReturn())
+        stack.append(stack_utils.build_empty_stack_item(
+            new_ctx_story.topic
+        ))
