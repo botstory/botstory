@@ -80,13 +80,8 @@ class StoryProcessor:
                 stack.pop()
 
             validator = matchers.deserialize(stack_tail['data'])
-            validation_result = validator.validate(message)
-
-            new_ctx_story = await self.process_next_part_of_story({
-                'step': stack[-1]['step'],
-                'story': compiled_story,
-                'stack': stack,
-            }, validation_result)
+            new_ctx_story = await self.process_next_part_of_story(stack_tail['step'], compiled_story.story_line,
+                                                                  validator.validate(message))
 
             if new_ctx_story:
                 compiled_story = new_ctx_story
@@ -99,15 +94,11 @@ class StoryProcessor:
 
         return waiting_for
 
-    async def process_next_part_of_story(self, received_data, validation_result):
+    async def process_next_part_of_story(self, step, story_line, validation_result):
         """
-        1. check whether we are going to dive in the deeper context
-        2. get new story - `case_story`
-        3. current stack item move one step farther and get status `wait for return`
-        4. stack gets new item: step 0, with case_story topic.
-        5. return: case_story.
 
-        :param received_data:
+        :param step:
+        :param story_line:
         :param validation_result:
         :return:
         """
@@ -115,12 +106,10 @@ class StoryProcessor:
         logger.debug('process_next_part_of_story')
         logger.debug('')
 
-        received_data['going-deeper'] = False
-
         # map-reduce process
         for m in self.middlewares:
             if hasattr(m, 'process'):
-                received_data = m.process(received_data, validation_result)
+                received_data = m.process(step, story_line, validation_result)
 
         return received_data
 
@@ -194,11 +183,8 @@ class StoryProcessor:
                     # SwitchOnValue is so special because it is the only result
                     # that doesn't async.
                     logger.debug('try to go deeper')
-                    new_ctx_story = await self.process_next_part_of_story({
-                        'step': idx,
-                        'story': compiled_story,
-                        'stack': message['session']['stack'],
-                    }, waiting_for.value)
+                    new_ctx_story = await self.process_next_part_of_story(idx, compiled_story.story_line,
+                                                                          waiting_for.value)
 
                     if new_ctx_story:
                         logger.debug('[>] going deeper')

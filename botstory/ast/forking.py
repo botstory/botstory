@@ -2,8 +2,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from botstory.ast import stack_utils
-from . import callable, parser
+from . import parser
 from .. import matchers
 
 
@@ -17,12 +16,11 @@ class Undefined:
         pass
 
 
-def match_children(data, key, value):
-    step_id = data['stack'][-1]['step']
-    if step_id >= len(data['story'].story_line):
+def match_children(step, story_line, key, value):
+    if step >= len(story_line):
         return []
 
-    fork = data['story'].story_line[step_id]
+    fork = story_line[step]
     if not isinstance(fork, parser.StoryPartFork):
         return []
     return [child for child in fork.children
@@ -33,22 +31,19 @@ class Middleware:
     def __init__(self):
         pass
 
-    def process(self, data, validation_result):
+    def process(self, step, story_line, validation_result):
         """
         process switch result before run certain case
-        :param data:
+        :param step:
+        :param story_line:
         :param validation_result:
         :return:
         """
-        logger.debug('process_switch')
-        logger.debug('  data: {}'.format(data))
-        logger.debug('  validation_result: {}'.format(validation_result))
-        # logger.debug('  children len {}'.format(len(data['story'].children)))
-        case_stories = match_children(data, 'case_id', validation_result)
+        case_stories = match_children(step, story_line, 'case_id', validation_result)
         if len(case_stories) == 0:
-            case_stories = match_children(data, 'case_equal', validation_result)
+            case_stories = match_children(step, story_line, 'case_equal', validation_result)
         if len(case_stories) == 0:
-            case_stories = match_children(data, 'default_case', True)
+            case_stories = match_children(step, story_line, 'default_case', True)
 
         if len(case_stories) == 0:
             logger.debug('   do not have any fork here')
