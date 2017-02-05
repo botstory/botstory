@@ -24,7 +24,6 @@ class Story:
         self.story_processor_instance = processor.StoryProcessor(
             self.parser_instance,
             self.stories_library,
-            middlewares=[forking.Middleware()]
         )
 
         self.match_message = self.story_processor_instance.match_message

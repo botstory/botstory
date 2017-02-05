@@ -1,6 +1,5 @@
 from botstory.ast import stack_utils
 import logging
-from . import processor
 from .. import matchers
 
 logger = logging.getLogger(__name__)

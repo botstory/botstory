@@ -38,10 +38,10 @@ class Parser:
         # with self.attach_scope():
         #     one_scope()
 
-    def go_deeper(self, one_story):
+    def go_deeper(self, one_story, buildScopePart):
         if len(self.current_node.story_line) == 0 or \
                 inspect.isfunction(self.current_node.story_line[-1]):
-            self.current_node.story_line.append(StoryPartFork())
+            self.current_node.story_line.append(buildScopePart())
 
         parent_node = self.current_node
         child_story = self.compile(one_story, self.middlewares)
@@ -76,7 +76,7 @@ class ASTNode:
         :param child_story_line:
         :return:
         """
-        assert isinstance(self.story_line[-1], StoryPartFork)
+        # assert isinstance(self.story_line[-1], StoryPartFork)
         self.story_line[-1].add_child(child_story_line)
 
     def append(self, story_part):
@@ -112,24 +112,3 @@ class StoryPartLeaf:
             'type': 'StoryPartLeaf',
             'name': self.__name__,
         })
-
-
-class StoryPartFork:
-    def __init__(self):
-        self.children = []
-
-    @property
-    def __name__(self):
-        return 'StoryPartFork'
-
-    def add_child(self, child_story_line):
-        self.children.append(child_story_line)
-
-    def to_json(self):
-        return {
-            'type': 'StoryPartFork',
-            'children': list(map(lambda c: c.to_json(), self.children))
-        }
-
-    def __repr__(self):
-        return json.dumps(self.to_json())

@@ -1,7 +1,7 @@
 import logging
 import json
 
-from . import parser
+from . import parser, forking
 from .. import di
 
 logger = logging.getLogger(__name__)
@@ -86,7 +86,7 @@ class StoriesLibrary:
         if not parent:
             return None
         inner_stories = [
-            story.children for story in parent.story_line if isinstance(story, parser.StoryPartFork)
+            story.children for story in parent.story_line if isinstance(story, forking.StoryPartFork)
             ]
 
         inner_stories = [item for sublist in inner_stories for item in sublist]

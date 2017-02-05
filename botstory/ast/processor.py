@@ -11,9 +11,8 @@ logger = logging.getLogger(__name__)
 
 @di.desc(reg=False)
 class StoryProcessor:
-    def __init__(self, parser_instance, library, middlewares=[]):
+    def __init__(self, parser_instance, library):
         self.library = library
-        self.middlewares = middlewares
         self.parser_instance = parser_instance
         self.tracker = mocktracker.MockTracker()
 
@@ -80,7 +79,7 @@ class StoryProcessor:
                 stack.pop()
 
             validator = matchers.deserialize(stack_tail['data'])
-            new_ctx_story = await self.process_next_part_of_story(stack_tail['step'], compiled_story.story_line,
+            new_ctx_story = await self.process_next_part_of_story(compiled_story.story_line[stack_tail['step']],
                                                                   validator.validate(message))
 
             if new_ctx_story:
@@ -94,7 +93,7 @@ class StoryProcessor:
 
         return waiting_for
 
-    async def process_next_part_of_story(self, step, story_line, validation_result):
+    async def process_next_part_of_story(self, story_part, validation_result):
         """
 
         :param step:
@@ -106,12 +105,10 @@ class StoryProcessor:
         logger.debug('process_next_part_of_story')
         logger.debug('')
 
-        # map-reduce process
-        for m in self.middlewares:
-            if hasattr(m, 'process'):
-                received_data = m.process(step, story_line, validation_result)
-
-        return received_data
+        if hasattr(story_part, 'get_child_by_validation_result'):
+            return story_part.get_child_by_validation_result(validation_result)
+        else:
+            return None
 
     async def process_story(self, message, compiled_story,
                             story_args=[], story_kwargs={},
@@ -156,7 +153,7 @@ class StoryProcessor:
 
             # TODO: just should skip story part
             # but it should be done in process_next_part_of_story
-            if isinstance(story_part, parser.StoryPartFork):
+            if isinstance(story_part, forking.StoryPartFork):
                 # looking for story part after StoryPartFork
                 # it possible because previous story part result
                 # didn't match any StoryPartFork cases or
@@ -183,7 +180,7 @@ class StoryProcessor:
                     # SwitchOnValue is so special because it is the only result
                     # that doesn't async.
                     logger.debug('try to go deeper')
-                    new_ctx_story = await self.process_next_part_of_story(idx, compiled_story.story_line,
+                    new_ctx_story = await self.process_next_part_of_story(compiled_story.story_line[idx],
                                                                           waiting_for.value)
 
                     if new_ctx_story:

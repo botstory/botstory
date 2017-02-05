@@ -1,9 +1,8 @@
+from botstory import matchers
 import logging
+import json
 
 logger = logging.getLogger(__name__)
-
-from . import parser
-from .. import matchers
 
 
 class Undefined:
@@ -16,40 +15,46 @@ class Undefined:
         pass
 
 
-def match_children(step, story_line, key, value):
-    if step >= len(story_line):
-        return []
-
-    fork = story_line[step]
-    if not isinstance(fork, parser.StoryPartFork):
-        return []
-    return [child for child in fork.children
-            if child.extensions.get(key, Undefined) == value]
-
-
-class Middleware:
+class StoryPartFork:
     def __init__(self):
-        pass
+        self.children = []
 
-    def process(self, step, story_line, validation_result):
-        """
-        process switch result before run certain case
-        :param step:
-        :param story_line:
-        :param validation_result:
-        :return:
-        """
-        case_stories = match_children(step, story_line, 'case_id', validation_result)
+    @classmethod
+    def factory(cls):
+        return cls()
+
+    @property
+    def __name__(self):
+        return 'StoryPartFork'
+
+    def add_child(self, child_story_line):
+        self.children.append(child_story_line)
+
+    def get_child_by_validation_result(self, validation_result):
+        case_stories = self.match_children('case_id', validation_result)
         if len(case_stories) == 0:
-            case_stories = match_children(step, story_line, 'case_equal', validation_result)
+            case_stories = self.match_children('case_equal', validation_result)
         if len(case_stories) == 0:
-            case_stories = match_children(step, story_line, 'default_case', True)
+            case_stories = self.match_children('default_case', True)
 
         if len(case_stories) == 0:
             logger.debug('   do not have any fork here')
             return None
 
         return case_stories[0]
+
+    def match_children(self, key, value):
+        return [child for child in self.children
+                if child.extensions.get(key, Undefined) == value]
+
+    def to_json(self):
+        return {
+            'type': 'StoryPartFork',
+            'children': list(map(lambda c: c.to_json(), self.children))
+        }
+
+    def __repr__(self):
+        return json.dumps(self.to_json())
 
 
 @matchers.matcher()
@@ -92,7 +97,7 @@ class ForkingStoriesAPI:
 
     def case(self, default=Undefined, equal_to=Undefined, match=Undefined):
         def decorate(story_part):
-            compiled_story = self.parser_instance.go_deeper(story_part)
+            compiled_story = self.parser_instance.go_deeper(story_part, StoryPartFork.factory)
             if default is True:
                 compiled_story.extensions['default_case'] = True
             if equal_to is not Undefined:
