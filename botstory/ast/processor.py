@@ -53,7 +53,7 @@ class StoryProcessor:
             if not compiled_story:
                 # there is no stories for such message
                 return None
-            stack.append(stack_utils.build_empty_stack_item(compiled_story.topic))
+            self.build_new_scope(stack, compiled_story)
 
             waiting_for = await self.process_story(
                 message=message,
@@ -221,15 +221,17 @@ class StoryProcessor:
 
     def build_new_scope(self, stack, new_ctx_story):
         """
-        build new scope on the top of stack and wait for it result
+        - build new scope on the top of stack
+        - and current scope will wait for it result
 
         :param stack:
         :param new_ctx_story:
         :return:
         """
-        last_stack_item = stack[-1]
-        last_stack_item['step'] += 1
-        last_stack_item['data'] = matchers.serialize(callable.WaitForReturn())
+        if len(stack) > 0:
+            last_stack_item = stack[-1]
+            last_stack_item['step'] += 1
+            last_stack_item['data'] = matchers.serialize(callable.WaitForReturn())
         stack.append(stack_utils.build_empty_stack_item(
             new_ctx_story.topic
         ))
