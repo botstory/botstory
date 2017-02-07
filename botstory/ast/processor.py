@@ -52,12 +52,15 @@ class StoryProcessor:
             if not compiled_story:
                 # there is no stories for such message
                 return None
+
             self.build_new_scope(stack, compiled_story)
 
             waiting_for = await self.process_story(
                 message=message,
                 compiled_story=compiled_story,
             )
+
+            self.may_drop_scope(compiled_story, stack, waiting_for)
 
         while (not waiting_for or isinstance(waiting_for, callable.EndOfStory)) and len(stack) > 0:
             logger.debug('  session = {}'.format(message['session']))
@@ -91,6 +94,8 @@ class StoryProcessor:
                 compiled_story=compiled_story,
             )
 
+            self.may_drop_scope(compiled_story, stack, waiting_for)
+
         return waiting_for
 
     async def get_deeper_story(self, story_part, validation_result):
@@ -120,20 +125,21 @@ class StoryProcessor:
         if message:
             session = message['session']
         current_story = session['stack'][-1]
-        idx = current_story['step']
+        start_step = current_story['step']
+        step = start_step
         waiting_for = None
         story_line = compiled_story.story_line
 
         logger.debug('current_story {} ({})'.format(current_story, len(story_line)))
 
         # integrate over parts of story
-        while idx < len(story_line):
+        for step, story_part in enumerate(story_line[start_step:], start_step):
             logger.debug('')
             logger.debug('  next iteration of {}'.format(current_story['topic']))
-            logger.debug('      idx = {} ({})'.format(idx, len(story_line)))
+            logger.debug('      step = {} ({})'.format(step, len(story_line)))
             logger.debug('      session {}'.format(session['stack']))
 
-            story_part = story_line[idx]
+            current_story['step'] = step
 
             logger.debug('self.tracker')
             logger.debug(self.tracker)
@@ -151,24 +157,20 @@ class StoryProcessor:
                 if isinstance(waiting_for, forking.SwitchOnValue):
                     new_ctx_story = await self.get_deeper_story(story_part, waiting_for.value)
                 if new_ctx_story:
-                    logger.debug('[>] going deeper')
                     self.build_new_scope(message['session']['stack'], new_ctx_story)
                     waiting_for = await self.process_story(
                         message=message,
                         compiled_story=new_ctx_story,
                     )
-
-                    logger.debug('[<] return')
+                    self.may_drop_scope(new_ctx_story, message['session']['stack'], waiting_for)
 
                     # we have more stories in a stack and we've already reached the end of last story
-                    if len(session['stack']) > 1 and \
-                                    session['stack'][-1]['step'] == len(new_ctx_story.story_line) and \
-                            not isinstance(waiting_for, callable.EndOfStory):
-                        session['stack'].pop()
+                    # if len(session['stack']) > 1 and \
+                    #                 session['stack'][-1]['step'] == len(new_ctx_story.story_line) and \
+                    #         not isinstance(waiting_for, callable.EndOfStory):
+                    #     session['stack'].pop()
+                    # should wait for new message income
                     break
-
-            idx += 1
-            current_story['step'] = idx
 
             logger.debug('  going to call: {}'.format(story_part.__name__))
 
@@ -192,11 +194,10 @@ class StoryProcessor:
                     current_story['data'] = matchers.serialize(
                         matchers.get_validator(waiting_for)
                     )
+                # should wait for new message income
                 break
 
-        if idx == len(story_line):
-            logger.debug('[!] played story line through')
-            session['stack'].pop()
+        current_story['step'] = step + 1
 
         return waiting_for
 
@@ -213,6 +214,21 @@ class StoryProcessor:
             last_stack_item = stack[-1]
             last_stack_item['step'] += 1
             last_stack_item['data'] = matchers.serialize(callable.WaitForReturn())
+
+        logger.debug('[>] going deeper')
         stack.append(stack_utils.build_empty_stack_item(
             new_ctx_story.topic
         ))
+
+    def may_drop_scope(self, compiled_story, stack, waiting_for):
+        # we reach the end of story line
+        # so we could collapse previous scope and related stack item
+        if stack[-1]['step'] >= len(compiled_story.story_line) - 1 and not waiting_for:
+            logger.debug('[<] return')
+            stack.pop()
+        else:
+            logger.debug('[ ] do not drop because')
+            if stack[-1]['step'] < len(compiled_story.story_line) - 1:
+                logger.debug('> {} (step) >= {} (story_line) - 1'.format(stack[-1]['step'], len(compiled_story.story_line)))
+            if waiting_for:
+                logger.debug('> waiting_for = {}'.format(waiting_for))
