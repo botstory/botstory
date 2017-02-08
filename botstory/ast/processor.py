@@ -1,10 +1,9 @@
+from botstory import di, matchers
+from botstory.ast import callable, forking, stack_utils
+from botstory.integrations import mocktracker
+
 import logging
 import inspect
-
-from botstory.ast import stack_utils
-from . import parser, callable, forking
-from .. import di, matchers
-from ..integrations import mocktracker
 
 logger = logging.getLogger(__name__)
 
