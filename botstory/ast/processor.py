@@ -82,12 +82,12 @@ class StoryProcessor:
                 stack.pop()
 
             validator = matchers.deserialize(stack_tail['data'])
-            new_ctx_story = await self.get_deeper_story(compiled_story.story_line[stack_tail['step']],
-                                                        validator.validate(message))
+            ctx_of_child_story = self.get_deeper_story(compiled_story.story_line[stack_tail['step']],
+                                                       validator.validate(message))
 
-            if new_ctx_story:
-                compiled_story = new_ctx_story
-                self.build_new_scope(stack, new_ctx_story)
+            if ctx_of_child_story:
+                compiled_story = ctx_of_child_story
+                self.build_new_scope(stack, ctx_of_child_story)
 
             waiting_for = await self.process_story(
                 message=message,
@@ -98,7 +98,7 @@ class StoryProcessor:
 
         return waiting_for
 
-    async def get_deeper_story(self, story_part, validation_result):
+    def get_deeper_story(self, story_part, validation_result):
         """
 
         :param story_part:
@@ -154,8 +154,10 @@ class StoryProcessor:
             if isinstance(story_part, forking.StoryPartFork):
                 logger.debug('  it could be new scope')
                 new_ctx_story = None
+
                 if isinstance(waiting_for, forking.SwitchOnValue):
-                    new_ctx_story = await self.get_deeper_story(story_part, waiting_for.value)
+                    new_ctx_story = story_part.get_child_by_validation_result(waiting_for.value)
+
                 if new_ctx_story:
                     self.build_new_scope(message['session']['stack'], new_ctx_story)
                     waiting_for = await self.process_story(
@@ -163,13 +165,6 @@ class StoryProcessor:
                         compiled_story=new_ctx_story,
                     )
                     self.may_drop_scope(new_ctx_story, message['session']['stack'], waiting_for)
-
-                    # we have more stories in a stack and we've already reached the end of last story
-                    # if len(session['stack']) > 1 and \
-                    #                 session['stack'][-1]['step'] == len(new_ctx_story.story_line) and \
-                    #         not isinstance(waiting_for, callable.EndOfStory):
-                    #     session['stack'].pop()
-                    # should wait for new message income
                     break
 
             logger.debug('  going to call: {}'.format(story_part.__name__))
@@ -226,9 +221,3 @@ class StoryProcessor:
         if stack[-1]['step'] >= len(compiled_story.story_line) - 1 and not waiting_for:
             logger.debug('[<] return')
             stack.pop()
-        else:
-            logger.debug('[ ] do not drop because')
-            if stack[-1]['step'] < len(compiled_story.story_line) - 1:
-                logger.debug('> {} (step) >= {} (story_line) - 1'.format(stack[-1]['step'], len(compiled_story.story_line)))
-            if waiting_for:
-                logger.debug('> waiting_for = {}'.format(waiting_for))
