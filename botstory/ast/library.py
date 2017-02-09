@@ -82,6 +82,9 @@ class StoriesLibrary:
         # Or it seems that we are somewhere on a leaves
         # so we're trying to find root of last story and than
         # get right sub story
+
+        # TODO: should it be:
+        # parent = self.get_story_by_topic(stack[-1]['topic'], stack[:-1])
         parent = self.get_story_by_topic(stack[-1]['topic'], stack[:-2])
         if not parent:
             return None

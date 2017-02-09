@@ -8,6 +8,107 @@ import inspect
 logger = logging.getLogger(__name__)
 
 
+class StoryContext:
+    def __init__(self, message, library):
+        self.library = library
+        self.message = message
+        self.waiting_for = None
+
+    def is_empty_stack(self):
+        return len(self.stack()) == 0
+
+    def is_waiting_for_input(self):
+        return self.waiting_for and \
+               not isinstance(self.waiting_for, callable.EndOfStory)
+
+    def compiled_story(self):
+        if self.is_empty_stack():
+            return self.library.get_global_story(self.message)
+        else:
+            return self.library.get_story_by_topic(self.stack_tail()['topic'], stack=self.stack()[:-1])
+
+    def stack(self):
+        return self.message['session']['stack']
+
+    def stack_tail(self):
+        return self.stack()[-1]
+
+    def is_end_of_story(self):
+        return self.stack_tail()['step'] >= len(self.compiled_story().story_line)
+
+    def is_match_to_story(self):
+        return self.compiled_story() is not None
+
+    def is_tail_of_story(self):
+        return self.stack_tail()['step'] >= len(self.compiled_story().story_line) - 1
+
+    def get_child_story(self):
+        """
+        try child story that match message and get scope of it
+        :return:
+        """
+        stack_tail = self.stack_tail()
+        validator = matchers.deserialize(stack_tail['data'])
+
+        story_part = self.compiled_story().story_line[stack_tail['step']]
+
+        validation_result = validator.validate(self.message)
+
+        if hasattr(story_part, 'get_child_by_validation_result'):
+            return story_part.get_child_by_validation_result(validation_result)
+        else:
+            return None
+
+
+# Context Reducers
+
+# TODO: should make it immutable
+def scope_in(ctx):
+    """
+    - build new scope on the top of stack
+    - and current scope will wait for it result
+
+    :param ctx:
+    :return:
+    """
+    compiled_story = None
+    if not ctx.is_empty_stack():
+        compiled_story = ctx.get_child_story()
+        # TODO: ! use reduceer
+        last_stack_item = ctx.stack_tail()
+        last_stack_item['step'] += 1
+        last_stack_item['data'] = matchers.serialize(callable.WaitForReturn())
+
+    if not compiled_story:
+        compiled_story = ctx.compiled_story()
+
+    logger.debug('[>] going deeper')
+    # TODO: ! use reduceer
+    stack = ctx.stack()
+    stack.append(stack_utils.build_empty_stack_item(compiled_story.topic))
+
+    return ctx
+
+
+# TODO: should make it immutable
+def scope_out(ctx):
+    """
+    drop last stack item if we have reach the end of stack
+    and don't wait any input
+
+    :param ctx:
+    :return:
+    """
+    # we reach the end of story line
+    # so we could collapse previous scope and related stack item
+    if ctx.is_tail_of_story() and not ctx.is_waiting_for_input():
+        logger.debug('[<] return')
+        # TODO: !
+        ctx.stack().pop()
+
+    return ctx
+
+
 @di.desc(reg=False)
 class StoryProcessor:
     def __init__(self, parser_instance, library):
@@ -37,77 +138,58 @@ class StoryProcessor:
         logger.debug('')
         logger.debug('  {} '.format(message))
 
+        ctx = StoryContext(message, self.library)
+
         self.tracker.new_message(
             user=message and message['user'],
             data=message['data'],
         )
 
-        stack = message['session']['stack']
-
-        waiting_for = None
-
-        if len(stack) == 0:
-            compiled_story = self.library.get_global_story(message)
-            if not compiled_story:
+        if ctx.is_empty_stack():
+            if not ctx.is_match_to_story():
                 # there is no stories for such message
                 return None
 
-            self.build_new_scope(stack, compiled_story)
+            compiled_story = ctx.compiled_story()
+            ctx = scope_in(ctx)
 
-            waiting_for = await self.process_story(
+            # TODO: don't mutate! (should pass and get ctx)
+            ctx.waiting_for = await self.process_story(
                 message=message,
                 compiled_story=compiled_story,
             )
 
-            self.may_drop_scope(compiled_story, stack, waiting_for)
+            ctx = scope_out(ctx)
 
-        while (not waiting_for or isinstance(waiting_for, callable.EndOfStory)) and len(stack) > 0:
+        while not ctx.is_waiting_for_input() and not ctx.is_empty_stack():
             logger.debug('  session = {}'.format(message['session']))
 
             # looking for first valid matcher
             while True:
-                if len(stack) == 0:
+                if ctx.is_empty_stack():
                     # we have reach the bottom of stack
                     logger.debug('  we have reach the bottom of stack '
                                  'so no once has receive this message')
                     return None
 
-                stack_tail = stack[-1]
-                compiled_story = self.library.get_story_by_topic(stack_tail['topic'], stack=stack[:-1])
-                if stack_tail['step'] < len(compiled_story.story_line):
+                if not ctx.is_end_of_story():
                     # if we haven't reach last step in list of story so we can parse result
                     break
 
-                stack.pop()
+                ctx = scope_out(ctx)
 
-            validator = matchers.deserialize(stack_tail['data'])
-            ctx_of_child_story = self.get_deeper_story(compiled_story.story_line[stack_tail['step']],
-                                                       validator.validate(message))
+            if ctx.get_child_story():
+                ctx = scope_in(ctx)
 
-            if ctx_of_child_story:
-                compiled_story = ctx_of_child_story
-                self.build_new_scope(stack, ctx_of_child_story)
-
-            waiting_for = await self.process_story(
+            # TODO: don't mutate! (should pass and get ctx)
+            ctx.waiting_for = await self.process_story(
                 message=message,
-                compiled_story=compiled_story,
+                compiled_story=ctx.compiled_story(),
             )
 
-            self.may_drop_scope(compiled_story, stack, waiting_for)
+            ctx = scope_out(ctx)
 
-        return waiting_for
-
-    def get_deeper_story(self, story_part, validation_result):
-        """
-
-        :param story_part:
-        :param validation_result:
-        :return:
-        """
-        if hasattr(story_part, 'get_child_by_validation_result'):
-            return story_part.get_child_by_validation_result(validation_result)
-        else:
-            return None
+        return ctx.waiting_for
 
     async def process_story(self, message, compiled_story,
                             story_args=[], story_kwargs={},
@@ -140,8 +222,6 @@ class StoryProcessor:
 
             current_story['step'] = step
 
-            logger.debug('self.tracker')
-            logger.debug(self.tracker)
             self.tracker.story(
                 user=message and message['user'],
                 story_name=current_story['topic'],
