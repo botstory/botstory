@@ -36,7 +36,7 @@ class StoryContext:
     def is_end_of_story(self):
         return self.stack_tail()['step'] >= len(self.compiled_story().story_line)
 
-    def is_match_to_story(self):
+    def does_it_match_any_story(self):
         return self.compiled_story() is not None
 
     def is_tail_of_story(self):
@@ -146,17 +146,16 @@ class StoryProcessor:
         )
 
         if ctx.is_empty_stack():
-            if not ctx.is_match_to_story():
+            if not ctx.does_it_match_any_story():
                 # there is no stories for such message
                 return None
 
-            compiled_story = ctx.compiled_story()
             ctx = scope_in(ctx)
 
             # TODO: don't mutate! (should pass and get ctx)
             ctx.waiting_for = await self.process_story(
-                message=message,
-                compiled_story=compiled_story,
+                message=ctx.message,
+                compiled_story=ctx.compiled_story(),
             )
 
             ctx = scope_out(ctx)
@@ -183,7 +182,7 @@ class StoryProcessor:
 
             # TODO: don't mutate! (should pass and get ctx)
             ctx.waiting_for = await self.process_story(
-                message=message,
+                message=ctx.message,
                 compiled_story=ctx.compiled_story(),
             )
 

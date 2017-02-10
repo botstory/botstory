@@ -110,13 +110,13 @@ async def test_should_catch_equal_text_message():
     story = Story()
 
     @story.on(text.Equal('hi there!'))
-    def one_story():
+    def first_story():
         @story.part()
         def then(ctx):
             trigger_hi_there.passed()
 
     @story.on(text.Equal('see you!'))
-    def one_story():
+    def second_story():
         @story.part()
         def then(ctx):
             trigger_see_you.passed()
@@ -150,13 +150,13 @@ async def test_should_catch_equal_text_message_case_in_sensitive():
     story = Story()
 
     @story.on(text.EqualCaseIgnore('hi there!'))
-    def one_story():
+    def first_story():
         @story.part()
         def then(ctx):
             trigger_hi_there.passed()
 
     @story.on(text.EqualCaseIgnore('see you!'))
-    def one_story():
+    def second_story():
         @story.part()
         def then(ctx):
             trigger_see_you.passed()

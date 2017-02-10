@@ -84,7 +84,7 @@ async def test_should_prevent_other_story_to_start_until_we_waiting_for_answer()
     story = Story()
 
     @story.on('hi there!')
-    def one_story():
+    def first_story():
         @story.part()
         async def then_ask(message):
             return await story.ask('How are you?', user=message['user'])
@@ -94,7 +94,7 @@ async def test_should_prevent_other_story_to_start_until_we_waiting_for_answer()
             trigger_2.passed()
 
     @story.on('Great!')
-    def one_story():
+    def second_story():
         @story.part()
         def then_trigger_1(message):
             trigger_1.passed()
@@ -116,7 +116,7 @@ async def test_should_start_next_story_after_current_finished():
     story = Story()
 
     @story.on('hi there!')
-    def one_story():
+    def first_story():
         @story.part()
         async def then(message):
             return await story.ask('How are you?', user=message['user'])
@@ -126,7 +126,7 @@ async def test_should_start_next_story_after_current_finished():
             pass
 
     @story.on('Great!')
-    def one_story():
+    def second_story():
         @story.part()
         def then(message):
             trigger.passed()
