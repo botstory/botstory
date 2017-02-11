@@ -93,6 +93,9 @@ class SwitchOnValue:
     def __init__(self, value):
         self.value = value
 
+    def __repr__(self):
+        return 'SwitchOnValue({})'.format(self.value)
+
 
 class ForkingStoriesAPI:
     def __init__(self, parser_instance):

@@ -1,9 +1,8 @@
 from botstory import di, matchers
-from botstory.ast import callable, forking, stack_utils, story_context
+from botstory.ast import callable, forking, story_context
 from botstory.integrations import mocktracker
 
 import logging
-import inspect
 
 logger = logging.getLogger(__name__)
 
@@ -49,9 +48,9 @@ class StoryProcessor:
                 # there is no stories for such message
                 return None
 
-            ctx = story_context.scope_in(ctx)
+            ctx = story_context.reducers.scope_in(ctx)
             ctx = await self.process_story(ctx)
-            ctx = story_context.scope_out(ctx)
+            ctx = story_context.reducers.scope_out(ctx)
 
         while not ctx.is_waiting_for_input() and not ctx.is_empty_stack():
             logger.debug('# in a loop')
@@ -69,12 +68,12 @@ class StoryProcessor:
                     # if we haven't reach last step in list of story so we can parse result
                     break
 
-                ctx = story_context.scope_out(ctx)
+                ctx = story_context.reducers.scope_out(ctx)
 
             if ctx.has_child_story():
-                ctx = story_context.scope_in(ctx)
+                ctx = story_context.reducers.scope_in(ctx)
             ctx = await self.process_story(ctx)
-            ctx = story_context.scope_out(ctx)
+            ctx = story_context.reducers.scope_out(ctx)
 
         return ctx.waiting_for
 
@@ -105,19 +104,13 @@ class StoryProcessor:
             )
 
             if ctx.has_child_story():
-                ctx = story_context.scope_in(ctx)
+                ctx = story_context.reducers.scope_in(ctx)
                 ctx = await self.process_story(ctx)
-                ctx = story_context.scope_out(ctx)
+                ctx = story_context.reducers.scope_out(ctx)
                 break
 
             logger.debug('#  going to call: {}'.format(story_part.__name__))
-
-            # TODO: don't mutate! should use reducer instead
-            ctx.waiting_for = story_part(ctx.message)
-
-            if inspect.iscoroutinefunction(story_part):
-                # TODO: don't mutate! should use reducer instead
-                ctx.waiting_for = await ctx.waiting_for
+            ctx = await story_context.reducers.execute(ctx, story_part)
 
             logger.debug('#  got result {}'.format(ctx.waiting_for))
 

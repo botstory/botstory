@@ -58,7 +58,7 @@ class CallableNodeWrapper:
             'data': kwargs,
         }, library=self.library)
         ctx = await self.processor.process_story(ctx=ctx)
-        ctx = story_context.scope_out(ctx)
+        ctx = story_context.reducers.scope_out(ctx)
 
         if isinstance(ctx.waiting_for, EndOfStory):
             return ctx.waiting_for.data
