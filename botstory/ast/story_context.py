@@ -1,5 +1,5 @@
 from botstory import matchers
-from botstory.ast import callable, stack_utils
+from botstory.ast import callable, forking, stack_utils
 import json
 import logging
 
@@ -46,10 +46,12 @@ class StoryContext:
         :return:
         """
         stack_tail = self.stack_tail()
-        validator = matchers.deserialize(stack_tail['data'])
-
         story_part = self.compiled_story().story_line[stack_tail['step']]
 
+        if isinstance(self.waiting_for, forking.SwitchOnValue):
+            return story_part.get_child_by_validation_result(self.waiting_for.value)
+
+        validator = matchers.deserialize(stack_tail['data'])
         validation_result = validator.validate(self.message)
 
         if hasattr(story_part, 'get_child_by_validation_result'):

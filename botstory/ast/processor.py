@@ -117,15 +117,9 @@ class StoryProcessor:
                     child_story = story_part.get_child_by_validation_result(ctx.waiting_for.value)
 
                 if child_story:
-                    # TODO: don't mutate! should use reducer instead
-                    # ctx = story_context.scope_in(ctx)
-                    self.build_new_scope(ctx.message['session']['stack'], child_story)
-
+                    ctx = story_context.scope_in(ctx)
                     ctx = await self.process_story(ctx)
-
-                    # TODO: don't mutate! should use reducer instead
-                    # ctx = story_context.scope_out(ctx)
-                    self.may_drop_scope(child_story, ctx.message['session']['stack'], ctx.waiting_for)
+                    ctx = story_context.scope_out(ctx)
                     break
 
             logger.debug('#  going to call: {}'.format(story_part.__name__))
