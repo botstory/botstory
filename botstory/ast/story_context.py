@@ -1,6 +1,6 @@
 from botstory import matchers
 from botstory.ast import callable, stack_utils
-
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,19 +20,10 @@ class StoryContext:
                not isinstance(self.waiting_for, callable.EndOfStory)
 
     def compiled_story(self):
-        logger.debug('def compiled_story(self):')
-        logger.debug('self.is_empty_stack()')
-        logger.debug(self.is_empty_stack())
-        logger.debug('self.stack()')
-        logger.debug(self.stack())
         if self.is_empty_stack():
             return self.library.get_global_story(self.message)
         else:
-            res = self.library.get_story_by_topic(self.stack_tail()['topic'], stack=self.stack()[:-1])
-            logger.debug('res')
-            logger.debug(type(res))
-            logger.debug(res)
-            return res
+            return self.library.get_story_by_topic(self.stack_tail()['topic'], stack=self.stack()[:-1])
 
     def stack(self):
         return self.message['session']['stack']
@@ -66,6 +57,15 @@ class StoryContext:
         else:
             return None
 
+    def to_json(self):
+        return {
+            'message': self.message,
+            'waiting_for': self.waiting_for,
+        }
+
+    def __repr__(self):
+        return json.dumps(self.to_json())
+
 
 # Context Reducers
 
@@ -89,7 +89,7 @@ def scope_in(ctx):
     if not compiled_story:
         compiled_story = ctx.compiled_story()
 
-    logger.debug('[>] going deeper')
+    logger.debug('# [>] going deeper')
     # TODO: ! use reduceer
     stack = ctx.stack()
     stack.append(stack_utils.build_empty_stack_item(compiled_story.topic))
@@ -109,7 +109,7 @@ def scope_out(ctx):
     # we reach the end of story line
     # so we could collapse previous scope and related stack item
     if ctx.is_tail_of_story() and not ctx.is_waiting_for_input():
-        logger.debug('[<] return')
+        logger.debug('# [<] return')
         # TODO: !
         ctx.stack().pop()
 

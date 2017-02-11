@@ -223,6 +223,7 @@ async def test_should_catch_text_message_that_match_regex_with_flags():
     await answer.pure_text('Going to Pripyat', session, user, story)
 
     assert trigger_destination.result() == 'Pripyat'
+    assert False
 
 
 def test_serialize_text_match():

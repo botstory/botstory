@@ -33,9 +33,9 @@ class StoryProcessor:
         :return:
         """
         logger.debug('')
-        logger.debug('> match_message <')
+        logger.debug('# match_message')
         logger.debug('')
-        logger.debug('  {} '.format(message))
+        logger.debug(message)
 
         ctx = story_context.StoryContext(message, self.library)
 
@@ -56,7 +56,8 @@ class StoryProcessor:
             ctx = story_context.scope_out(ctx)
 
         while not ctx.is_waiting_for_input() and not ctx.is_empty_stack():
-            logger.debug('  session = {}'.format(message['session']))
+            logger.debug('# in a loop')
+            logger.debug(ctx)
 
             # looking for first valid matcher
             while True:
@@ -83,16 +84,12 @@ class StoryProcessor:
 
     async def process_story(self, ctx):
         logger.debug('')
-        logger.debug('process_story')
+        logger.debug('# process_story')
         logger.debug('')
+        logger.debug(ctx)
 
         message = ctx.message
         compiled_story = ctx.compiled_story()
-
-        logger.debug('  story {}'.format(compiled_story))
-        logger.debug('  type of story {}'.format(type(compiled_story)))
-        logger.debug('! topic {}'.format(compiled_story.topic))
-        logger.debug('  message {}'.format(message))
 
         session = message['session']
         current_story = session['stack'][-1]
@@ -101,14 +98,10 @@ class StoryProcessor:
         waiting_for = None
         story_line = compiled_story.story_line
 
-        logger.debug('current_story {} ({})'.format(current_story, len(story_line)))
-
         # integrate over parts of story
         for step, story_part in enumerate(story_line[start_step:], start_step):
-            logger.debug('')
-            logger.debug('  next iteration of {}'.format(current_story['topic']))
-            logger.debug('      step = {} ({})'.format(step, len(story_line)))
-            logger.debug('      session {}'.format(session['stack']))
+            logger.debug('# in a loop')
+            logger.debug(ctx)
 
             current_story['step'] = step
 
@@ -121,7 +114,6 @@ class StoryProcessor:
             # check whether it could be new scope
             # TODO: it could be done at StoryPartFork.__call__
             if isinstance(story_part, forking.StoryPartFork):
-                logger.debug('  it could be new scope')
                 child_story = None
 
                 if isinstance(waiting_for, forking.SwitchOnValue):
@@ -139,14 +131,14 @@ class StoryProcessor:
                     self.may_drop_scope(child_story, message['session']['stack'], waiting_for)
                     break
 
-            logger.debug('  going to call: {}'.format(story_part.__name__))
+            logger.debug('#  going to call: {}'.format(story_part.__name__))
 
             waiting_for = story_part(message)
 
             if inspect.iscoroutinefunction(story_part):
                 waiting_for = await waiting_for
 
-            logger.debug('  got result {}'.format(waiting_for))
+            logger.debug('#  got result {}'.format(waiting_for))
 
             if waiting_for and not isinstance(waiting_for, forking.SwitchOnValue):
                 if isinstance(waiting_for, callable.EndOfStory):
