@@ -66,6 +66,8 @@ class CallableNodeWrapper:
                                                           # compiled_story=self.ast_node,
                                                           )
 
+        ctx = story_context.scope_out(ctx)
+
         if isinstance(ctx.waiting_for, EndOfStory):
             return ctx.waiting_for.data
         return ctx.waiting_for

@@ -40,24 +40,33 @@ class StoryContext:
     def is_tail_of_story(self):
         return self.stack_tail()['step'] >= len(self.compiled_story().story_line) - 1
 
+    def has_child_story(self):
+        return self.get_child_story() is not None
+
     def get_child_story(self):
         """
         try child story that match message and get scope of it
         :return:
         """
         stack_tail = self.stack_tail()
+        logger.debug('self.compiled_story().story_line')
+        logger.debug(self.compiled_story().story_line)
+        logger.debug("stack_tail['step']")
+        logger.debug(stack_tail['step'])
         story_part = self.compiled_story().story_line[stack_tail['step']]
+
+        if not hasattr(story_part, 'get_child_by_validation_result'):
+            return None
 
         if isinstance(self.waiting_for, forking.SwitchOnValue):
             return story_part.get_child_by_validation_result(self.waiting_for.value)
 
-        validator = matchers.deserialize(stack_tail['data'])
-        validation_result = validator.validate(self.message)
-
-        if hasattr(story_part, 'get_child_by_validation_result'):
+        if stack_tail['data'] is not None:
+            validator = matchers.deserialize(stack_tail['data'])
+            validation_result = validator.validate(self.message)
             return story_part.get_child_by_validation_result(validation_result)
-        else:
-            return None
+
+        return None
 
     def user(self):
         return self.message['user']

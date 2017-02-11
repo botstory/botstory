@@ -73,7 +73,7 @@ class StoryProcessor:
 
                 ctx = story_context.scope_out(ctx)
 
-            if ctx.get_child_story():
+            if ctx.has_child_story():
                 ctx = story_context.scope_in(ctx)
 
             ctx = await self.process_story(ctx)
@@ -108,19 +108,11 @@ class StoryProcessor:
                 story_part_name=story_part.__name__,
             )
 
-            # check whether it could be new scope
-            # TODO: it could be done at StoryPartFork.__call__
-            if isinstance(story_part, forking.StoryPartFork):
-                child_story = None
-
-                if isinstance(ctx.waiting_for, forking.SwitchOnValue):
-                    child_story = story_part.get_child_by_validation_result(ctx.waiting_for.value)
-
-                if child_story:
-                    ctx = story_context.scope_in(ctx)
-                    ctx = await self.process_story(ctx)
-                    ctx = story_context.scope_out(ctx)
-                    break
+            if ctx.has_child_story():
+                ctx = story_context.scope_in(ctx)
+                ctx = await self.process_story(ctx)
+                ctx = story_context.scope_out(ctx)
+                break
 
             logger.debug('#  going to call: {}'.format(story_part.__name__))
 

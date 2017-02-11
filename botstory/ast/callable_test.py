@@ -2,6 +2,7 @@ import logging
 import pytest
 import random
 
+from botstory.ast import callable
 from .. import EndOfStory, Story, SwitchOnValue
 from ..utils import answer, build_fake_session, build_fake_user, SimpleTrigger
 
@@ -195,6 +196,7 @@ async def test_call_story_from_another_callable():
         def so(ctx):
             logger.debug('[!] def so(cxt):')
             trigger_1.passed()
+            return callable.EndOfStory()
 
     # push extra parameter with session
     # and it will propagate up to other story as well
