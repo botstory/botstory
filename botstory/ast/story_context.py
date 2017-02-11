@@ -57,6 +57,9 @@ class StoryContext:
         else:
             return None
 
+    def user(self):
+        return self.message['user']
+
     def to_json(self):
         return {
             'message': self.message,

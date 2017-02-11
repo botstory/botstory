@@ -37,12 +37,12 @@ class StoryProcessor:
         logger.debug('')
         logger.debug(message)
 
-        ctx = story_context.StoryContext(message, self.library)
-
         self.tracker.new_message(
             user=message and message['user'],
             data=message['data'],
         )
+
+        ctx = story_context.StoryContext(message, self.library)
 
         if ctx.is_empty_stack():
             if not ctx.does_it_match_any_story():
@@ -88,26 +88,23 @@ class StoryProcessor:
         logger.debug('')
         logger.debug(ctx)
 
-        message = ctx.message
         compiled_story = ctx.compiled_story()
 
-        session = message['session']
-        current_story = session['stack'][-1]
+        current_story = ctx.message['session']['stack'][-1]
         start_step = current_story['step']
         step = start_step
-        waiting_for = None
-        story_line = compiled_story.story_line
 
         # integrate over parts of story
-        for step, story_part in enumerate(story_line[start_step:], start_step):
+        for step, story_part in enumerate(compiled_story.story_line[start_step:], start_step):
             logger.debug('# in a loop')
             logger.debug(ctx)
 
+            # TODO: don't mutate! should use reducer instead
             current_story['step'] = step
 
             self.tracker.story(
-                user=message and message['user'],
-                story_name=current_story['topic'],
+                user=ctx.user(),
+                story_name=ctx.stack()[-1]['topic'],
                 story_part_name=story_part.__name__,
             )
 
@@ -116,48 +113,51 @@ class StoryProcessor:
             if isinstance(story_part, forking.StoryPartFork):
                 child_story = None
 
-                if isinstance(waiting_for, forking.SwitchOnValue):
-                    child_story = story_part.get_child_by_validation_result(waiting_for.value)
+                if isinstance(ctx.waiting_for, forking.SwitchOnValue):
+                    child_story = story_part.get_child_by_validation_result(ctx.waiting_for.value)
 
                 if child_story:
                     # TODO: don't mutate! should use reducer instead
-                    ctx.waiting_for = waiting_for
                     # ctx = story_context.scope_in(ctx)
-                    self.build_new_scope(message['session']['stack'], child_story)
+                    self.build_new_scope(ctx.message['session']['stack'], child_story)
 
                     ctx = await self.process_story(ctx)
-                    waiting_for = ctx.waiting_for
+
+                    # TODO: don't mutate! should use reducer instead
                     # ctx = story_context.scope_out(ctx)
-                    self.may_drop_scope(child_story, message['session']['stack'], waiting_for)
+                    self.may_drop_scope(child_story, ctx.message['session']['stack'], ctx.waiting_for)
                     break
 
             logger.debug('#  going to call: {}'.format(story_part.__name__))
 
-            waiting_for = story_part(message)
+            # TODO: don't mutate! should use reducer instead
+            ctx.waiting_for = story_part(ctx.message)
 
             if inspect.iscoroutinefunction(story_part):
-                waiting_for = await waiting_for
+                # TODO: don't mutate! should use reducer instead
+                ctx.waiting_for = await ctx.waiting_for
 
-            logger.debug('#  got result {}'.format(waiting_for))
+            logger.debug('#  got result {}'.format(ctx.waiting_for))
 
-            if waiting_for and not isinstance(waiting_for, forking.SwitchOnValue):
-                if isinstance(waiting_for, callable.EndOfStory):
-                    if message:
-                        if isinstance(waiting_for.data, dict):
-                            message['data'] = {**message['data'], **waiting_for.data}
+            if ctx.waiting_for and not isinstance(ctx.waiting_for, forking.SwitchOnValue):
+                if isinstance(ctx.waiting_for, callable.EndOfStory):
+                    # TODO: don't mutate! should use reducer instead
+                    if ctx.message:
+                        if isinstance(ctx.waiting_for.data, dict):
+                            ctx.message['data'] = {**ctx.message['data'], **ctx.waiting_for.data}
                         else:
-                            message['data'] = waiting_for.data
+                            ctx.message['data'] = ctx.waiting_for.data
                 else:
+                    # TODO: don't mutate! should use reducer instead
                     current_story['data'] = matchers.serialize(
-                        matchers.get_validator(waiting_for)
+                        matchers.get_validator(ctx.waiting_for)
                     )
                 # should wait for new message income
                 break
 
+        # TODO: don't mutate! should use reducer instead
         current_story['step'] = step + 1
 
-        # TODO: don't mutate! should use reducer instead
-        ctx.waiting_for = waiting_for
         return ctx
 
     def build_new_scope(self, stack, new_ctx_story):
