@@ -85,7 +85,7 @@ class StoryProcessor:
 
         compiled_story = ctx.compiled_story()
         current_story = ctx.stack_tail()
-        start_step = current_story['step']
+        start_step = ctx.stack_tail()['step']
         step = start_step
 
         # integrate over parts of story
@@ -94,7 +94,7 @@ class StoryProcessor:
             logger.debug(ctx)
 
             # TODO: don't mutate! should use reducer instead
-            current_story['step'] = step
+            ctx.stack_tail()['step'] = step
 
             self.tracker.story(
                 user=ctx.user(),
@@ -122,7 +122,7 @@ class StoryProcessor:
                         ctx.message['data'] = ctx.waiting_for.data
                 else:
                     # TODO: don't mutate! should use reducer instead
-                    current_story['data'] = matchers.serialize(
+                    ctx.stack_tail()['data'] = matchers.serialize(
                         matchers.get_validator(ctx.waiting_for)
                     )
                 # should wait for new message income
