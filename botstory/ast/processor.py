@@ -84,8 +84,7 @@ class StoryProcessor:
         logger.debug(ctx)
 
         compiled_story = ctx.compiled_story()
-
-        current_story = ctx.message['session']['stack'][-1]
+        current_story = ctx.stack_tail()
         start_step = current_story['step']
         step = start_step
 
@@ -117,11 +116,10 @@ class StoryProcessor:
             if ctx.waiting_for and not isinstance(ctx.waiting_for, forking.SwitchOnValue):
                 if isinstance(ctx.waiting_for, callable.EndOfStory):
                     # TODO: don't mutate! should use reducer instead
-                    if ctx.message:
-                        if isinstance(ctx.waiting_for.data, dict):
-                            ctx.message['data'] = {**ctx.message['data'], **ctx.waiting_for.data}
-                        else:
-                            ctx.message['data'] = ctx.waiting_for.data
+                    if isinstance(ctx.waiting_for.data, dict):
+                        ctx.message['data'] = {**ctx.message['data'], **ctx.waiting_for.data}
+                    else:
+                        ctx.message['data'] = ctx.waiting_for.data
                 else:
                     # TODO: don't mutate! should use reducer instead
                     current_story['data'] = matchers.serialize(
