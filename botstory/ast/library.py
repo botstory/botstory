@@ -1,10 +1,14 @@
 import logging
 import json
 
-from . import parser, forking
+from . import forking
 from .. import di
 
 logger = logging.getLogger(__name__)
+
+
+class DuplicationException(Exception):
+    pass
 
 
 class StoriesScope:
@@ -12,6 +16,8 @@ class StoriesScope:
         self.stories = []
 
     def add(self, story):
+        if self.by_topic(story.topic):
+            raise DuplicationException('We already have topic {}'.format(story.topic))
         self.stories.append(story)
 
     def all_filters(self):
@@ -85,7 +91,7 @@ class StoriesLibrary:
 
         # TODO: should it be:
         # parent = self.get_story_by_topic(stack[-1]['topic'], stack[:-1])
-        parent = self.get_story_by_topic(stack[-1]['topic'], stack[:-2])
+        parent = self.get_story_by_topic(stack[-1]['topic'], stack[:-1])
         if not parent:
             return None
         inner_stories = [

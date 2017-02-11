@@ -601,7 +601,7 @@ async def test_switch_inside_of_callable_inside_of_switch():
         def room_1():
             @story.part()
             async def meet_dragon(message):
-                return await cast_the_magic(message['user'], session=session)
+                return await cast_the_magic(user=message['user'], session=session)
 
             @story.part()
             def store_end(message):
@@ -611,7 +611,7 @@ async def test_switch_inside_of_callable_inside_of_switch():
         def room_2():
             @story.part()
             async def meet_ogr(message):
-                return await cast_the_magic(message['user'], session=session)
+                return await cast_the_magic(user=message['user'], session=session)
 
             @story.part()
             def store_end(message):

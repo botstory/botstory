@@ -1,4 +1,7 @@
+import logging
 from .. import matchers, middlewares
+
+logger = logging.getLogger(__name__)
 
 
 class CommonStoriesAPI:
