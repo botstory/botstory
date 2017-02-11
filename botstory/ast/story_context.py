@@ -49,10 +49,6 @@ class StoryContext:
         :return:
         """
         stack_tail = self.stack_tail()
-        logger.debug('self.compiled_story().story_line')
-        logger.debug(self.compiled_story().story_line)
-        logger.debug("stack_tail['step']")
-        logger.debug(stack_tail['step'])
         story_part = self.compiled_story().story_line[stack_tail['step']]
 
         if not hasattr(story_part, 'get_child_by_validation_result'):

@@ -50,9 +50,7 @@ class StoryProcessor:
                 return None
 
             ctx = story_context.scope_in(ctx)
-
             ctx = await self.process_story(ctx)
-
             ctx = story_context.scope_out(ctx)
 
         while not ctx.is_waiting_for_input() and not ctx.is_empty_stack():
@@ -75,9 +73,7 @@ class StoryProcessor:
 
             if ctx.has_child_story():
                 ctx = story_context.scope_in(ctx)
-
             ctx = await self.process_story(ctx)
-
             ctx = story_context.scope_out(ctx)
 
         return ctx.waiting_for
@@ -145,29 +141,3 @@ class StoryProcessor:
         current_story['step'] = step + 1
 
         return ctx
-
-    def build_new_scope(self, stack, new_ctx_story):
-        """
-        - build new scope on the top of stack
-        - and current scope will wait for it result
-
-        :param stack:
-        :param new_ctx_story:
-        :return:
-        """
-        if len(stack) > 0:
-            last_stack_item = stack[-1]
-            last_stack_item['step'] += 1
-            last_stack_item['data'] = matchers.serialize(callable.WaitForReturn())
-
-        logger.debug('[>] going deeper')
-        stack.append(stack_utils.build_empty_stack_item(
-            new_ctx_story.topic
-        ))
-
-    def may_drop_scope(self, compiled_story, stack, waiting_for):
-        # we reach the end of story line
-        # so we could collapse previous scope and related stack item
-        if stack[-1]['step'] >= len(compiled_story.story_line) - 1 and not waiting_for:
-            logger.debug('[<] return')
-            stack.pop()

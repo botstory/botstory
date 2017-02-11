@@ -36,16 +36,16 @@ class CallableNodeWrapper:
     helps start processing callable story
     """
 
-    def __init__(self, ast_node, library, processor_instance):
+    def __init__(self, ast_node, library, processor):
         self.library = library
         self.ast_node = ast_node
-        self.processor_instance = processor_instance
+        self.processor = processor
 
     async def startpoint(self, *args, **kwargs):
-        if 'session' not in kwargs:
+        if {'session', 'user'} > set(kwargs):
             raise AttributeError('Got {} and {}. Should pass session as well'.format(args, kwargs))
 
-        # TODO: get session from context
+        # TODO: should get session from context
         session = kwargs.pop('session')
 
         # we are going deeper so prepare one more item in stack
@@ -53,19 +53,11 @@ class CallableNodeWrapper:
         session['stack'].append(stack_utils.build_empty_stack_item(self.ast_node.topic))
         ctx = story_context.StoryContext(message={
             'session': session,
-            # TODO: get user from context
+            # TODO: should get user from context
             'user': kwargs.pop('user'),
             'data': kwargs,
         }, library=self.library)
-        ctx = await self.processor_instance.process_story(ctx=ctx,
-                                                          # session=session,
-                                                          # we don't have message yet
-                                                          # TODO: 1st it should be context
-                                                          # and it should be ever for callable
-                                                          # message=None,
-                                                          # compiled_story=self.ast_node,
-                                                          )
-
+        ctx = await self.processor.process_story(ctx=ctx)
         ctx = story_context.scope_out(ctx)
 
         if isinstance(ctx.waiting_for, EndOfStory):
