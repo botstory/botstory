@@ -1,5 +1,5 @@
 from botstory import matchers
-from botstory.ast import callable, stack_utils
+from botstory.ast import callable, forking, stack_utils
 import logging
 import inspect
 
@@ -14,6 +14,19 @@ async def execute(ctx):
 
     # TODO: don't mutate! should use reducer instead
     ctx.waiting_for = waiting_for
+
+    if ctx.waiting_for and not isinstance(ctx.waiting_for, forking.SwitchOnValue):
+        if isinstance(ctx.waiting_for, callable.EndOfStory):
+            # TODO: don't mutate! should use reducer instead
+            if isinstance(ctx.waiting_for.data, dict):
+                ctx.message['data'] = {**ctx.message['data'], **ctx.waiting_for.data}
+            else:
+                ctx.message['data'] = ctx.waiting_for.data
+        else:
+            # TODO: don't mutate! should use reducer instead
+            ctx.stack_tail()['data'] = matchers.serialize(
+                matchers.get_validator(ctx.waiting_for)
+            )
     return ctx
 
 
