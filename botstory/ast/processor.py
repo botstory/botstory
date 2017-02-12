@@ -83,23 +83,22 @@ class StoryProcessor:
         logger.debug('')
         logger.debug(ctx)
 
-        compiled_story = ctx.compiled_story()
         current_story = ctx.stack_tail()
-        start_step = ctx.stack_tail()['step']
-        step = start_step
+        step = ctx.stack_tail()['step']
 
         # integrate over parts of story
-        for step, story_part in enumerate(compiled_story.story_line[start_step:], start_step):
+        for ctx in story_context.reducers.iterate_through_storyline(ctx):
             logger.debug('# in a loop')
             logger.debug(ctx)
 
             # TODO: don't mutate! should use reducer instead
-            ctx.stack_tail()['step'] = step
+            ctx.stack_tail()['step'] = ctx.step
+            step = ctx.step
 
             self.tracker.story(
                 user=ctx.user(),
                 story_name=ctx.stack()[-1]['topic'],
-                story_part_name=story_part.__name__,
+                story_part_name=ctx.get_current_story_part().__name__,
             )
 
             if ctx.has_child_story():
@@ -108,8 +107,8 @@ class StoryProcessor:
                 ctx = story_context.reducers.scope_out(ctx)
                 break
 
-            logger.debug('#  going to call: {}'.format(story_part.__name__))
-            ctx = await story_context.reducers.execute(ctx, story_part)
+            logger.debug('#  going to call: {}'.format(ctx.get_current_story_part().__name__))
+            ctx = await story_context.reducers.execute(ctx)
 
             logger.debug('#  got result {}'.format(ctx.waiting_for))
 

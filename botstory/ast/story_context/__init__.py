@@ -12,6 +12,7 @@ class StoryContext:
     def __init__(self, message, library):
         self.library = library
         self.message = message
+        self.step = 0
         self.waiting_for = None
 
     def is_empty_stack(self):
@@ -44,6 +45,9 @@ class StoryContext:
 
     def has_child_story(self):
         return self.get_child_story() is not None
+
+    def get_current_story_part(self):
+        return self.compiled_story().story_line[self.step]
 
     def get_child_story(self):
         """

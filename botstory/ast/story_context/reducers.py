@@ -6,7 +6,8 @@ import inspect
 logger = logging.getLogger(__name__)
 
 
-async def execute(ctx, story_part):
+async def execute(ctx):
+    story_part = ctx.get_current_story_part()
     waiting_for = story_part(ctx.message)
     if inspect.iscoroutinefunction(story_part):
         waiting_for = await waiting_for
@@ -14,6 +15,16 @@ async def execute(ctx, story_part):
     # TODO: don't mutate! should use reducer instead
     ctx.waiting_for = waiting_for
     return ctx
+
+
+def iterate_through_storyline(ctx):
+    start_step = ctx.stack_tail()['step']
+
+    for step, story_part in enumerate(ctx.compiled_story().story_line[start_step:], start_step):
+        # TODO: should make it immutable
+        ctx.step = step
+        ctx.story_part = story_part
+        yield ctx
 
 
 # TODO: should make it immutable
