@@ -18,9 +18,22 @@ class StoryContext:
     def is_empty_stack(self):
         return len(self.stack()) == 0
 
-    def is_waiting_for_input(self):
+    def could_scope_out(self):
+        """
+        could bubble up from current scope
+
+        :return:
+        """
         return self.waiting_for and \
                not isinstance(self.waiting_for, callable.EndOfStory)
+
+    def is_waiting_for_input(self):
+        """
+        could make one step further
+        :return:
+        """
+        return self.waiting_for and \
+               not isinstance(self.waiting_for, forking.SwitchOnValue)
 
     def compiled_story(self):
         if self.is_empty_stack():
@@ -76,10 +89,11 @@ class StoryContext:
     def to_json(self):
         return {
             'message': self.message,
-            'waiting_for':  str(self.waiting_for),
+            'waiting_for': str(self.waiting_for),
         }
 
     def __repr__(self):
         return json.dumps(self.to_json())
+
 
 __all__ = [reducers, StoryContext]

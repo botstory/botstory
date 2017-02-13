@@ -79,7 +79,7 @@ def scope_out(ctx):
     """
     # we reach the end of story line
     # so we could collapse previous scope and related stack item
-    if ctx.is_tail_of_story() and not ctx.is_waiting_for_input():
+    if ctx.is_tail_of_story() and not ctx.could_scope_out():
         logger.debug('# [<] return')
         # TODO: !
         ctx.stack().pop()

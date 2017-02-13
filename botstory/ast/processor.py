@@ -1,5 +1,5 @@
-from botstory import di, matchers
-from botstory.ast import callable, forking, story_context
+from botstory import di
+from botstory.ast import story_context
 from botstory.integrations import mocktracker
 
 import logging
@@ -52,7 +52,7 @@ class StoryProcessor:
             ctx = await self.process_story(ctx)
             ctx = story_context.reducers.scope_out(ctx)
 
-        while not ctx.is_waiting_for_input() and not ctx.is_empty_stack():
+        while not ctx.could_scope_out() and not ctx.is_empty_stack():
             logger.debug('# in a loop')
             logger.debug(ctx)
 
@@ -111,7 +111,7 @@ class StoryProcessor:
             ctx = await story_context.reducers.execute(ctx)
             logger.debug('#  got result {}'.format(ctx.waiting_for))
 
-            if ctx.waiting_for and not isinstance(ctx.waiting_for, forking.SwitchOnValue):
+            if ctx.is_waiting_for_input():
                 break
 
         # TODO: don't mutate! should use reducer instead
