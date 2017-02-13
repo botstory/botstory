@@ -34,9 +34,8 @@ def iterate_through_storyline(ctx):
     start_step = ctx.stack_tail()['step']
 
     for step, story_part in enumerate(ctx.compiled_story().story_line[start_step:], start_step):
-        # TODO: should make it immutable
+        # TODO: should use reducer instead
         ctx.step = step
-        ctx.story_part = story_part
         yield ctx
 
 

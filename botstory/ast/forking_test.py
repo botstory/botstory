@@ -559,62 +559,62 @@ async def test_switch_inside_of_callable_inside_of_switch():
     @story.callable()
     def cast_the_magic():
         @story.part()
-        async def ask_kind_of_spell(user):
-            return await story.ask('What kind of spell do you cast?', user=user)
+        async def ask_kind_of_spell(ctx):
+            return await story.ask('What kind of spell do you cast?', user=ctx['user'])
 
         @story.part()
-        def switch_by_kind_of_spell(message):
-            return forking.SwitchOnValue(message['data']['text']['raw'])
+        def switch_by_kind_of_spell(ctx):
+            return forking.SwitchOnValue(ctx['data']['text']['raw'])
 
         @story.case(equal_to='fireball')
         def fireball():
             @story.part()
-            async def power_of_spell(message):
-                spell_type.receive(message['data']['text']['raw'])
-                return await story.ask('What is the power of fireball?', user=message['user'])
+            async def power_of_spell(ctx):
+                spell_type.receive(ctx['data']['text']['raw'])
+                return await story.ask('What is the power of fireball?', user=ctx['user'])
 
         @story.case(equal_to='lightning')
         def lightning():
             @story.part()
-            async def power_of_spell(message):
-                spell_type.receive(message['data']['text']['raw'])
-                return await story.ask('What is the power of lightning?', user=message['user'])
+            async def power_of_spell(ctx):
+                spell_type.receive(ctx['data']['text']['raw'])
+                return await story.ask('What is the power of lightning?', user=ctx['user'])
 
         @story.part()
-        def store_power(message):
-            spell_power.receive(message['data']['text']['raw'])
+        def store_power(ctx):
+            spell_power.receive(ctx['data']['text']['raw'])
 
     @story.on('enter')
     def dungeon():
         @story.part()
-        async def ask_direction(message):
+        async def ask_direction(ctx):
             return await story.ask(
                 'Where do you go?',
-                user=message['user']
+                user=ctx['user']
             )
 
         @story.part()
-        def parser_direction(message):
-            return forking.SwitchOnValue(message['data']['text']['raw'])
+        def parser_direction(ctx):
+            return forking.SwitchOnValue(ctx['data']['text']['raw'])
 
         @story.case(equal_to='left')
         def room_1():
             @story.part()
-            async def meet_dragon(message):
-                return await cast_the_magic(user=message['user'], session=session)
+            async def meet_dragon(ctx):
+                return await cast_the_magic(session=ctx['session'], user=ctx['user'])
 
             @story.part()
-            def store_end(message):
+            def store_end(ctx):
                 visited_rooms.receive(visited_rooms.value + 1)
 
         @story.case(equal_to='right')
         def room_2():
             @story.part()
-            async def meet_ogr(message):
-                return await cast_the_magic(user=message['user'], session=session)
+            async def meet_ogr(ctx):
+                return await cast_the_magic(user=ctx['user'], session=session)
 
             @story.part()
-            def store_end(message):
+            def store_end(ctx):
                 visited_rooms.receive(visited_rooms.value + 1)
 
     await answer.pure_text('enter', session, user, story)
