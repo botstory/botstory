@@ -57,7 +57,7 @@ class CallableNodeWrapper:
             'user': kwargs.pop('user'),
             'data': kwargs,
         }, library=self.library)
-        ctx = await self.processor.process_story(ctx=ctx)
+        ctx = await self.processor.process_story(ctx)
         ctx = story_context.reducers.scope_out(ctx)
 
         if isinstance(ctx.waiting_for, EndOfStory):

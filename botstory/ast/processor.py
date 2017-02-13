@@ -84,33 +84,33 @@ class StoryProcessor:
         logger.debug(ctx)
 
         # integrate over parts of story
-        for ctx in story_context.reducers.iterate_through_storyline(ctx):
+        for story_part_ctx in story_context.reducers.iterate_through_storyline(ctx):
             logger.debug('# in a loop')
-            logger.debug(ctx)
+            logger.debug(story_part_ctx)
 
             # TODO: don't mutate! should use reducer instead
-            ctx.stack_tail()['step'] = ctx.step
+            story_part_ctx.stack_tail()['step'] = story_part_ctx.step
 
             self.tracker.story(
-                user=ctx.user(),
-                story_name=ctx.stack()[-1]['topic'],
-                story_part_name=ctx.get_current_story_part().__name__,
+                user=story_part_ctx.user(),
+                story_name=story_part_ctx.stack()[-1]['topic'],
+                story_part_name=story_part_ctx.get_current_story_part().__name__,
             )
 
-            if ctx.has_child_story():
-                ctx = story_context.reducers.scope_in(ctx)
-                ctx = await self.process_story(ctx)
-                ctx = story_context.reducers.scope_out(ctx)
+            if story_part_ctx.has_child_story():
+                story_part_ctx = story_context.reducers.scope_in(story_part_ctx)
+                story_part_ctx = await self.process_story(story_part_ctx)
+                ctx = story_context.reducers.scope_out(story_part_ctx)
                 break
 
             # TODO: don't mutate! should use reducer instead
-            ctx.stack_tail()['step'] = ctx.step + 1
+            story_part_ctx.stack_tail()['step'] = story_part_ctx.step + 1
 
-            logger.debug('#  going to call: {}'.format(ctx.get_current_story_part().__name__))
-            ctx = await story_context.reducers.execute(ctx)
-            logger.debug('#  got result {}'.format(ctx.waiting_for))
+            logger.debug('#  going to call: {}'.format(story_part_ctx.get_current_story_part().__name__))
+            story_part_ctx = await story_context.reducers.execute(story_part_ctx)
+            logger.debug('#  got result {}'.format(story_part_ctx.waiting_for))
 
-            if ctx.is_waiting_for_input():
+            if story_part_ctx.is_waiting_for_input():
                 break
 
         logger.debug('# return from process_story')
