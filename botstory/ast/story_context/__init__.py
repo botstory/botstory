@@ -14,8 +14,11 @@ class StoryContext:
         self.message = message
         self.waiting_for = None
 
-    def is_empty_stack(self):
-        return len(self.stack()) == 0
+    def compiled_story(self):
+        if self.is_empty_stack():
+            return self.library.get_global_story(self.message)
+        else:
+            return self.library.get_story_by_topic(self.stack_tail()['topic'], stack=self.stack()[:-1])
 
     def could_scope_out(self):
         """
@@ -29,6 +32,18 @@ class StoryContext:
     def current_step(self):
         return self.stack_tail()['step']
 
+    def does_it_match_any_story(self):
+        return self.compiled_story() is not None
+
+    def is_empty_stack(self):
+        return len(self.stack()) == 0
+
+    def is_end_of_story(self):
+        return self.current_step() >= len(self.compiled_story().story_line)
+
+    def is_tail_of_story(self):
+        return self.current_step() >= len(self.compiled_story().story_line) - 1
+
     def is_waiting_for_input(self):
         """
         could make one step further
@@ -36,33 +51,6 @@ class StoryContext:
         """
         return self.waiting_for and \
                not isinstance(self.waiting_for, forking.SwitchOnValue)
-
-    def compiled_story(self):
-        if self.is_empty_stack():
-            return self.library.get_global_story(self.message)
-        else:
-            return self.library.get_story_by_topic(self.stack_tail()['topic'], stack=self.stack()[:-1])
-
-    def stack(self):
-        return self.message['session']['stack']
-
-    def stack_tail(self):
-        return self.stack()[-1]
-
-    def is_end_of_story(self):
-        return self.current_step() >= len(self.compiled_story().story_line)
-
-    def does_it_match_any_story(self):
-        return self.compiled_story() is not None
-
-    def is_tail_of_story(self):
-        return self.current_step() >= len(self.compiled_story().story_line) - 1
-
-    def has_child_story(self):
-        return self.get_child_story() is not None
-
-    def get_current_story_part(self):
-        return self.compiled_story().story_line[self.current_step()]
 
     def get_child_story(self):
         """
@@ -85,14 +73,26 @@ class StoryContext:
 
         return None
 
-    def user(self):
-        return self.message['user']
+    def get_current_story_part(self):
+        return self.compiled_story().story_line[self.current_step()]
+
+    def has_child_story(self):
+        return self.get_child_story() is not None
+
+    def stack(self):
+        return self.message['session']['stack']
+
+    def stack_tail(self):
+        return self.stack()[-1]
 
     def to_json(self):
         return {
             'message': self.message,
             'waiting_for': str(self.waiting_for),
         }
+
+    def user(self):
+        return self.message['user']
 
     def __repr__(self):
         return json.dumps(self.to_json())
