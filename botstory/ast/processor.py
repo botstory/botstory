@@ -85,11 +85,7 @@ class StoryProcessor:
             logger.debug('# in a loop')
             logger.debug(story_part_ctx)
 
-            self.tracker.story(
-                user=story_part_ctx.user(),
-                story_name=story_part_ctx.stack()[-1]['topic'],
-                story_part_name=story_part_ctx.get_current_story_part().__name__,
-            )
+            self.tracker.story(ctx)
 
             if story_part_ctx.has_child_story():
                 story_part_ctx = story_context.reducers.scope_in(story_part_ctx)

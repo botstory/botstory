@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 @di.desc('tracker', reg=False)
 class GAStatistics:
-
     def __init__(self,
                  tracking_id=None,
                  story_tracking_template='{story}/{part}',
@@ -55,7 +54,11 @@ class GAStatistics:
                               )
         )
 
-    def story(self, user, story_name, story_part_name):
+    def story(self, ctx):
+        user = ctx.user()
+        story_name = ctx.stack()[-1]['topic']
+        story_part_name = ctx.get_current_story_part().__name__
+
         queue.add(
             functools.partial(self.get_tracker(user).send,
                               'pageview', self.story_tracking_template.format(story=story_name,
