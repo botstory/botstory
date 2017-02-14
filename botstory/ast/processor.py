@@ -36,12 +36,9 @@ class StoryProcessor:
         logger.debug('')
         logger.debug(message)
 
-        self.tracker.new_message(
-            user=message and message['user'],
-            data=message['data'],
-        )
-
         ctx = story_context.StoryContext(message, self.library)
+
+        self.tracker.new_message(ctx)
 
         if ctx.is_empty_stack():
             if not ctx.does_it_match_any_story():

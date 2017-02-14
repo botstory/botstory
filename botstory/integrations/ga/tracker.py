@@ -63,7 +63,9 @@ class GAStatistics:
                               )
         )
 
-    def new_message(self, user, data):
+    def new_message(self, ctx):
+        user = ctx.message['user']
+        data = ctx.message['data']
         queue.add(
             functools.partial(self.get_tracker(user).send,
                               'pageview', self.new_message_tracking_template.format(data=json.dumps(data)),

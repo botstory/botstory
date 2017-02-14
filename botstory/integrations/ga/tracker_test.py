@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+from botstory.ast import story_context
 import json
 import pytest
 from unittest import mock
@@ -43,7 +44,11 @@ async def test_should_put_in_queue_new_message_tracker(tracker_mock):
     user = utils.build_fake_user()
     ga = GAStatistics(tracking_id='UA-XXXXX-Y')
 
-    ga.new_message(user, {'text': {'raw': 'hi!'}})
+    ga.new_message(
+        story_context.StoryContext(
+            {'user': user, 'data': {'text': {'raw': 'hi!'}}}, None
+        )
+    )
 
     await asyncio.sleep(0.1)
 
