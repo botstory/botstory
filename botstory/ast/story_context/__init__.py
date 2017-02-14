@@ -12,7 +12,6 @@ class StoryContext:
     def __init__(self, message, library):
         self.library = library
         self.message = message
-        self.step = 0
         self.waiting_for = None
 
     def is_empty_stack(self):
@@ -26,6 +25,9 @@ class StoryContext:
         """
         return self.waiting_for and \
                not isinstance(self.waiting_for, callable.EndOfStory)
+
+    def current_step(self):
+        return self.stack_tail()['step']
 
     def is_waiting_for_input(self):
         """
@@ -48,19 +50,19 @@ class StoryContext:
         return self.stack()[-1]
 
     def is_end_of_story(self):
-        return self.stack_tail()['step'] >= len(self.compiled_story().story_line)
+        return self.current_step() >= len(self.compiled_story().story_line)
 
     def does_it_match_any_story(self):
         return self.compiled_story() is not None
 
     def is_tail_of_story(self):
-        return self.stack_tail()['step'] >= len(self.compiled_story().story_line) - 1
+        return self.current_step() >= len(self.compiled_story().story_line) - 1
 
     def has_child_story(self):
         return self.get_child_story() is not None
 
     def get_current_story_part(self):
-        return self.compiled_story().story_line[self.step]
+        return self.compiled_story().story_line[self.current_step()]
 
     def get_child_story(self):
         """

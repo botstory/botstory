@@ -42,11 +42,10 @@ async def execute(ctx):
 
 
 def iterate_through_storyline(ctx):
-    start_step = ctx.stack_tail()['step']
+    start_step = ctx.current_step()
 
     for step, story_part in enumerate(ctx.compiled_story().story_line[start_step:], start_step):
         # TODO: should use reducer instead
-        ctx.step = step
         ctx.stack_tail()['step'] = step
         yield ctx
 
