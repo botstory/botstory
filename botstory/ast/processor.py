@@ -88,9 +88,6 @@ class StoryProcessor:
             logger.debug('# in a loop')
             logger.debug(story_part_ctx)
 
-            # TODO: don't mutate! should use reducer instead
-            story_part_ctx.stack_tail()['step'] = story_part_ctx.step
-
             self.tracker.story(
                 user=story_part_ctx.user(),
                 story_name=story_part_ctx.stack()[-1]['topic'],
@@ -103,15 +100,12 @@ class StoryProcessor:
                 ctx = story_context.reducers.scope_out(story_part_ctx)
                 break
 
-            # TODO: don't mutate! should use reducer instead
-            story_part_ctx.stack_tail()['step'] = story_part_ctx.step + 1
-
             logger.debug('#  going to call: {}'.format(story_part_ctx.get_current_story_part().__name__))
             story_part_ctx = await story_context.reducers.execute(story_part_ctx)
             logger.debug('#  got result {}'.format(story_part_ctx.waiting_for))
 
             if story_part_ctx.is_waiting_for_input():
-                break
+                return story_part_ctx
 
         logger.debug('# return from process_story')
         return ctx

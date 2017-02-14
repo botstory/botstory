@@ -7,6 +7,14 @@ logger = logging.getLogger(__name__)
 
 
 async def execute(ctx):
+    """
+    execute story part at the current context
+    and make one step further
+
+    :param ctx:
+    :return:
+    """
+    tail = ctx.stack_tail()
     story_part = ctx.get_current_story_part()
     waiting_for = story_part(ctx.message)
     if inspect.iscoroutinefunction(story_part):
@@ -15,7 +23,10 @@ async def execute(ctx):
     # TODO: don't mutate! should use reducer instead
     ctx.waiting_for = waiting_for
 
-    if ctx.waiting_for and not isinstance(ctx.waiting_for, forking.SwitchOnValue):
+    # TODO: don't mutate! should use reducer instead
+    # (cold be after if ctx.is_waiting_for_input():)
+    tail['step'] += 1
+    if ctx.is_waiting_for_input():
         if isinstance(ctx.waiting_for, callable.EndOfStory):
             # TODO: don't mutate! should use reducer instead
             if isinstance(ctx.waiting_for.data, dict):
@@ -36,6 +47,7 @@ def iterate_through_storyline(ctx):
     for step, story_part in enumerate(ctx.compiled_story().story_line[start_step:], start_step):
         # TODO: should use reducer instead
         ctx.step = step
+        ctx.stack_tail()['step'] = step
         yield ctx
 
 
