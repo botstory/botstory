@@ -9,10 +9,15 @@ logger = logging.getLogger(__name__)
 
 
 class StoryContext:
-    def __init__(self, message, library):
+    def __init__(self, message, library, waiting_for=None):
         self.library = library
         self.message = message
-        self.waiting_for = None
+        self.waiting_for = waiting_for
+
+    def clone(self):
+        return StoryContext(self.message,
+                            self.library,
+                            self.waiting_for)
 
     def compiled_story(self):
         if self.is_empty_stack():

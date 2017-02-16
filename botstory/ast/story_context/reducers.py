@@ -1,5 +1,5 @@
 from botstory import matchers
-from botstory.ast import callable, forking, stack_utils
+from botstory.ast import callable, stack_utils, story_context
 import logging
 import inspect
 
@@ -78,11 +78,11 @@ def scope_in(ctx):
     return ctx
 
 
-# TODO: should make it immutable
 def scope_out(ctx):
     """
-    drop last stack item if we have reach the end of stack
-    and don't wait any input
+    drop last stack item if:
+     - we have reach the end of stack
+     - and don't wait any input
 
     :param ctx:
     :return:
@@ -91,7 +91,7 @@ def scope_out(ctx):
     # so we could collapse previous scope and related stack item
     if ctx.is_tail_of_story() and not ctx.could_scope_out():
         logger.debug('# [<] return')
-        # TODO: !
-        ctx.stack().pop()
+        ctx = ctx.clone()
+        ctx.message['session']['stack'] = ctx.message['session']['stack'][:-1]
 
     return ctx
