@@ -40,6 +40,33 @@ class StoryContext:
     def does_it_match_any_story(self):
         return self.compiled_story() is not None
 
+    def get_child_story(self):
+        """
+        try child story that match message and get scope of it
+        :return:
+        """
+        story_part = self.get_current_story_part()
+
+        if not hasattr(story_part, 'get_child_by_validation_result'):
+            return None
+
+        if isinstance(self.waiting_for, forking.SwitchOnValue):
+            return story_part.get_child_by_validation_result(self.waiting_for.value)
+
+        stack_tail = self.stack_tail()
+        if stack_tail['data'] is not None:
+            validator = matchers.deserialize(stack_tail['data'])
+            validation_result = validator.validate(self.message)
+            return story_part.get_child_by_validation_result(validation_result)
+
+        return None
+
+    def get_current_story_part(self):
+        return self.compiled_story().story_line[self.current_step()]
+
+    def has_child_story(self):
+        return self.get_child_story() is not None
+
     def is_empty_stack(self):
         return len(self.stack()) == 0
 
@@ -56,33 +83,6 @@ class StoryContext:
         """
         return self.waiting_for and \
                not isinstance(self.waiting_for, forking.SwitchOnValue)
-
-    def get_child_story(self):
-        """
-        try child story that match message and get scope of it
-        :return:
-        """
-        stack_tail = self.stack_tail()
-        story_part = self.compiled_story().story_line[stack_tail['step']]
-
-        if not hasattr(story_part, 'get_child_by_validation_result'):
-            return None
-
-        if isinstance(self.waiting_for, forking.SwitchOnValue):
-            return story_part.get_child_by_validation_result(self.waiting_for.value)
-
-        if stack_tail['data'] is not None:
-            validator = matchers.deserialize(stack_tail['data'])
-            validation_result = validator.validate(self.message)
-            return story_part.get_child_by_validation_result(validation_result)
-
-        return None
-
-    def get_current_story_part(self):
-        return self.compiled_story().story_line[self.current_step()]
-
-    def has_child_story(self):
-        return self.get_child_story() is not None
 
     def stack(self):
         return self.message['session']['stack']

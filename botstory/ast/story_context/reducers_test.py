@@ -54,3 +54,19 @@ def test_scope_out_immutability(build_mock_context):
     })
     ctx_after = story_context.reducers.scope_out(ctx_before)
     assert ctx_after is not ctx_before
+
+
+def test_scope_in_immutability(build_mock_context):
+    ctx_before = build_mock_context({
+        'session': {
+            'stack': [{
+                'data': None,
+                'step': 2,
+                'topic': 'one_story',
+            }],
+        },
+        'user': None,
+        'data': None,
+    })
+    ctx_after = story_context.reducers.scope_out(ctx_before)
+    assert ctx_after is not ctx_before
