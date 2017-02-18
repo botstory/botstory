@@ -236,13 +236,13 @@ class FBInterface:
 
                             message['data'] = data
 
-                            await self.story_processor.match_message(message)
+                            message = await self.story_processor.match_message(message)
 
                     elif 'postback' in m:
                         message['data'] = {
                             'option': m['postback']['payload'],
                         }
-                        await self.story_processor.match_message(message)
+                        message = await self.story_processor.match_message(message)
                     elif 'delivery' in m:
                         logger.debug('delivery notification')
                     elif 'read' in m:

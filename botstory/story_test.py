@@ -48,62 +48,60 @@ async def test_should_run_sequence_of_parts():
 @pytest.mark.asyncio
 async def test_should_wait_for_answer_on_ask():
     trigger = SimpleTrigger()
-    session = build_fake_session()
-    user = build_fake_user()
 
-    global story
-    story = Story()
+    with answer.Talk() as talk:
+        say_pure_text = talk(answer.pure_text)
+        story = talk.story
 
-    @story.on('hi there!')
-    def one_story():
-        @story.part()
-        async def then(message):
-            return await story.ask('How are you?', user=message['user'])
+        @story.on('hi there!')
+        def one_story():
+            @story.part()
+            async def then(message):
+                return await story.ask('How are you?', user=message['user'])
 
-        @story.part()
-        def then(message):
-            trigger.passed()
+            @story.part()
+            def then(message):
+                trigger.passed()
 
-    await answer.pure_text('hi there!', session, user, story=story)
+        await say_pure_text('hi there!')
 
-    assert not trigger.is_triggered
+        assert not trigger.is_triggered
 
-    await answer.pure_text('Great!', session, user, story=story)
+        await say_pure_text('Great!')
 
-    assert trigger.is_triggered
+        assert trigger.is_triggered
 
 
 @pytest.mark.asyncio
 async def test_should_prevent_other_story_to_start_until_we_waiting_for_answer():
     trigger_1 = SimpleTrigger()
     trigger_2 = SimpleTrigger()
-    session = build_fake_session()
-    user = build_fake_user()
 
-    global story
-    story = Story()
+    with answer.Talk() as talk:
+        say_pure_text = talk(answer.pure_text)
+        story = talk.story
 
-    @story.on('hi there!')
-    def first_story():
-        @story.part()
-        async def then_ask(message):
-            return await story.ask('How are you?', user=message['user'])
+        @story.on('hi there!')
+        def first_story():
+            @story.part()
+            async def then_ask(ctx):
+                return await story.ask('How are you?', user=ctx['user'])
 
-        @story.part()
-        async def then_trigger_2(message):
-            trigger_2.passed()
+            @story.part()
+            async def then_trigger_2(ctx):
+                trigger_2.passed()
 
-    @story.on('Great!')
-    def second_story():
-        @story.part()
-        def then_trigger_1(message):
-            trigger_1.passed()
+        @story.on('Great!')
+        def second_story():
+            @story.part()
+            def then_trigger_1(ctx):
+                trigger_1.passed()
 
-    await answer.pure_text('hi there!', session, user, story)
-    await answer.pure_text('Great!', session, user, story)
+        await say_pure_text('hi there!')
+        await say_pure_text('Great!')
 
-    assert trigger_2.is_triggered
-    assert not trigger_1.is_triggered
+        assert trigger_2.is_triggered
+        assert not trigger_1.is_triggered
 
 
 @pytest.mark.asyncio
@@ -142,33 +140,33 @@ async def test_should_start_next_story_after_current_finished():
 async def test_should_match_group_of_matchers_between_parts_of_story():
     trigger_1 = SimpleTrigger()
     trigger_2 = SimpleTrigger()
-    session = build_fake_session()
-    user = build_fake_user()
 
-    global story
-    story = Story()
+    with answer.Talk() as talk:
+        say_location = talk(answer.location)
+        say_pure_text = talk(answer.pure_text)
+        story = talk.story
 
-    @story.on('hi there!')
-    def one_story():
-        @story.part()
-        def then(message):
-            return [text.Any(), location.Any()]
+        @story.on('hi there!')
+        def one_story():
+            @story.part()
+            def then(ctx):
+                return [text.Any(), location.Any()]
 
-        @story.part()
-        def then(message):
-            trigger_1.passed()
-            return [text.Any(), location.Any()]
+            @story.part()
+            def then(ctx):
+                trigger_1.passed()
+                return [text.Any(), location.Any()]
 
-        @story.part()
-        def then(message):
-            trigger_2.passed()
+            @story.part()
+            def then(ctx):
+                trigger_2.passed()
 
-    await answer.pure_text('hi there!', session, user, story)
-    await answer.location({'lat': 1, 'lng': 1}, session, user, story)
-    await answer.pure_text('hi there!', session, user, story)
+        say_pure_text('hi there!')
+        say_location({'lat': 1, 'lng': 1})
+        say_pure_text('hi there!')
 
-    assert trigger_1.is_triggered
-    assert trigger_2.is_triggered
+        assert trigger_1.is_triggered
+        assert trigger_2.is_triggered
 
 
 @pytest.mark.asyncio

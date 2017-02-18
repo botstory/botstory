@@ -92,46 +92,44 @@ async def test_parts_of_callable_story():
 async def test_call_story_from_common_story():
     trigger = SimpleTrigger()
 
-    session = build_fake_session()
-    user = build_fake_user()
+    with answer.Talk() as talk:
+        say_pure_text = talk(answer.pure_text)
+        story = talk.story
 
-    global story
-    story = Story()
+        @story.callable()
+        def common_greeting():
+            @story.part()
+            async def ask_name(ctx):
+                return await story.ask(
+                    'Hi {}. How are you?'.format(ctx['user']['name']),
+                    user=ctx['user'],
+                )
 
-    @story.callable()
-    def common_greeting():
-        @story.part()
-        async def ask_name(ctx):
-            return await story.ask(
-                'Hi {}. How are you?'.format(ctx['user']['name']),
-                user=user,
-            )
+        @story.on('Hi!')
+        def meet():
+            @story.part()
+            async def greeting(ctx):
+                return await common_greeting(
+                    user=ctx['user'],
+                    session=ctx['session'],
+                )
 
-    @story.on('Hi!')
-    def meet():
-        @story.part()
-        async def greeting(ctx):
-            return await common_greeting(
-                user=ctx['user'],
-                session=ctx['session'],
-            )
+            @story.part()
+            async def ask_location(ctx):
+                return await story.ask(
+                    'Which planet are we going to visit today?',
+                    user=ctx['user'],
+                )
 
-        @story.part()
-        async def ask_location(ctx):
-            return await story.ask(
-                'Which planet are we going to visit today?',
-                user=ctx['user'],
-            )
+            @story.part()
+            def parse(ctx):
+                trigger.receive(ctx['data']['text']['raw'])
 
-        @story.part()
-        def parse(message):
-            trigger.receive(message['data']['text']['raw'])
+        await say_pure_text('Hi!')
+        await say_pure_text('I\'m fine')
+        await say_pure_text('Venus, as usual!')
 
-    await answer.pure_text('Hi!', session, user=user, story=story)
-    await answer.pure_text('I\'m fine', session, user=user, story=story)
-    await answer.pure_text('Venus, as usual!', session, user=user, story=story)
-
-    assert trigger.value == 'Venus, as usual!'
+        assert trigger.value == 'Venus, as usual!'
 
 
 @pytest.mark.asyncio
@@ -210,77 +208,75 @@ async def test_call_story_from_another_callable():
 @pytest.mark.asyncio
 async def test_async_end_of_story_with_switch():
     sides = ['heads', 'tails']
-    user = build_fake_user()
-    session = build_fake_session()
     budget = SimpleTrigger(2)
     game_result = SimpleTrigger()
 
-    global story
-    story = Story()
+    with answer.Talk() as talk:
+        say_pure_text = talk(answer.pure_text)
+        story = talk.story
 
-    @story.callable()
-    def flip_a_coin():
-        @story.part()
-        async def choose_side(ctx):
-            return await story.ask('Please choose a side', user=ctx['user'])
-
-        @story.part()
-        async def flip(ctx):
-            user_side = ctx['data']['text']['raw']
-            await story.say('Thanks!', user=ctx['user'])
-            await story.say('And I am flipping a Coin', user=ctx['user'])
-            coin_side = random.choice(sides)
-            await story.say('and got {}'.format(coin_side), user=ctx['user'])
-            if coin_side == user_side:
-                await story.say('My greetings! You guessed!', user=ctx['user'])
-                budget.receive(budget.value + 1)
-            else:
-                await story.say('Sad but you loose!', user=ctx['user'])
-                budget.receive(budget.value - 1)
-            return SwitchOnValue(budget.value)
-
-        @story.case(equal_to=0)
-        def loose():
+        @story.callable()
+        def flip_a_coin():
             @story.part()
-            def end_of_story(ctx):
+            async def choose_side(ctx):
+                return await story.ask('Please choose a side', user=ctx['user'])
+
+            @story.part()
+            async def flip(ctx):
+                user_side = ctx['data']['text']['raw']
+                await story.say('Thanks!', user=ctx['user'])
+                await story.say('And I am flipping a Coin', user=ctx['user'])
+                coin_side = random.choice(sides)
+                await story.say('and got {}'.format(coin_side), user=ctx['user'])
+                if coin_side == user_side:
+                    await story.say('My greetings! You guessed!', user=ctx['user'])
+                    budget.receive(budget.value + 1)
+                else:
+                    await story.say('Sad but you loose!', user=ctx['user'])
+                    budget.receive(budget.value - 1)
+                return SwitchOnValue(budget.value)
+
+            @story.case(equal_to=0)
+            def loose():
+                @story.part()
+                def end_of_story(ctx):
+                    return EndOfStory({
+                        'game_result': 'loose'
+                    })
+
+            @story.case(equal_to=5)
+            def win():
+                @story.part()
+                def end_of_story(ctx):
+                    return EndOfStory({
+                        'game_result': 'win'
+                    })
+
+            @story.part()
+            def tail_recursion(ctx):
+                # TODO: add test for recursion
+                # return flip_a_coin(message['user'], session)
                 return EndOfStory({
-                    'game_result': 'loose'
+                    'game_result': 'in progress'
                 })
 
-        @story.case(equal_to=5)
-        def win():
+        @story.on('enter to the saloon')
+        def enter_to_the_saloon():
             @story.part()
-            def end_of_story(ctx):
-                return EndOfStory({
-                    'game_result': 'win'
-                })
+            async def start_a_game(ctx):
+                return await flip_a_coin(user=user, session=ctx['session'])
 
-        @story.part()
-        def tail_recursion(ctx):
-            # TODO: add test for recursion
-            # return flip_a_coin(message['user'], session)
-            return EndOfStory({
-                'game_result': 'in progress'
-            })
+            @story.part()
+            def game_over(ctx):
+                logger.debug('game_over')
+                logger.debug(ctx)
+                game_result.receive(ctx['data']['game_result'])
 
-    @story.on('enter to the saloon')
-    def enter_to_the_saloon():
-        @story.part()
-        async def start_a_game(ctx):
-            return await flip_a_coin(user=user, session=ctx['session'])
+        await say_pure_text('enter to the saloon')
 
-        @story.part()
-        def game_over(ctx):
-            logger.debug('game_over')
-            logger.debug(ctx)
-            game_result.receive(ctx['data']['game_result'])
+        await say_pure_text(random.choice(sides))
 
-    await answer.pure_text('enter to the saloon',
-                           session=session, user=user, story=story)
-
-    await answer.pure_text(random.choice(sides), session, user, story=story)
-
-    assert game_result.result() in ['loose', 'win', 'in progress']
+        assert game_result.result() in ['loose', 'win', 'in progress']
 
 
 @pytest.mark.asyncio

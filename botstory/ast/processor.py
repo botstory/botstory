@@ -22,28 +22,28 @@ class StoryProcessor:
             return
         self.tracker = tracker
 
-    async def match_message(self, message):
+    async def match_message(self, message_ctx):
         """
 
         match bot message to existing stories
         and take into account context of current user
 
-        :param message:
-        :return:
+        :param message_ctx:
+        :return: mutated message_ctx
         """
         logger.debug('')
         logger.debug('# match_message')
         logger.debug('')
-        logger.debug(message)
+        logger.debug(message_ctx)
 
-        ctx = story_context.StoryContext(message, self.library)
+        ctx = story_context.StoryContext(message_ctx, self.library)
 
         self.tracker.new_message(ctx)
 
         if ctx.is_empty_stack():
             if not ctx.does_it_match_any_story():
                 # there is no stories for such message
-                return None
+                return ctx.message
 
             ctx = story_context.reducers.scope_in(ctx)
             ctx = await self.process_story(ctx)
@@ -59,7 +59,7 @@ class StoryProcessor:
                     # we have reach the bottom of stack
                     logger.debug('  we have reach the bottom of stack '
                                  'so no once has receive this message')
-                    return None
+                    return ctx.message
 
                 if not ctx.is_end_of_story():
                     # if we haven't reach last step in list of story so we can parse result
@@ -72,7 +72,7 @@ class StoryProcessor:
             ctx = await self.process_story(ctx)
             ctx = story_context.reducers.scope_out(ctx)
 
-        return ctx.waiting_for
+        return ctx.message
 
     async def process_story(self, ctx):
         logger.debug('')
