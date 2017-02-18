@@ -100,7 +100,12 @@ class StoryContext:
         return self.message['user']
 
     def __repr__(self):
-        return json.dumps(self.to_json())
+        try:
+            return json.dumps(self.to_json(), skipkeys=True, sort_keys=True)
+        except Exception as err:
+            logger.warn(err)
+            logger.warn('fail to dump json of message {} '
+                        'waiting for {}'.format(str(self.message), str(self.waiting_for)))
 
 
 __all__ = [reducers, StoryContext]
