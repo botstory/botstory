@@ -1,5 +1,5 @@
 from botstory import matchers
-from botstory.ast import callable, stack_utils, story_context
+from botstory.ast import callable, stack_utils
 import logging
 import inspect
 
@@ -59,6 +59,8 @@ def scope_in(ctx):
     :param ctx:
     :return:
     """
+    ctx = ctx.clone()
+
     compiled_story = None
     if not ctx.is_empty_stack():
         compiled_story = ctx.get_child_story()
@@ -71,9 +73,13 @@ def scope_in(ctx):
         compiled_story = ctx.compiled_story()
 
     logger.debug('# [>] going deeper')
-    # TODO: ! use reduceer
-    stack = ctx.stack()
-    stack.append(stack_utils.build_empty_stack_item(compiled_story.topic))
+    ctx.message = {
+        **ctx.message,
+        'session': {
+            **ctx.message['session'],
+            'stack': ctx.message['session']['stack'] + [stack_utils.build_empty_stack_item(compiled_story.topic)]
+        }
+    }
 
     return ctx
 
