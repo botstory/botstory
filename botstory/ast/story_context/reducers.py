@@ -14,30 +14,38 @@ async def execute(ctx):
     :param ctx:
     :return:
     """
-    tail = ctx.stack_tail()
     story_part = ctx.get_current_story_part()
     waiting_for = story_part(ctx.message)
     if inspect.iscoroutinefunction(story_part):
         waiting_for = await waiting_for
 
-    # TODO: don't mutate! should use reducer instead
+    ctx = ctx.clone()
     ctx.waiting_for = waiting_for
 
-    # TODO: don't mutate! should use reducer instead
     # (cold be after if ctx.is_waiting_for_input():)
-    tail['step'] += 1
+    ctx.message = modify_stack(ctx,
+                               lambda stack: stack[:-1] + [{
+                                   'data': matchers.serialize(callable.WaitForReturn()),
+                                   'step': stack[-1]['step'] + 1,
+                                   'topic': stack[-1]['topic']
+                               }])
+    logger.debug('ctx.is_waiting_for_input()')
+    logger.debug(ctx.is_waiting_for_input())
     if ctx.is_waiting_for_input():
         if isinstance(ctx.waiting_for, callable.EndOfStory):
-            # TODO: don't mutate! should use reducer instead
             if isinstance(ctx.waiting_for.data, dict):
                 ctx.message['data'] = {**ctx.message['data'], **ctx.waiting_for.data}
             else:
                 ctx.message['data'] = ctx.waiting_for.data
         else:
-            # TODO: don't mutate! should use reducer instead
-            ctx.stack_tail()['data'] = matchers.serialize(
-                matchers.get_validator(ctx.waiting_for)
-            )
+            ctx.message = modify_stack(ctx,
+                                       lambda stack: stack[:-1] + [{
+                                           'data': matchers.serialize(
+                                                matchers.get_validator(ctx.waiting_for)
+                                            ),
+                                           'step': stack[-1]['step'],
+                                           'topic': stack[-1]['topic']
+                                       }])
     return ctx
 
 

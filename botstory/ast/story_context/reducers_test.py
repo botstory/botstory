@@ -1,5 +1,5 @@
 from botstory import Story
-from botstory.ast import forking, story_context
+from botstory.ast import callable, forking, story_context
 from botstory.middlewares import location, text
 import pytest
 
@@ -23,7 +23,7 @@ def build_mock_context():
             def location_case():
                 @story.part()
                 def store_location(ctx):
-                    pass
+                    return text.Equal('hello!')
 
             @story.case(match='text')
             def text_case():
@@ -33,11 +33,62 @@ def build_mock_context():
 
             @story.part()
             def after_switch(ctx):
-                pass
+                return callable.EndOfStory('the end')
 
         return story_context.StoryContext(msg, story.stories_library)
 
     return factory
+
+
+@pytest.mark.asyncio
+async def test_execute_immutability(build_mock_context):
+    ctx_before = build_mock_context({
+        'session': {
+            'stack': [{
+                'data': None,
+                'step': 0,
+                'topic': 'one_story',
+            }, {
+                'data': None,
+                'step': 0,
+                'topic': 'location_case',
+            }],
+        },
+        'user': None,
+        'data': None,
+    })
+
+    ctx_after = await story_context.reducers.execute(ctx_before)
+    assert ctx_after is not ctx_before
+    assert ctx_after.waiting_for is not ctx_before.waiting_for
+    assert ctx_after.message is not ctx_before.message
+    assert ctx_after.message['session'] is not ctx_before.message['session']
+    assert ctx_after.message['session']['stack'] is not ctx_before.message['session']['stack']
+    assert ctx_after.message['session']['stack'][-1] is not ctx_before.message['session']['stack'][-1]
+
+
+@pytest.mark.asyncio
+async def test_execute_immutability_with_end_of_story(build_mock_context):
+    ctx_before = build_mock_context({
+        'session': {
+            'stack': [{
+                'data': None,
+                'step': 2,
+                'topic': 'one_story',
+            }],
+        },
+        'user': None,
+        'data': None,
+    })
+
+    ctx_after = await story_context.reducers.execute(ctx_before)
+    assert ctx_after is not ctx_before
+    assert ctx_after.waiting_for is not ctx_before.waiting_for
+    assert ctx_after.message is not ctx_before.message
+    assert ctx_after.message['data'] is not ctx_before.message['data']
+    assert ctx_after.message['session'] is not ctx_before.message['session']
+    assert ctx_after.message['session']['stack'] is not ctx_before.message['session']['stack']
+    assert ctx_after.message['session']['stack'][-1] is not ctx_before.message['session']['stack'][-1]
 
 
 def test_iterate_storyline_immutability(build_mock_context):
