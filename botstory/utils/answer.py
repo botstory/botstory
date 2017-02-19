@@ -18,7 +18,7 @@ class Talk:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.story.clear()
-        return self
+        return False
 
     def __call__(self, *args, **kwargs):
         return self.wrap_user_talk(args[0])
