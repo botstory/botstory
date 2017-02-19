@@ -65,7 +65,6 @@ def iterate_storyline(ctx):
         yield ctx_child
 
 
-# TODO: should make it immutable
 def scope_in(ctx):
     """
     - build new scope on the top of stack
@@ -79,11 +78,12 @@ def scope_in(ctx):
     compiled_story = None
     if not ctx.is_empty_stack():
         compiled_story = ctx.get_child_story()
-        # TODO: ! use reduceer
-        last_stack_item = ctx.stack_tail()
-        last_stack_item['step'] += 1
-        last_stack_item['data'] = matchers.serialize(callable.WaitForReturn())
-
+        ctx.message = modify_stack(ctx,
+                                   lambda stack: stack[:-1] + [{
+                                       'data': matchers.serialize(callable.WaitForReturn()),
+                                       'step': stack[-1]['step'] + 1,
+                                       'topic': stack[-1]['topic']
+                                   }])
     if not compiled_story:
         compiled_story = ctx.compiled_story()
 
