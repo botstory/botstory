@@ -268,7 +268,7 @@ async def test_async_end_of_story_with_switch():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip
+@pytest.mark.skip('recursion')
 async def test_async_end_of_story():
     game_result = SimpleTrigger()
 

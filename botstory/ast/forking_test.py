@@ -243,10 +243,8 @@ async def test_one_sync_switch_inside_of_another_sync_switch():
         assert visited_rooms.value == 3
 
 
-# TODO: fix switch
 @pytest.mark.asyncio
-@pytest.mark.skip
-async def test_one_sync_switch_inside_of_another_sync_switch_alt_0():
+async def test_one_sync_switch_inside_of_another_sync_switch_with_failed_switch():
     exit_trigger = SimpleTrigger()
     wrong_way = SimpleTrigger()
 
@@ -293,24 +291,20 @@ async def test_one_sync_switch_inside_of_another_sync_switch_alt_0():
 
         await say_pure_text('enter')
         # should fail switch next_room_1_1 and drop to room_1_2
-        # and should be catched by alt_labyrinth
+        # and should not be cought by alt_labyrinth
 
-        # but seems something wrong with processor right now
         await say_pure_text('right-way')
 
         assert not wrong_way.is_triggered
         assert exit_trigger.is_triggered
 
 
-# TODO: simplify syntax
 @pytest.mark.asyncio
-@pytest.mark.skip
-async def test_simplify_syntax_0():
+async def test_simplify_syntax_wait_for_any_text():
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
 
     with answer.Talk() as talk:
-        say_pure_text = talk(answer.pure_text)
         story = talk.story
 
         @story.on('enter')
@@ -332,17 +326,15 @@ async def test_simplify_syntax_0():
                 def right_room_passed(ctx):
                     return right_trigger.passed()
 
-        await say_pure_text('enter')
-        await say_pure_text('right')
+        await talk.pure_text('enter')
+        await talk.pure_text('right')
 
         assert not left_trigger.is_triggered
         assert right_trigger.is_triggered
 
 
-# TODO: simplify syntax
 @pytest.mark.asyncio
-@pytest.mark.skip
-async def test_simplify_syntax_1():
+async def test_simplify_syntax_for_case_matching():
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
 
@@ -355,14 +347,12 @@ async def test_simplify_syntax_1():
             def enter(ctx):
                 return [text.Any()]
 
-            # TODO: !!!!!!!!!!!
             @story.case('left')
             def left_room():
                 @story.part()
                 def left_room_passed(ctx):
                     return left_trigger.passed()
 
-            # TODO: !!!!!!!!!!!
             @story.case('right')
             def right_room():
                 @story.part()
@@ -376,10 +366,8 @@ async def test_simplify_syntax_1():
         assert right_trigger.is_triggered
 
 
-# TODO: simplify syntax
 @pytest.mark.asyncio
-@pytest.mark.skip
-async def test_simplify_syntax_2():
+async def test_simplify_syntax_case_matches_previous_returned_value():
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
 
@@ -390,7 +378,6 @@ async def test_simplify_syntax_2():
         def labyrinth():
             @story.part()
             def enter(ctx):
-                # TODO: !!!!!!!!!!!
                 return 'right'
 
             @story.case('left')
@@ -413,7 +400,6 @@ async def test_simplify_syntax_2():
 
 # TODO: simplify syntax
 @pytest.mark.asyncio
-@pytest.mark.skip
 async def test_warn_on_incorrect_syntax_user_forgot_add_switch_value():
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
