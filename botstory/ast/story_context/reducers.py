@@ -22,21 +22,16 @@ async def execute(ctx):
     ctx = ctx.clone()
     ctx.waiting_for = waiting_for
 
-    # (cold be after if ctx.is_waiting_for_input():)
-    ctx.message = modify_stack(ctx,
-                               lambda stack: stack[:-1] + [{
-                                   'data': matchers.serialize(callable.WaitForReturn()),
-                                   'step': stack[-1]['step'] + 1,
-                                   'topic': stack[-1]['topic']
-                               }])
-    logger.debug('ctx.is_waiting_for_input()')
-    logger.debug(ctx.is_waiting_for_input())
     if ctx.is_waiting_for_input():
         if isinstance(ctx.waiting_for, callable.EndOfStory):
             if isinstance(ctx.waiting_for.data, dict):
-                ctx.message['data'] = {**ctx.message['data'], **ctx.waiting_for.data}
+                new_data = {**ctx.message['data'], **ctx.waiting_for.data}
             else:
-                ctx.message['data'] = ctx.waiting_for.data
+                new_data = ctx.waiting_for.data
+            ctx.message = {
+                **ctx.message,
+                'data': new_data,
+            }
         else:
             ctx.message = modify_stack(ctx,
                                        lambda stack: stack[:-1] + [{
@@ -46,6 +41,13 @@ async def execute(ctx):
                                            'step': stack[-1]['step'],
                                            'topic': stack[-1]['topic']
                                        }])
+    else:
+        ctx.message = modify_stack(ctx,
+                                   lambda stack: stack[:-1] + [{
+                                       'data': stack[-1]['data'],
+                                       'step': stack[-1]['step'] + 1,
+                                       'topic': stack[-1]['topic']
+                                   }])
     return ctx
 
 

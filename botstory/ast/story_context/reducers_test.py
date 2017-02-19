@@ -86,9 +86,6 @@ async def test_execute_immutability_with_end_of_story(build_mock_context):
     assert ctx_after.waiting_for is not ctx_before.waiting_for
     assert ctx_after.message is not ctx_before.message
     assert ctx_after.message['data'] is not ctx_before.message['data']
-    assert ctx_after.message['session'] is not ctx_before.message['session']
-    assert ctx_after.message['session']['stack'] is not ctx_before.message['session']['stack']
-    assert ctx_after.message['session']['stack'][-1] is not ctx_before.message['session']['stack'][-1]
 
 
 def test_iterate_storyline_immutability(build_mock_context):
