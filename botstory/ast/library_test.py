@@ -1,19 +1,20 @@
 import pytest
-from . import library, parser
+from . import forking, library, parser
 
 
 @pytest.fixture(scope='function')
 def story_library():
     l = library.StoriesLibrary()
     story_1 = parser.ASTNode('hi!')
+    story_1.append(forking.StoryPartFork())
+    story_1_1 = parser.ASTNode('How do you feel?')
+    story_1.add_child(story_1_1)
+
     story_2 = parser.ASTNode('bye!')
     story_3 = parser.ASTNode('where to go?')
-    story_4 = parser.ASTNode('How do you feel?')
-    story_1.append(parser.StoryPartFork())
-    story_1.add_child(story_4)
 
-    l.add_message_handler(story_1)
-    l.add_message_handler(story_2)
+    l.add_global(story_1)
+    l.add_global(story_2)
     l.add_callable(story_3)
     return l
 

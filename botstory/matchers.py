@@ -23,7 +23,7 @@ def build_deserialize(cls):
 
 def get_validator(filter_data):
     """
-    ask every matcher whether it can serve such filter ata
+    ask every matcher whether it can serve such filter data
 
     :param filter_data:
     :return:

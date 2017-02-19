@@ -236,13 +236,13 @@ class FBInterface:
 
                             message['data'] = data
 
-                            await self.story_processor.match_message(message)
+                            message = await self.story_processor.match_message(message)
 
                     elif 'postback' in m:
                         message['data'] = {
                             'option': m['postback']['payload'],
                         }
-                        await self.story_processor.match_message(message)
+                        message = await self.story_processor.match_message(message)
                     elif 'delivery' in m:
                         logger.debug('delivery notification')
                     elif 'read' in m:
@@ -277,7 +277,7 @@ class FBInterface:
             )
 
         # check whether we have `On Start Story`
-        have_on_start_story = not not self.library.get_right_story({
+        have_on_start_story = not not self.library.get_global_story({
             'data': {'option': option.OnStart.DEFAULT_OPTION_PAYLOAD}
         })
         if have_on_start_story:

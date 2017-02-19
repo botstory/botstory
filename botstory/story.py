@@ -3,7 +3,7 @@ import logging
 
 from . import chat, di
 from .ast import callable as callable_module, common, \
-    forking, library, parser, processor, users
+    forking, library, loop, parser, processor, users
 
 logger = logging.getLogger(__name__)
 
@@ -19,12 +19,11 @@ class Story:
     def __init__(self):
         self.stories_library = library.StoriesLibrary()
 
-        self.parser_instance = parser.Parser()
+        self.parser_instance = parser.Parser(self.stories_library)
 
         self.story_processor_instance = processor.StoryProcessor(
             self.parser_instance,
             self.stories_library,
-            middlewares=[forking.Middleware()]
         )
 
         self.match_message = self.story_processor_instance.match_message
@@ -40,9 +39,21 @@ class Story:
         self.forking_api = forking.ForkingStoriesAPI(
             parser_instance=self.parser_instance,
         )
+        self.story_loop = loop.StoryLoopAPI(
+            library=self.stories_library,
+            parser_instance=self.parser_instance,
+        )
         self.middlewares = []
         self.chat = chat.Chat()
         self.users = users.Users()
+
+    # Facade
+    def loop(self):
+        """
+        close loop/scope of sub-stories
+        :return:
+        """
+        return self.story_loop.loop()
 
     def on(self, receive):
         return self.common_stories_instance.on(receive)
@@ -109,9 +120,11 @@ class Story:
             loop.run_until_complete(self.stop())
 
     def register(self):
+        di.injector.register(instance=self.parser_instance)
         di.injector.register(instance=self.story_processor_instance)
         di.injector.register(instance=self.stories_library)
         di.injector.register(instance=self.users)
+        di.injector.bind(self.parser_instance, auto=True)
         di.injector.bind(self.story_processor_instance, auto=True)
         di.injector.bind(self.stories_library, auto=True)
         di.injector.bind(self.users, auto=True)

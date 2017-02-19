@@ -1,3 +1,4 @@
+from botstory import di
 import logging
 import json
 import inspect
@@ -5,26 +6,42 @@ import inspect
 logger = logging.getLogger(__name__)
 
 
+@di.desc(reg=False)
 class Parser:
-    def __init__(self):
+    def __init__(self, library):
         self.current_node = None
+        self.current_scope = library.global_scope
         self.middlewares = []
 
     def compile(self, one_story, middlewares=[]):
         topic = one_story.__name__
         self.middlewares = middlewares
+        previous_node = self.current_node
         self.current_node = ASTNode(topic=topic)
 
         one_story()
 
         res = self.current_node
-        self.current_node = None
+        self.current_node = previous_node
         return res
 
-    def go_deeper(self, one_story):
+    def compile_scope(self, scope_node, scope_func):
+        self.current_node.append(scope_node)
+        parent_scope = self.current_scope
+        self.current_scope = scope_node.local_scope
+
+        scope_func()
+
+        res = self.current_scope
+        self.current_scope = parent_scope
+        return res
+        # with self.attach_scope():
+        #     one_scope()
+
+    def go_deeper(self, one_story, buildScopePart):
         if len(self.current_node.story_line) == 0 or \
                 inspect.isfunction(self.current_node.story_line[-1]):
-            self.current_node.story_line.append(StoryPartFork())
+            self.current_node.story_line.append(buildScopePart())
 
         parent_node = self.current_node
         child_story = self.compile(one_story, self.middlewares)
@@ -59,7 +76,7 @@ class ASTNode:
         :param child_story_line:
         :return:
         """
-        assert isinstance(self.story_line[-1], StoryPartFork)
+        # assert isinstance(self.story_line[-1], StoryPartFork)
         self.story_line[-1].add_child(child_story_line)
 
     def append(self, story_part):
@@ -72,12 +89,14 @@ class ASTNode:
 
     def to_json(self):
         return {
-            'type': 'leaf',
+            'type': 'ASTNode',
             'topic': self.topic,
-            'story_names': list(self.story_names),
+            'story_line': list(
+                [l.to_json() if hasattr(l, 'to_json') else 'part: {}'.format(l.__name__) for l in self.story_line]
+            ),
         }
 
-    def __str__(self):
+    def __repr__(self):
         return json.dumps(self.to_json())
 
 
@@ -88,28 +107,8 @@ class StoryPartLeaf:
     def __call__(self, *args, **kwargs):
         return self.fn(*args, **kwargs)
 
-    def __str__(self):
-        return {
+    def __repr__(self):
+        return json.dumps({
             'type': 'StoryPartLeaf',
             'name': self.__name__,
-        }
-
-
-class StoryPartFork:
-    def __init__(self):
-        self.children = []
-
-    def __name__(self):
-        return 'StoryPartFork'
-
-    def add_child(self, child_story_line):
-        self.children.append(child_story_line)
-
-    def to_json(self):
-        return {
-            'type': self.__name__,
-            'children': list(self.children),
-        }
-
-    def __str__(self):
-        return json.dumps(self.to_json())
+        })

@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+from botstory.ast import story_context
 import json
 import pytest
 from unittest import mock
@@ -24,11 +25,27 @@ def tracker_mock(mocker):
 
 
 @pytest.mark.asyncio
-async def test_should_put_in_queue_story_tracker(tracker_mock):
+async def test_should_put_in_queue_story_tracker(mocker, tracker_mock):
     user = utils.build_fake_user()
     ga = GAStatistics(tracking_id='UA-XXXXX-Y')
 
-    ga.story(user, 'one story', 'one part')
+    class FakePart:
+        @property
+        def __name__(self):
+            return 'one part'
+
+    ctx = story_context.StoryContext(None, None)
+
+    with mock.patch.object(ctx,
+                           'user',
+                           return_value=user):
+        with mock.patch.object(ctx,
+                               'stack',
+                               return_value=[{'topic': 'one story'}]):
+            with mock.patch.object(ctx,
+                                   'get_current_story_part',
+                                   return_value=FakePart()):
+                ga.story(ctx)
 
     await asyncio.sleep(0.1)
 
@@ -43,7 +60,11 @@ async def test_should_put_in_queue_new_message_tracker(tracker_mock):
     user = utils.build_fake_user()
     ga = GAStatistics(tracking_id='UA-XXXXX-Y')
 
-    ga.new_message(user, {'text': {'raw': 'hi!'}})
+    ga.new_message(
+        story_context.StoryContext(
+            {'user': user, 'data': {'text': {'raw': 'hi!'}}}, None
+        )
+    )
 
     await asyncio.sleep(0.1)
 

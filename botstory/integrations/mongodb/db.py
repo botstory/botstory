@@ -52,12 +52,17 @@ class MongodbInterface:
         self.user_collection = self.db.get_collection(self.user_collection_name)
 
     async def get_session(self, **kwargs):
-        return await self.session_collection.find_one(kwargs)
+        session = await self.session_collection.find_one(kwargs)
+        if not session:
+            return None
+        session.pop('lastModified', None)
+        return session
 
     async def set_session(self, session):
         logger.info('set_session {}'.format(session))
         if '_id' in session:
             _id = session['_id']
+            session.pop('lastModified', None)
             res = await self.session_collection.update_one(
                 {'_id': _id},
                 {
@@ -84,12 +89,17 @@ class MongodbInterface:
         if 'id' in kwargs:
             kwargs['_id'] = kwargs.get('id', None)
             del kwargs['id']
-        return await self.user_collection.find_one(kwargs)
+        user = await self.user_collection.find_one(kwargs)
+        if not user:
+            return None
+        user.pop('lastModified', None)
+        return user
 
     async def set_user(self, user):
         logger.info('set_user {}'.format(user))
         if '_id' in user:
             _id = user['_id']
+            user.pop('lastModified', None)
             res = await self.user_collection.update_one(
                 {'_id': _id},
                 {

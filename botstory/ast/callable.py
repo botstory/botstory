@@ -1,5 +1,5 @@
+from botstory.ast import stack_utils, story_context
 import logging
-from . import processor
 from .. import matchers
 
 logger = logging.getLogger(__name__)
@@ -36,30 +36,33 @@ class CallableNodeWrapper:
     helps start processing callable story
     """
 
-    def __init__(self, ast_node, processor_instance):
+    def __init__(self, ast_node, library, processor):
+        self.library = library
         self.ast_node = ast_node
-        self.processor_instance = processor_instance
+        self.processor = processor
 
     async def startpoint(self, *args, **kwargs):
-        if 'session' not in kwargs:
+        if {'session', 'user'} > set(kwargs):
             raise AttributeError('Got {} and {}. Should pass session as well'.format(args, kwargs))
 
+        # TODO: should get session from context
         session = kwargs.pop('session')
 
         # we are going deeper so prepare one more item in stack
         logger.debug('  action: extend stack by +1')
-        session['stack'].append(processor.build_empty_stack_item())
-        res = await self.processor_instance.process_story(session,
-                                                          # we don't have message yet
-                                                          message=None,
-                                                          compiled_story=self.ast_node,
-                                                          idx=0,
-                                                          story_args=args,
-                                                          story_kwargs=kwargs)
+        session['stack'].append(stack_utils.build_empty_stack_item(self.ast_node.topic))
+        ctx = story_context.StoryContext(message={
+            'session': session,
+            # TODO: should get user from context
+            'user': kwargs.pop('user'),
+            'data': kwargs,
+        }, library=self.library)
+        ctx = await self.processor.process_story(ctx)
+        ctx = story_context.reducers.scope_out(ctx)
 
-        if isinstance(res, EndOfStory):
-            return res.data
-        return res
+        if isinstance(ctx.waiting_for, EndOfStory):
+            return ctx.waiting_for.data
+        return ctx.waiting_for
 
 
 class CallableStoriesAPI:
@@ -76,7 +79,8 @@ class CallableStoriesAPI:
             self.library.add_callable(compiled_story)
             return CallableNodeWrapper(
                 compiled_story,
-                self.processor_instance
+                self.library,
+                self.processor_instance,
             ).startpoint
 
         return fn
