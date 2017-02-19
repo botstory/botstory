@@ -40,6 +40,29 @@ def build_mock_context():
     return factory
 
 
+def test_iterate_storyline_immutability(build_mock_context):
+    ctx_before = build_mock_context({
+        'session': {
+            'stack': [{
+                'data': None,
+                'step': 0,
+                'topic': 'one_story',
+            }],
+        },
+        'user': None,
+        'data': None,
+    })
+
+    story_line = story_context.reducers.iterate_storyline(ctx_before)
+    assert story_line is not []
+    for story_part in story_line:
+        assert story_part != ctx_before
+        assert story_part.message is not ctx_before.message
+        assert story_part.message['session'] is not ctx_before.message['session']
+        assert story_part.message['session']['stack'] is not ctx_before.message['session']['stack']
+        assert story_part.message['session']['stack'][-1] is not ctx_before.message['session']['stack'][-1]
+
+
 def test_scope_out_immutability(build_mock_context):
     ctx_before = build_mock_context({
         'session': {

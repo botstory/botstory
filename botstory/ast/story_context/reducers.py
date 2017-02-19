@@ -41,13 +41,28 @@ async def execute(ctx):
     return ctx
 
 
-def iterate_through_storyline(ctx):
+def iterate_storyline(ctx):
+    """
+    iterate the last storyline from the last visited story part
+
+    :param ctx:
+    :return:
+    """
     start_step = ctx.current_step()
 
     for step, story_part in enumerate(ctx.compiled_story().story_line[start_step:], start_step):
-        # TODO: should use reducer instead
-        ctx.stack_tail()['step'] = step
-        yield ctx
+        ctx_child = ctx.clone()
+
+        tail = ctx.stack_tail()
+
+        ctx_child.message = modify_stack(ctx_child,
+                                         lambda stack: stack[:-1] + [{
+                                             'data': tail['data'],
+                                             'step': step,
+                                             'topic': tail['topic'],
+                                         }])
+
+        yield ctx_child
 
 
 # TODO: should make it immutable
@@ -73,13 +88,8 @@ def scope_in(ctx):
         compiled_story = ctx.compiled_story()
 
     logger.debug('# [>] going deeper')
-    ctx.message = {
-        **ctx.message,
-        'session': {
-            **ctx.message['session'],
-            'stack': ctx.message['session']['stack'] + [stack_utils.build_empty_stack_item(compiled_story.topic)]
-        }
-    }
+    ctx.message = modify_stack(ctx,
+                               lambda stack: stack + [stack_utils.build_empty_stack_item(compiled_story.topic)])
 
     return ctx
 
@@ -101,3 +111,13 @@ def scope_out(ctx):
         ctx.message['session']['stack'] = ctx.message['session']['stack'][:-1]
 
     return ctx
+
+
+def modify_stack(ctx, mutator):
+    return {
+        **ctx.message,
+        'session': {
+            **ctx.message['session'],
+            'stack': mutator(ctx.message['session']['stack']),
+        }
+    }
