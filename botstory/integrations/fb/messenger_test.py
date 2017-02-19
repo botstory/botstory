@@ -433,14 +433,14 @@ async def test_handler_raw_text(build_fb_interface):
     @story.on('hello, world!')
     def correct_story():
         @story.part()
-        def store_result(message):
-            correct_trigger.receive(message)
+        def store_result(ctx):
+            correct_trigger.receive(ctx['data'])
 
     @story.on('Goodbye, world!')
     def incorrect_story():
         @story.part()
-        def store_result(message):
-            incorrect_trigger.receive(message)
+        def store_result(ctx):
+            incorrect_trigger.receive(ctx['data'])
 
     await fb_interface.handle({
         'object': 'page',
@@ -468,12 +468,8 @@ async def test_handler_raw_text(build_fb_interface):
 
     assert incorrect_trigger.value is None
     assert correct_trigger.value == {
-        'user': fb_interface.storage.user,
-        'session': fb_interface.storage.session,
-        'data': {
-            'text': {
-                'raw': 'hello, world!'
-            }
+        'text': {
+            'raw': 'hello, world!'
         }
     }
 
@@ -488,14 +484,14 @@ async def test_handler_selected_option(build_fb_interface):
     @story.on(receive=option.Match('GREEN'))
     def correct_story():
         @story.part()
-        def store_result(message):
-            correct_trigger.receive(message)
+        def store_result(ctx):
+            correct_trigger.receive(ctx['data'])
 
     @story.on(receive=option.Match('BLUE'))
     def incorrect_story():
         @story.part()
-        def store_result(message):
-            incorrect_trigger.receive(message)
+        def store_result(ctx):
+            incorrect_trigger.receive(ctx['data'])
 
     await fb_interface.handle({
         'object': 'page',
@@ -524,13 +520,9 @@ async def test_handler_selected_option(build_fb_interface):
 
     assert incorrect_trigger.value is None
     assert correct_trigger.value == {
-        'user': fb_interface.storage.user,
-        'session': fb_interface.storage.session,
-        'data': {
-            'option': 'GREEN',
-            'text': {
-                'raw': 'Green!'
-            }
+        'option': 'GREEN',
+        'text': {
+            'raw': 'Green!'
         }
     }
 
@@ -545,14 +537,14 @@ async def test_handler_postback(build_fb_interface):
     @story.on(receive=option.Match('GREEN'))
     def correct_story():
         @story.part()
-        def store_result(message):
-            correct_trigger.receive(message)
+        def store_result(ctx):
+            correct_trigger.receive(ctx['data'])
 
     @story.on(receive=option.Match('BLUE'))
     def incorrect_story():
         @story.part()
-        def store_result(message):
-            incorrect_trigger.receive(message)
+        def store_result(ctx):
+            incorrect_trigger.receive(ctx['data'])
 
     await fb_interface.handle({
         'object': 'page',
@@ -576,11 +568,7 @@ async def test_handler_postback(build_fb_interface):
 
     assert incorrect_trigger.value is None
     assert correct_trigger.value == {
-        'user': fb_interface.storage.user,
-        'session': fb_interface.storage.session,
-        'data': {
-            'option': 'GREEN',
-        }
+        'option': 'GREEN',
     }
 
 

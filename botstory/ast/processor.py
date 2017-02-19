@@ -83,7 +83,6 @@ class StoryProcessor:
         # integrate over parts of story
         last_story_part = None
         for story_part_ctx in story_context.reducers.iterate_storyline(ctx):
-            last_story_part = story_part_ctx
             logger.debug('# in a loop')
             logger.debug(story_part_ctx)
 
@@ -98,6 +97,7 @@ class StoryProcessor:
 
             if story_part_ctx.is_waiting_for_input():
                 return story_part_ctx
+            last_story_part = story_part_ctx
 
         if last_story_part is None:
             raise Exception('story line is empty')
