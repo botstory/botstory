@@ -15,7 +15,9 @@ async def execute(ctx):
     :return:
     """
     story_part = ctx.get_current_story_part()
+    logger.debug('#  going to call: {}'.format(story_part.__name__))
     waiting_for = story_part(ctx.message)
+    logger.debug('#  got result {}'.format(waiting_for))
     if inspect.iscoroutinefunction(story_part):
         waiting_for = await waiting_for
 

@@ -87,21 +87,18 @@ class StoryProcessor:
             logger.debug('# in a loop')
             logger.debug(story_part_ctx)
 
-            self.tracker.story(ctx)
+            self.tracker.story(story_part_ctx)
 
             if story_part_ctx.has_child_story():
                 story_part_ctx = story_context.reducers.scope_in(story_part_ctx)
                 story_part_ctx = await self.process_story(story_part_ctx)
-                ctx = story_context.reducers.scope_out(story_part_ctx)
+                story_part_ctx = story_context.reducers.scope_out(story_part_ctx)
             else:
-                logger.debug('#  going to call: {}'.format(story_part_ctx.get_current_story_part().__name__))
                 story_part_ctx = await story_context.reducers.execute(story_part_ctx)
-                logger.debug('#  got result {}'.format(story_part_ctx.waiting_for))
 
             if story_part_ctx.is_waiting_for_input():
                 return story_part_ctx
 
-        logger.debug('# return from process_story')
         if last_story_part is None:
             raise Exception('story line is empty')
         return last_story_part
