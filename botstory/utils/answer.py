@@ -44,7 +44,7 @@ class Talk:
                             story=self.story,
                             )
 
-    async def wrap_user_talk(self, fn):
+    def wrap_user_talk(self, fn):
         async def fn_wrapper(payload):
             mutated_ctx = await fn(payload,
                                    self.session,
