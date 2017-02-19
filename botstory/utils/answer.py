@@ -23,6 +23,27 @@ class Talk:
     def __call__(self, *args, **kwargs):
         return self.wrap_user_talk(args[0])
 
+    async def location(self, loc):
+        return await location(loc,
+                              session=self.session,
+                              user=self.user,
+                              story=self.story,
+                              )
+
+    async def pure_text(self, text):
+        return await pure_text(text,
+                               session=self.session,
+                               user=self.user,
+                               story=self.story,
+                               )
+
+    async def option(self, payload):
+        return await option(payload,
+                            session=self.session,
+                            user=self.user,
+                            story=self.story,
+                            )
+
     async def wrap_user_talk(self, fn):
         async def fn_wrapper(payload):
             mutated_ctx = await fn(payload,

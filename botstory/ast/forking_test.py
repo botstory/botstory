@@ -3,19 +3,12 @@ import logging
 import pytest
 import random
 
-logger = logging.getLogger(__name__)
-
 from . import forking
-from .. import matchers, Story
+from .. import matchers
 from ..middlewares import location, text
-from ..utils import answer, build_fake_session, build_fake_user, SimpleTrigger
+from ..utils import answer, SimpleTrigger
 
-story = None
-
-
-def teardown_function(function):
-    logger.debug('tear down!')
-    story and story.clear()
+logger = logging.getLogger(__name__)
 
 
 @pytest.mark.asyncio
@@ -65,494 +58,475 @@ async def test_cases():
 
 @pytest.mark.asyncio
 async def test_sync_value():
-    user = build_fake_user()
-    session = build_fake_session()
     trigger_start = SimpleTrigger()
     trigger_heads = SimpleTrigger()
     trigger_tails = SimpleTrigger()
 
-    global story
-    story = Story()
+    with answer.Talk() as talk:
+        say_pure_text = talk(answer.pure_text)
+        story = talk.story
 
-    @story.on('Flip a coin!')
-    def one_story():
-        @story.part()
-        def start(message):
-            coin = random.choice(['heads', 'tails'])
-            assert not trigger_start.is_triggered
-            assert not trigger_heads.is_triggered
-            assert not trigger_tails.is_triggered
-            trigger_start.passed()
-            return forking.SwitchOnValue(coin)
-
-        @story.case(equal_to='heads')
-        def heads():
+        @story.on('Flip a coin!')
+        def one_story():
             @story.part()
-            def store_heads(message):
+            def start(message):
+                coin = random.choice(['heads', 'tails'])
+                assert not trigger_start.is_triggered
                 assert not trigger_heads.is_triggered
-                trigger_heads.passed()
-
-        @story.case(equal_to='tails')
-        def tails():
-            @story.part()
-            def store_tails(message):
                 assert not trigger_tails.is_triggered
-                trigger_tails.passed()
+                trigger_start.passed()
+                return forking.SwitchOnValue(coin)
 
-    await answer.pure_text('Flip a coin!', session, user, story)
+            @story.case(equal_to='heads')
+            def heads():
+                @story.part()
+                def store_heads(message):
+                    assert not trigger_heads.is_triggered
+                    trigger_heads.passed()
 
-    assert trigger_heads.is_triggered != trigger_tails.is_triggered
+            @story.case(equal_to='tails')
+            def tails():
+                @story.part()
+                def store_tails(message):
+                    assert not trigger_tails.is_triggered
+                    trigger_tails.passed()
+
+        await say_pure_text('Flip a coin!')
+
+        assert trigger_heads.is_triggered != trigger_tails.is_triggered
 
 
 @pytest.mark.asyncio
 async def test_few_switches_in_one_story():
-    user = build_fake_user()
-    session = build_fake_session()
     trigger_heads = SimpleTrigger()
     trigger_heads.receive(0)
     trigger_tails = SimpleTrigger()
     trigger_tails.receive(0)
 
-    global story
-    story = Story()
+    with answer.Talk() as talk:
+        say_pure_text = talk(answer.pure_text)
+        story = talk.story
 
-    @story.on('Flip a coin!')
-    def one_story():
-        @story.part()
-        def start_0(message):
-            coin = random.choice(['heads', 'tails'])
-            return forking.SwitchOnValue(coin)
-
-        @story.case(equal_to='heads')
-        def heads_0():
+        @story.on('Flip a coin!')
+        def one_story():
             @story.part()
-            def store_heads(message):
-                trigger_heads.receive(trigger_heads.value + 1)
+            def start_0(ctx):
+                coin = random.choice(['heads', 'tails'])
+                return forking.SwitchOnValue(coin)
 
-        @story.case(equal_to='tails')
-        def tails_0():
+            @story.case(equal_to='heads')
+            def heads_0():
+                @story.part()
+                def store_heads(ctx):
+                    trigger_heads.receive(trigger_heads.value + 1)
+
+            @story.case(equal_to='tails')
+            def tails_0():
+                @story.part()
+                def store_tails(ctx):
+                    trigger_tails.receive(trigger_tails.value + 1)
+
             @story.part()
-            def store_tails(message):
-                trigger_tails.receive(trigger_tails.value + 1)
+            def start_1(ctx):
+                assert trigger_heads.value + trigger_tails.value == 1
+                coin = random.choice(['heads', 'tails'])
+                return forking.SwitchOnValue(coin)
 
-        @story.part()
-        def start_1(message):
-            assert trigger_heads.value + trigger_tails.value == 1
-            coin = random.choice(['heads', 'tails'])
-            return forking.SwitchOnValue(coin)
+            @story.case(equal_to='heads')
+            def heads_1():
+                @story.part()
+                def store_heads(ctx):
+                    trigger_heads.receive(trigger_heads.value + 1)
 
-        @story.case(equal_to='heads')
-        def heads_1():
-            @story.part()
-            def store_heads(message):
-                trigger_heads.receive(trigger_heads.value + 1)
+            @story.case(equal_to='tails')
+            def tails_1():
+                @story.part()
+                def store_tails(ctx):
+                    trigger_tails.receive(trigger_tails.value + 1)
 
-        @story.case(equal_to='tails')
-        def tails_1():
-            @story.part()
-            def store_tails(message):
-                trigger_tails.receive(trigger_tails.value + 1)
+        await say_pure_text('Flip a coin!')
 
-    await answer.pure_text('Flip a coin!', session, user, story)
-
-    assert trigger_heads.value + trigger_tails.value == 2
+        assert trigger_heads.value + trigger_tails.value == 2
 
 
 @pytest.mark.asyncio
 async def test_default_sync_value():
-    user = build_fake_user()
-    session = build_fake_session()
     trigger_1 = SimpleTrigger()
     trigger_default = SimpleTrigger()
 
-    global story
-    story = Story()
+    with answer.Talk() as talk:
+        say_pure_text = talk(answer.pure_text)
+        story = talk.story
 
-    @story.on('Roll the dice!')
-    def one_story_1():
-        @story.part()
-        def start(message):
-            side = random.randint(1, 6)
-            return forking.SwitchOnValue(side)
-
-        @story.case(equal_to=1)
-        def side_1():
+        @story.on('Roll the dice!')
+        def one_story_1():
             @story.part()
-            def store_1(message):
-                trigger_1.passed()
+            def start(ctx):
+                side = random.randint(1, 6)
+                return forking.SwitchOnValue(side)
 
-        @story.case(default=True)
-        def other_sides():
-            @story.part()
-            def store_other(message):
-                trigger_default.passed()
+            @story.case(equal_to=1)
+            def side_1():
+                @story.part()
+                def store_1(ctx):
+                    trigger_1.passed()
 
-    await answer.pure_text('Roll the dice!', session, user, story)
+            @story.case(default=True)
+            def other_sides():
+                @story.part()
+                def store_other(ctx):
+                    trigger_default.passed()
 
-    assert trigger_1.is_triggered != trigger_default.is_triggered
+        await say_pure_text('Roll the dice!')
+
+        assert trigger_1.is_triggered != trigger_default.is_triggered
 
 
 @pytest.mark.asyncio
 async def test_one_sync_switch_inside_of_another_sync_switch():
-    user = build_fake_user()
-    session = build_fake_session()
     visited_rooms = SimpleTrigger(0)
 
-    global story
-    story = Story()
+    with answer.Talk() as talk:
+        say_pure_text = talk(answer.pure_text)
+        story = talk.story
 
-    @story.on('enter')
-    def labyrinth():
-        @story.part()
-        def enter(message):
-            turn = random.choice(['left', 'right'])
-            visited_rooms.receive(visited_rooms.value + 1)
-            return forking.SwitchOnValue(turn)
-
-        @story.case(equal_to='left')
-        def room_1():
+        @story.on('enter')
+        def labyrinth():
             @story.part()
-            def next_room_1(message):
+            def enter(ctx):
                 turn = random.choice(['left', 'right'])
                 visited_rooms.receive(visited_rooms.value + 1)
                 return forking.SwitchOnValue(turn)
 
             @story.case(equal_to='left')
-            def room_1_1():
+            def room_1():
                 @story.part()
-                def next_room_1_1(message):
+                def next_room_1(ctx):
+                    turn = random.choice(['left', 'right'])
                     visited_rooms.receive(visited_rooms.value + 1)
+                    return forking.SwitchOnValue(turn)
+
+                @story.case(equal_to='left')
+                def room_1_1():
+                    @story.part()
+                    def next_room_1_1(ctx):
+                        visited_rooms.receive(visited_rooms.value + 1)
+
+                @story.case(equal_to='right')
+                def room_1_2():
+                    @story.part()
+                    def next_room_1_2(ctx):
+                        visited_rooms.receive(visited_rooms.value + 1)
 
             @story.case(equal_to='right')
-            def room_1_2():
+            def room_2():
                 @story.part()
-                def next_room_1_2(message):
+                def next_room_2(ctx):
+                    turn = random.choice(['left', 'right'])
                     visited_rooms.receive(visited_rooms.value + 1)
+                    return forking.SwitchOnValue(turn)
 
-        @story.case(equal_to='right')
-        def room_2():
-            @story.part()
-            def next_room_2(message):
-                turn = random.choice(['left', 'right'])
-                visited_rooms.receive(visited_rooms.value + 1)
-                return forking.SwitchOnValue(turn)
+                @story.case(equal_to='left')
+                def room_2_1():
+                    @story.part()
+                    def next_room_2_1(ctx):
+                        visited_rooms.receive(visited_rooms.value + 1)
 
-            @story.case(equal_to='left')
-            def room_2_1():
-                @story.part()
-                def next_room_2_1(message):
-                    visited_rooms.receive(visited_rooms.value + 1)
+                @story.case(equal_to='right')
+                def room_2_2():
+                    @story.part()
+                    def next_room_2_2(ctx):
+                        visited_rooms.receive(visited_rooms.value + 1)
 
-            @story.case(equal_to='right')
-            def room_2_2():
-                @story.part()
-                def next_room_2_2(message):
-                    visited_rooms.receive(visited_rooms.value + 1)
+        await say_pure_text('enter')
 
-    await answer.pure_text('enter', session, user, story)
-
-    assert visited_rooms.value == 3
+        assert visited_rooms.value == 3
 
 
 # TODO: fix switch
 @pytest.mark.asyncio
 @pytest.mark.skip
 async def test_one_sync_switch_inside_of_another_sync_switch_alt_0():
-    user = build_fake_user()
-    session = build_fake_session()
     exit_trigger = SimpleTrigger()
     wrong_way = SimpleTrigger()
 
-    global story
-    story = Story()
+    with answer.Talk() as talk:
+        say_pure_text = talk(answer.pure_text)
+        story = talk.story
 
-    @story.on('enter')
-    def labyrinth():
-        @story.part()
-        def enter(ctx):
-            return forking.SwitchOnValue('left')
-
-        @story.case(equal_to='left')
-        def room_1():
+        @story.on('enter')
+        def labyrinth():
             @story.part()
-            def next_room_1(ctx):
+            def enter(ctx):
                 return forking.SwitchOnValue('left')
 
             @story.case(equal_to='left')
-            def room_1_1():
+            def room_1():
                 @story.part()
-                def next_room_1_1(ctx):
-                    return forking.Switch({
-                        'no-exit': text.Match('no-exit'),
-                    })
+                def next_room_1(ctx):
+                    return forking.SwitchOnValue('left')
 
-                @story.case(match='no-exit')
-                def room_1_1_1():
+                @story.case(equal_to='left')
+                def room_1_1():
                     @story.part()
-                    def next_room_1_1_1(ctx):
-                        wrong_way.passed()
+                    def next_room_1_1(ctx):
+                        return forking.Switch({
+                            'no-exit': text.Match('no-exit'),
+                        })
 
+                    @story.case(match='no-exit')
+                    def room_1_1_1():
+                        @story.part()
+                        def next_room_1_1_1(ctx):
+                            wrong_way.passed()
+
+                @story.part()
+                def room_1_2(ctx):
+                    exit_trigger.passed()
+                    return [text.Any()]
+
+        @story.on('right-way')
+        def alt_labyrinth():
             @story.part()
-            def room_1_2(ctx):
-                exit_trigger.passed()
-                return [text.Any()]
+            def next_room_2(ctx):
+                wrong_way.passed()
 
-    @story.on('right-way')
-    def alt_labyrinth():
-        @story.part()
-        def next_room_2(ctx):
-            wrong_way.passed()
+        await say_pure_text('enter')
+        # should fail switch next_room_1_1 and drop to room_1_2
+        # and should be catched by alt_labyrinth
 
-    await answer.pure_text('enter', session, user, story)
-    # should fail switch next_room_1_1 and drop to room_1_2
-    # and should be catched by alt_labyrinth
+        # but seems something wrong with processor right now
+        await say_pure_text('right-way')
 
-    # but seems something wrong with processor right now
-    await answer.pure_text('right-way', session, user, story)
-
-    assert not wrong_way.is_triggered
-    assert exit_trigger.is_triggered
+        assert not wrong_way.is_triggered
+        assert exit_trigger.is_triggered
 
 
 # TODO: simplify syntax
 @pytest.mark.asyncio
 @pytest.mark.skip
 async def test_simplify_syntax_0():
-    user = build_fake_user()
-    session = build_fake_session()
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
 
-    global story
-    story = Story()
+    with answer.Talk() as talk:
+        say_pure_text = talk(answer.pure_text)
+        story = talk.story
 
-    @story.on('enter')
-    def labyrinth():
-        @story.part()
-        def enter(ctx):
-            # TODO: !!!!!!!!!!!
-            return [text.Any()]
-
-        @story.case(equal_to='left')
-        def left_room():
+        @story.on('enter')
+        def labyrinth():
             @story.part()
-            def left_room_passed(ctx):
-                return left_trigger.passed()
+            def enter(ctx):
+                # TODO: !!!!!!!!!!!
+                return [text.Any()]
 
-        @story.case(equal_to='right')
-        def right_room():
-            @story.part()
-            def right_room_passed(ctx):
-                return right_trigger.passed()
+            @story.case(equal_to='left')
+            def left_room():
+                @story.part()
+                def left_room_passed(ctx):
+                    return left_trigger.passed()
 
-    await answer.pure_text('enter', session, user, story)
-    await answer.pure_text('right', session, user, story)
+            @story.case(equal_to='right')
+            def right_room():
+                @story.part()
+                def right_room_passed(ctx):
+                    return right_trigger.passed()
 
-    assert not left_trigger.is_triggered
-    assert right_trigger.is_triggered
+        await say_pure_text('enter')
+        await say_pure_text('right')
+
+        assert not left_trigger.is_triggered
+        assert right_trigger.is_triggered
 
 
 # TODO: simplify syntax
 @pytest.mark.asyncio
 @pytest.mark.skip
 async def test_simplify_syntax_1():
-    user = build_fake_user()
-    session = build_fake_session()
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
 
-    global story
-    story = Story()
+    with answer.Talk() as talk:
+        story = talk.story
 
-    @story.on('enter')
-    def labyrinth():
-        @story.part()
-        def enter(ctx):
-            return [text.Any()]
-
-        # TODO: !!!!!!!!!!!
-        @story.case('left')
-        def left_room():
+        @story.on('enter')
+        def labyrinth():
             @story.part()
-            def left_room_passed(ctx):
-                return left_trigger.passed()
+            def enter(ctx):
+                return [text.Any()]
 
-        # TODO: !!!!!!!!!!!
-        @story.case('right')
-        def right_room():
-            @story.part()
-            def right_room_passed(ctx):
-                return right_trigger.passed()
+            # TODO: !!!!!!!!!!!
+            @story.case('left')
+            def left_room():
+                @story.part()
+                def left_room_passed(ctx):
+                    return left_trigger.passed()
 
-    await answer.pure_text('enter', session, user, story)
-    await answer.pure_text('right', session, user, story)
+            # TODO: !!!!!!!!!!!
+            @story.case('right')
+            def right_room():
+                @story.part()
+                def right_room_passed(ctx):
+                    return right_trigger.passed()
 
-    assert not left_trigger.is_triggered
-    assert right_trigger.is_triggered
+        await talk.pure_text('enter')
+        await talk.pure_text('right')
+
+        assert not left_trigger.is_triggered
+        assert right_trigger.is_triggered
 
 
 # TODO: simplify syntax
 @pytest.mark.asyncio
 @pytest.mark.skip
 async def test_simplify_syntax_2():
-    user = build_fake_user()
-    session = build_fake_session()
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
 
-    global story
-    story = Story()
+    with answer.Talk() as talk:
+        story = talk.story
 
-    @story.on('enter')
-    def labyrinth():
-        @story.part()
-        def enter(ctx):
-            # TODO: !!!!!!!!!!!
-            return 'right'
-
-        @story.case('left')
-        def left_room():
+        @story.on('enter')
+        def labyrinth():
             @story.part()
-            def left_room_passed(ctx):
-                return left_trigger.passed()
+            def enter(ctx):
+                # TODO: !!!!!!!!!!!
+                return 'right'
 
-        @story.case('right')
-        def right_room():
-            @story.part()
-            def right_room_passed(ctx):
-                return right_trigger.passed()
+            @story.case('left')
+            def left_room():
+                @story.part()
+                def left_room_passed(ctx):
+                    return left_trigger.passed()
 
-    await answer.pure_text('enter', session, user, story)
+            @story.case('right')
+            def right_room():
+                @story.part()
+                def right_room_passed(ctx):
+                    return right_trigger.passed()
 
-    assert not left_trigger.is_triggered
-    assert right_trigger.is_triggered
+        await talk.pure_text('enter')
+
+        assert not left_trigger.is_triggered
+        assert right_trigger.is_triggered
 
 
 # TODO: simplify syntax
 @pytest.mark.asyncio
 @pytest.mark.skip
 async def test_warn_on_incorrect_syntax_user_forgot_add_switch_value():
-    user = build_fake_user()
-    session = build_fake_session()
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
 
-    global story
-    story = Story()
+    with answer.Talk() as talk:
+        story = talk.story
 
-    @story.on('enter')
-    def labyrinth():
-        @story.part()
-        def enter(ctx):
+        @story.on('enter')
+        def labyrinth():
+            @story.part()
+            def enter(ctx):
+                # TODO: !!!!!!!!!!!
+                # user forgot to add switch value like:
+                # return 'right'
+                pass
+
             # TODO: !!!!!!!!!!!
-            # user forgot to add switch value like:
-            # return 'right'
-            pass
+            @story.case('left')
+            def left_room():
+                @story.part()
+                def left_room_passed(ctx):
+                    return left_trigger.passed()
 
-        # TODO: !!!!!!!!!!!
-        @story.case('left')
-        def left_room():
-            @story.part()
-            def left_room_passed(ctx):
-                return left_trigger.passed()
+            # TODO: !!!!!!!!!!!
+            @story.case('right')
+            def right_room():
+                @story.part()
+                def right_room_passed(ctx):
+                    return right_trigger.passed()
 
-        # TODO: !!!!!!!!!!!
-        @story.case('right')
-        def right_room():
-            @story.part()
-            def right_room_passed(ctx):
-                return right_trigger.passed()
+        await talk.pure_text('enter')
 
-    await answer.pure_text('enter', session, user, story)
-
-    assert not left_trigger.is_triggered
-    assert not right_trigger.is_triggered
-    # TODO: test warn message here
+        assert not left_trigger.is_triggered
+        assert not right_trigger.is_triggered
+        # TODO: test warn message here
 
 
 @pytest.mark.asyncio
 async def test_one_sync_switch_inside_of_another_async_switch():
-        visited_rooms = SimpleTrigger(0)
+    visited_rooms = SimpleTrigger(0)
 
-        with answer.Talk() as talk:
-            say_pure_text = talk(answer.pure_text)
-            story = talk.story
+    with answer.Talk() as talk:
+        story = talk.story
 
-            @story.on('enter')
-            def labyrinth():
+        @story.on('enter')
+        def labyrinth():
+            @story.part()
+            async def enter(message):
+                visited_rooms.receive(visited_rooms.value + 1)
+                return await story.ask('Which turn to choose?', user=message['user'])
+
+            @story.part()
+            def parse_direction_0(message):
+                return forking.SwitchOnValue(message['data']['text']['raw'])
+
+            @story.case(equal_to='left')
+            def room_1():
                 @story.part()
-                async def enter(message):
+                async def next_room_1(message):
                     visited_rooms.receive(visited_rooms.value + 1)
                     return await story.ask('Which turn to choose?', user=message['user'])
 
                 @story.part()
-                def parse_direction_0(message):
+                def parse_direction_1(message):
                     return forking.SwitchOnValue(message['data']['text']['raw'])
 
                 @story.case(equal_to='left')
-                def room_1():
+                def room_1_1():
                     @story.part()
-                    async def next_room_1(message):
+                    def next_room_1_1(message):
                         visited_rooms.receive(visited_rooms.value + 1)
-                        return await story.ask('Which turn to choose?', user=message['user'])
-
-                    @story.part()
-                    def parse_direction_1(message):
-                        return forking.SwitchOnValue(message['data']['text']['raw'])
-
-                    @story.case(equal_to='left')
-                    def room_1_1():
-                        @story.part()
-                        def next_room_1_1(message):
-                            visited_rooms.receive(visited_rooms.value + 1)
-
-                    @story.case(equal_to='right')
-                    def room_1_2():
-                        @story.part()
-                        def next_room_1_2(message):
-                            visited_rooms.receive(visited_rooms.value + 1)
 
                 @story.case(equal_to='right')
-                def room_2():
+                def room_1_2():
                     @story.part()
-                    async def next_room_2(message):
+                    def next_room_1_2(message):
                         visited_rooms.receive(visited_rooms.value + 1)
-                        return await story.ask('Which turn to choose?', user=message['user'])
 
+            @story.case(equal_to='right')
+            def room_2():
+                @story.part()
+                async def next_room_2(message):
+                    visited_rooms.receive(visited_rooms.value + 1)
+                    return await story.ask('Which turn to choose?', user=message['user'])
+
+                @story.part()
+                def parse_direction_2(message):
+                    return forking.SwitchOnValue(message['data']['text']['raw'])
+
+                @story.case(equal_to='left')
+                def room_2_1():
                     @story.part()
-                    def parse_direction_2(message):
-                        return forking.SwitchOnValue(message['data']['text']['raw'])
+                    def next_room_2_1(message):
+                        visited_rooms.receive(visited_rooms.value + 1)
 
-                    @story.case(equal_to='left')
-                    def room_2_1():
-                        @story.part()
-                        def next_room_2_1(message):
-                            visited_rooms.receive(visited_rooms.value + 1)
+                @story.case(equal_to='right')
+                def room_2_2():
+                    @story.part()
+                    def next_room_2_2(message):
+                        visited_rooms.receive(visited_rooms.value + 1)
 
-                    @story.case(equal_to='right')
-                    def room_2_2():
-                        @story.part()
-                        def next_room_2_2(message):
-                            visited_rooms.receive(visited_rooms.value + 1)
+        await talk.pure_text('enter')
+        await talk.pure_text(random.choice(['left', 'right']))
+        await talk.pure_text(random.choice(['left', 'right']))
 
-            await say_pure_text('enter')
-            await say_pure_text(random.choice(['left', 'right']))
-            await say_pure_text(random.choice(['left', 'right']))
-
-            assert visited_rooms.value == 3
+        assert visited_rooms.value == 3
 
 
 @pytest.mark.asyncio
 async def test_switch_inside_of_callable_inside_of_switch():
-    user = build_fake_user()
-    session = build_fake_session()
-
     visited_rooms = SimpleTrigger(0)
     spell_type = SimpleTrigger()
     spell_power = SimpleTrigger()
-
-    global story
-    story = Story()
 
     with answer.Talk() as talk:
         say_pure_text = talk(answer.pure_text)
@@ -619,10 +593,10 @@ async def test_switch_inside_of_callable_inside_of_switch():
                 def store_end(ctx):
                     visited_rooms.receive(visited_rooms.value + 1)
 
-        await say_pure_text('enter', session, user, story)
-        await say_pure_text(random.choice(['left', 'right']), session, user, story)
-        await say_pure_text(random.choice(['fireball', 'lightning']), session, user, story)
-        await say_pure_text(random.choice(['light', 'strong']), session, user, story)
+        await say_pure_text('enter')
+        await say_pure_text(random.choice(['left', 'right']))
+        await say_pure_text(random.choice(['fireball', 'lightning']))
+        await say_pure_text(random.choice(['light', 'strong']))
 
         assert visited_rooms.value == 1
         assert spell_type.value in ['fireball', 'lightning']
