@@ -69,25 +69,23 @@ def iterate_storyline(ctx):
     :param ctx:
     :return:
     """
-    start_step = ctx.current_step()
-
     logger.debug('# start iterate')
-    for step, _ in enumerate(ctx.compiled_story().story_line[start_step:], start_step):
-        ctx_child = ctx.clone()
-
+    for step in range(ctx.current_step(),
+                      len(ctx.compiled_story().story_line)):
+        ctx = ctx.clone()
         tail = ctx.stack_tail()
-
-        ctx_child.message = modify_stack_in_message(ctx_child.message,
-                                                    lambda stack: stack[:-1] + [{
-                                                        'data': tail['data'],
-                                                        'step': step,
-                                                        'topic': tail['topic'],
-                                                    }])
+        ctx.message = modify_stack_in_message(ctx.message,
+                                              lambda stack: stack[:-1] + [{
+                                                  'data': tail['data'],
+                                                  'step': step,
+                                                  'topic': tail['topic'],
+                                              }])
 
         logger.debug('# [{}] iterate'.format(step))
-        logger.debug(ctx_child)
+        logger.debug(ctx)
 
-        ctx = yield ctx_child
+        ctx = yield ctx
+
 
 
 def scope_in(ctx):
