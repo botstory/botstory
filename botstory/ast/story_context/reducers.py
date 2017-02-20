@@ -17,9 +17,9 @@ async def execute(ctx):
     tail_depth = len(ctx.stack()) - 1
 
     story_part = ctx.get_current_story_part()
-    logger.debug('#  going to call: {}'.format(story_part.__name__))
+    logger.debug('# going to call: {}'.format(story_part.__name__))
     waiting_for = story_part(ctx.message)
-    logger.debug('#  got result {}'.format(waiting_for))
+    logger.debug('# got result {}'.format(waiting_for))
     if inspect.iscoroutinefunction(story_part):
         waiting_for = await waiting_for
 
@@ -33,18 +33,7 @@ async def execute(ctx):
         ctx = ctx.clone()
         ctx.waiting_for = waiting_for
 
-    # ctx.message = modify_stack(ctx,
-    #                            lambda stack: stack[:-1] + [{
-    #                                'data': matchers.serialize(
-    #                                    matchers.get_validator(ctx.waiting_for)
-    #                                ),
-    #                                'step': stack[-1]['step'] + 1,
-    #                                'topic': stack[-1]['topic']
-    #                            }])
-
-    # TODO: should not mutate
-    ctx.message['session']['stack'][tail_depth]['step'] += 1
-
+    tail_data = ctx.message['session']['stack'][tail_depth]['data']
     if ctx.is_waiting_for_input():
         if isinstance(ctx.waiting_for, callable.EndOfStory):
             if isinstance(ctx.waiting_for.data, dict):
@@ -57,25 +46,18 @@ async def execute(ctx):
             }
         else:
             logger.debug('# before have modified data at stack')
-            ctx.message = modify_stack(ctx,
-                                       lambda stack: stack[:-1] + [{
-                                           'data': matchers.serialize(
-                                                matchers.get_validator(ctx.waiting_for)
-                                            ),
-                                           # 'step': stack[-1]['step'] + 1,
-                                           'step': stack[-1]['step'],
-                                           'topic': stack[-1]['topic']
-                                       }])
-            logger.debug('# have modified data at stack')
-            logger.debug(ctx)
-    # else:
-    #     ctx.message = modify_stack(ctx,
-    #                                lambda stack: stack[:-1] + [{
-    #                                    'data': matchers.serialize(callable.WaitForReturn()),
-    #                                    # 'step': stack[-1]['step'] + 1,
-    #                                    'step': stack[-1]['step'],
-    #                                    'topic': stack[-1]['topic']
-    #                                }])
+            tail_data = matchers.serialize(
+                matchers.get_validator(ctx.waiting_for)
+            )
+
+    ctx.message = modify_stack_in_message(ctx.message,
+                                          lambda stack: stack[:tail_depth] +
+                                                        [{
+                                                            'data': tail_data,
+                                                            'step': stack[tail_depth]['step'] + 1,
+                                                            'topic': stack[tail_depth]['topic'],
+                                                        }] +
+                                                        stack[tail_depth + 1:])
     logger.debug('# mutated ctx after execute')
     logger.debug(ctx)
     return ctx
@@ -96,12 +78,12 @@ def iterate_storyline(ctx):
 
         tail = ctx.stack_tail()
 
-        ctx_child.message = modify_stack(ctx_child,
-                                         lambda stack: stack[:-1] + [{
-                                             'data': tail['data'],
-                                             'step': step,
-                                             'topic': tail['topic'],
-                                         }])
+        ctx_child.message = modify_stack_in_message(ctx_child.message,
+                                                    lambda stack: stack[:-1] + [{
+                                                        'data': tail['data'],
+                                                        'step': step,
+                                                        'topic': tail['topic'],
+                                                    }])
 
         logger.debug('# [{}] iterate'.format(step))
         logger.debug(ctx_child)
@@ -123,18 +105,19 @@ def scope_in(ctx):
     compiled_story = None
     if not ctx.is_empty_stack():
         compiled_story = ctx.get_child_story()
-        ctx.message = modify_stack(ctx,
-                                   lambda stack: stack[:-1] + [{
-                                       'data': matchers.serialize(callable.WaitForReturn()),
-                                       'step': stack[-1]['step'] + 1,
-                                       'topic': stack[-1]['topic']
-                                   }])
+        ctx.message = modify_stack_in_message(ctx.message,
+                                              lambda stack: stack[:-1] + [{
+                                                  'data': matchers.serialize(callable.WaitForReturn()),
+                                                  'step': stack[-1]['step'] + 1,
+                                                  'topic': stack[-1]['topic']
+                                              }])
     if not compiled_story:
         compiled_story = ctx.compiled_story()
 
     logger.debug('# [>] going deeper')
-    ctx.message = modify_stack(ctx,
-                               lambda stack: stack + [stack_utils.build_empty_stack_item(compiled_story.topic)])
+    ctx.message = modify_stack_in_message(ctx.message,
+                                          lambda stack: stack + [
+                                              stack_utils.build_empty_stack_item(compiled_story.topic)])
     logger.debug(ctx)
     return ctx
 
@@ -159,11 +142,11 @@ def scope_out(ctx):
     return ctx
 
 
-def modify_stack(ctx, mutator):
+def modify_stack_in_message(message, mutator):
     return {
-        **ctx.message,
+        **message,
         'session': {
-            **ctx.message['session'],
-            'stack': mutator(ctx.message['session']['stack']),
+            **message['session'],
+            'stack': mutator(message['session']['stack']),
         }
     }
