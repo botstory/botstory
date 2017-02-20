@@ -50,7 +50,11 @@ class CallableNodeWrapper:
 
         # we are going deeper so prepare one more item in stack
         logger.debug('  action: extend stack by +1')
-        session['stack'].append(stack_utils.build_empty_stack_item(self.ast_node.topic))
+        session = {
+            **session,
+            'stack': session['stack'] + [stack_utils.build_empty_stack_item(self.ast_node.topic)],
+        }
+
         ctx = story_context.StoryContext(message={
             'session': session,
             # TODO: should get user from context
@@ -60,9 +64,15 @@ class CallableNodeWrapper:
         ctx = await self.processor.process_story(ctx)
         ctx = story_context.reducers.scope_out(ctx)
 
+        logger.debug('# result of callable')
+        logger.debug(ctx)
+
         if isinstance(ctx.waiting_for, EndOfStory):
             return ctx.waiting_for.data
-        return ctx.waiting_for
+
+        # because we would like to return to stories from caller
+        # we should return our context to callee
+        return ctx
 
 
 class CallableStoriesAPI:

@@ -82,22 +82,30 @@ class StoryProcessor:
 
         # integrate over parts of story
         last_story_part = None
-        for story_part_ctx in story_context.reducers.iterate_storyline(ctx):
-            logger.debug('# in a loop')
-            logger.debug(story_part_ctx)
+        storyline = story_context.reducers.iterate_storyline(ctx)
+        story_part_ctx = next(storyline)
+        while True:
+            try:
+                logger.debug('# in a loop')
+                logger.debug(story_part_ctx)
 
-            self.tracker.story(story_part_ctx)
+                self.tracker.story(story_part_ctx)
 
-            if story_part_ctx.has_child_story():
-                story_part_ctx = story_context.reducers.scope_in(story_part_ctx)
-                story_part_ctx = await self.process_story(story_part_ctx)
-                story_part_ctx = story_context.reducers.scope_out(story_part_ctx)
-            else:
-                story_part_ctx = await story_context.reducers.execute(story_part_ctx)
+                if story_part_ctx.has_child_story():
+                    story_part_ctx = story_context.reducers.scope_in(story_part_ctx)
+                    story_part_ctx = await self.process_story(story_part_ctx)
+                    story_part_ctx = story_context.reducers.scope_out(story_part_ctx)
+                else:
+                    story_part_ctx = await story_context.reducers.execute(story_part_ctx)
 
-            if story_part_ctx.is_waiting_for_input():
-                return story_part_ctx
-            last_story_part = story_part_ctx
+                if story_part_ctx.is_waiting_for_input():
+                    logger.debug('# exit. waiting for user input')
+                    logger.debug(story_part_ctx)
+                    return story_part_ctx
+                last_story_part = story_part_ctx
+                story_part_ctx = storyline.send(story_part_ctx)
+            except StopIteration:
+                break
 
         if last_story_part is None:
             raise Exception('story line is empty')

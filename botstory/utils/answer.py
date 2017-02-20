@@ -23,26 +23,17 @@ class Talk:
     def __call__(self, *args, **kwargs):
         return self.wrap_user_talk(args[0])
 
+    def init_by_ctx(self, ctx):
+        self.session = ctx.message['session']
+
     async def location(self, loc):
-        return await location(loc,
-                              session=self.session,
-                              user=self.user,
-                              story=self.story,
-                              )
+        return await self.wrap_user_talk(location)(loc)
 
     async def pure_text(self, text):
-        return await pure_text(text,
-                               session=self.session,
-                               user=self.user,
-                               story=self.story,
-                               )
+        return await self.wrap_user_talk(pure_text)(text)
 
     async def option(self, payload):
-        return await option(payload,
-                            session=self.session,
-                            user=self.user,
-                            story=self.story,
-                            )
+        return await self.wrap_user_talk(option)(payload)
 
     def wrap_user_talk(self, fn):
         async def fn_wrapper(payload):

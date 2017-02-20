@@ -1,5 +1,5 @@
 from botstory import matchers
-from botstory.ast import callable, stack_utils
+from botstory.ast import callable, stack_utils, story_context
 import logging
 import inspect
 
@@ -14,6 +14,8 @@ async def execute(ctx):
     :param ctx:
     :return:
     """
+    tail_depth = len(ctx.stack()) - 1
+
     story_part = ctx.get_current_story_part()
     logger.debug('#  going to call: {}'.format(story_part.__name__))
     waiting_for = story_part(ctx.message)
@@ -21,8 +23,27 @@ async def execute(ctx):
     if inspect.iscoroutinefunction(story_part):
         waiting_for = await waiting_for
 
-    ctx = ctx.clone()
-    ctx.waiting_for = waiting_for
+    # story part could run callable story and return its context
+    if isinstance(waiting_for, story_context.StoryContext):
+        # for such cases is very important to know `tail_depth`
+        # because story context from callable story already has
+        # few stack items above our tail
+        ctx = waiting_for.clone()
+    else:
+        ctx = ctx.clone()
+        ctx.waiting_for = waiting_for
+
+    # ctx.message = modify_stack(ctx,
+    #                            lambda stack: stack[:-1] + [{
+    #                                'data': matchers.serialize(
+    #                                    matchers.get_validator(ctx.waiting_for)
+    #                                ),
+    #                                'step': stack[-1]['step'] + 1,
+    #                                'topic': stack[-1]['topic']
+    #                            }])
+
+    # TODO: should not mutate
+    ctx.message['session']['stack'][tail_depth]['step'] += 1
 
     if ctx.is_waiting_for_input():
         if isinstance(ctx.waiting_for, callable.EndOfStory):
@@ -35,21 +56,28 @@ async def execute(ctx):
                 'data': new_data,
             }
         else:
+            logger.debug('# before have modified data at stack')
             ctx.message = modify_stack(ctx,
                                        lambda stack: stack[:-1] + [{
                                            'data': matchers.serialize(
                                                 matchers.get_validator(ctx.waiting_for)
                                             ),
+                                           # 'step': stack[-1]['step'] + 1,
                                            'step': stack[-1]['step'],
                                            'topic': stack[-1]['topic']
                                        }])
-    else:
-        ctx.message = modify_stack(ctx,
-                                   lambda stack: stack[:-1] + [{
-                                       'data': stack[-1]['data'],
-                                       'step': stack[-1]['step'] + 1,
-                                       'topic': stack[-1]['topic']
-                                   }])
+            logger.debug('# have modified data at stack')
+            logger.debug(ctx)
+    # else:
+    #     ctx.message = modify_stack(ctx,
+    #                                lambda stack: stack[:-1] + [{
+    #                                    'data': matchers.serialize(callable.WaitForReturn()),
+    #                                    # 'step': stack[-1]['step'] + 1,
+    #                                    'step': stack[-1]['step'],
+    #                                    'topic': stack[-1]['topic']
+    #                                }])
+    logger.debug('# mutated ctx after execute')
+    logger.debug(ctx)
     return ctx
 
 
@@ -62,7 +90,8 @@ def iterate_storyline(ctx):
     """
     start_step = ctx.current_step()
 
-    for step, story_part in enumerate(ctx.compiled_story().story_line[start_step:], start_step):
+    logger.debug('# start iterate')
+    for step, _ in enumerate(ctx.compiled_story().story_line[start_step:], start_step):
         ctx_child = ctx.clone()
 
         tail = ctx.stack_tail()
@@ -74,7 +103,11 @@ def iterate_storyline(ctx):
                                              'topic': tail['topic'],
                                          }])
 
-        yield ctx_child
+        logger.debug('# [{}] iterate'.format(step))
+        logger.debug(ctx_child)
+
+        ctx = yield ctx_child
+        logger.debug('get back {}'.format(ctx))
 
 
 def scope_in(ctx):
@@ -102,7 +135,7 @@ def scope_in(ctx):
     logger.debug('# [>] going deeper')
     ctx.message = modify_stack(ctx,
                                lambda stack: stack + [stack_utils.build_empty_stack_item(compiled_story.topic)])
-
+    logger.debug(ctx)
     return ctx
 
 
@@ -121,6 +154,7 @@ def scope_out(ctx):
         logger.debug('# [<] return')
         ctx = ctx.clone()
         ctx.message['session']['stack'] = ctx.message['session']['stack'][:-1]
+        logger.debug(ctx)
 
     return ctx
 

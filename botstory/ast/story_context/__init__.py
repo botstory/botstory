@@ -4,12 +4,15 @@ from botstory.ast.story_context import reducers
 
 import json
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
 
 class StoryContext:
-    def __init__(self, message, library, waiting_for=None):
+    def __init__(self, message, library, waiting_for=None, parent_uid=None):
+        self.uid = str(uuid.uuid4())
+        self.parent_uid = parent_uid
         self.library = library
         self.message = message
         self.waiting_for = waiting_for
@@ -17,7 +20,9 @@ class StoryContext:
     def clone(self):
         return StoryContext(self.message,
                             self.library,
-                            self.waiting_for)
+                            self.waiting_for,
+                            parent_uid=self.uid,
+                            )
 
     def compiled_story(self):
         if self.is_empty_stack():
@@ -92,6 +97,8 @@ class StoryContext:
 
     def to_json(self):
         return {
+            'uid': self.uid,
+            'parent_uid': self.parent_uid,
             'message': self.message,
             'waiting_for': str(self.waiting_for),
         }
