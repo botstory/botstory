@@ -84,6 +84,10 @@ class StoryProcessor:
         last_story_part = None
         storyline = story_context.reducers.iterate_storyline(ctx)
         story_part_ctx = next(storyline)
+
+        # loop thought storyline
+        # we can't use for here because we should send update context
+        # back to iterator
         while True:
             try:
                 logger.debug('# in a loop')
@@ -99,8 +103,6 @@ class StoryProcessor:
                     story_part_ctx = await story_context.reducers.execute(story_part_ctx)
 
                 if story_part_ctx.is_waiting_for_input():
-                    logger.debug('# exit. waiting for user input')
-                    logger.debug(story_part_ctx)
                     return story_part_ctx
                 last_story_part = story_part_ctx
                 story_part_ctx = storyline.send(story_part_ctx)
