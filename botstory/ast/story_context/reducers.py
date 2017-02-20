@@ -45,7 +45,6 @@ async def execute(ctx):
                 'data': new_data,
             }
         else:
-            logger.debug('# before have modified data at stack')
             tail_data = matchers.serialize(
                 matchers.get_validator(ctx.waiting_for)
             )
@@ -89,7 +88,6 @@ def iterate_storyline(ctx):
         logger.debug(ctx_child)
 
         ctx = yield ctx_child
-        logger.debug('get back {}'.format(ctx))
 
 
 def scope_in(ctx):
