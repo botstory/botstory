@@ -70,7 +70,8 @@ async def test_parts_of_callable_story():
                 await story.say(res, user=ctx['user'])
                 trigger_2.passed()
 
-        await meet_ava_story(session=talk.session, user=talk.user)
+        ctx = await meet_ava_story(session=talk.session, user=talk.user)
+        talk.init_by_ctx(ctx)
 
         await talk.pure_text('Eugene')
         await talk.pure_text('13')
@@ -159,29 +160,24 @@ async def test_call_story_from_another_callable():
         def one_story():
             @story.part()
             def so_1(ctx):
-                logger.debug('[!] def so_1(ctx)')
                 pass
 
             @story.part()
             async def so_2(ctx):
-                logger.debug('[!] def so_2(ctx)')
                 await another_story(session=ctx['session'], user=ctx['user'])
 
             @story.part()
             def so_3(ctx):
-                logger.debug('[!] def so_3(ctx)')
                 trigger_2.passed()
 
         @story.callable()
         def another_story():
             @story.part()
             def has(cxt):
-                logger.debug('[!] def has(cxt):')
                 pass
 
             @story.part()
             def so(ctx):
-                logger.debug('[!] def so(cxt):')
                 trigger_1.passed()
                 return callable.EndOfStory()
 
@@ -252,7 +248,7 @@ async def test_async_end_of_story_with_switch():
         def enter_to_the_saloon():
             @story.part()
             async def start_a_game(ctx):
-                return await flip_a_coin(user=user, session=ctx['session'])
+                return await flip_a_coin(user=ctx['user'], session=ctx['session'])
 
             @story.part()
             def game_over(ctx):

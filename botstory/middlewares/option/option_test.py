@@ -12,8 +12,6 @@ async def test_should_ask_with_options():
     trigger = SimpleTrigger()
 
     with answer.Talk() as talk:
-        say_option = talk(answer.option)
-        say_pure_text = talk(answer.pure_text)
         story = talk.story
 
         @story.on('How are you?')
@@ -39,8 +37,8 @@ async def test_should_ask_with_options():
             def get_health(ctx):
                 trigger.receive(ctx['data']['option'])
 
-        await say_pure_text('How are you?')
-        await say_option({'health': 1})
+        await talk.pure_text('How are you?')
+        await talk.option({'health': 1})
         assert trigger.result() == {'health': 1}
 
 
@@ -49,7 +47,6 @@ async def test_validate_option():
     trigger = SimpleTrigger()
 
     with answer.Talk() as talk:
-        say_option = talk(answer.option)
         story = talk.story
 
         @story.on(receive=option.Any())
@@ -58,16 +55,15 @@ async def test_validate_option():
             def store_option(ctx):
                 trigger.passed()
 
-        await say_option({'engine': 'start'})
+        await talk.option({'engine': 'start'})
         assert trigger.is_triggered
 
 
 @pytest.mark.asyncio
-async def test_validate_only_option():
+async def test_discard_not_valid_text_message():
     trigger = SimpleTrigger()
 
     with answer.Talk() as talk:
-        say_pure_text = talk(answer.pure_text)
         story = talk.story
 
         @story.on(receive=option.Any())
@@ -76,7 +72,7 @@ async def test_validate_only_option():
             def store_option(ctx):
                 trigger.passed()
 
-        await say_pure_text('Start engine!')
+        await talk.pure_text('Start engine!')
         assert not trigger.is_triggered
 
 
@@ -93,15 +89,14 @@ async def test_validate_only_option():
 
     with answer.Talk() as talk:
         story = talk.story
-        say_option = talk(answer.option)
 
         @story.on(receive=option.Match('green'))
         def one_story():
             @story.part()
-            def store_option(message):
+            def store_option(ctx):
                 trigger.passed()
 
-        await say_option('green')
+        await talk.option('green')
         assert trigger.is_triggered
 
 

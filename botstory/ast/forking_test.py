@@ -300,6 +300,7 @@ async def test_one_sync_switch_inside_of_another_sync_switch_with_failed_switch(
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip('not implemented yet')
 async def test_simplify_syntax_wait_for_any_text():
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
@@ -334,6 +335,7 @@ async def test_simplify_syntax_wait_for_any_text():
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip('not implemented yet')
 async def test_simplify_syntax_for_case_matching():
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
@@ -367,6 +369,7 @@ async def test_simplify_syntax_for_case_matching():
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip('not implemented yet')
 async def test_simplify_syntax_case_matches_previous_returned_value():
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
@@ -398,8 +401,8 @@ async def test_simplify_syntax_case_matches_previous_returned_value():
         assert right_trigger.is_triggered
 
 
-# TODO: simplify syntax
 @pytest.mark.asyncio
+@pytest.mark.skip('test warn message here')
 async def test_warn_on_incorrect_syntax_user_forgot_add_switch_value():
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
@@ -416,14 +419,12 @@ async def test_warn_on_incorrect_syntax_user_forgot_add_switch_value():
                 # return 'right'
                 pass
 
-            # TODO: !!!!!!!!!!!
             @story.case('left')
             def left_room():
                 @story.part()
                 def left_room_passed(ctx):
                     return left_trigger.passed()
 
-            # TODO: !!!!!!!!!!!
             @story.case('right')
             def right_room():
                 @story.part()
@@ -573,7 +574,7 @@ async def test_switch_inside_of_callable_inside_of_switch():
             def room_2():
                 @story.part()
                 async def meet_ogr(ctx):
-                    return await cast_the_magic(user=ctx['user'], session=session)
+                    return await cast_the_magic(user=ctx['user'], session=ctx['session'])
 
                 @story.part()
                 def store_end(ctx):

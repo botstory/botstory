@@ -41,7 +41,10 @@ class StoryPartFork:
             case_stories = self.match_children('default_case', True)
 
         if len(case_stories) == 0:
-            logger.debug('   do not have any fork here')
+            logger.debug('#######################################')
+            logger.debug('# [!] do not have any fork here')
+            logger.debug('# context = {}'.format(self))
+            logger.debug('# validation_result = {}'.format(validation_result))
             return None
 
         return case_stories[0]

@@ -102,13 +102,53 @@ def test_iterate_storyline_immutability(build_mock_context):
     })
 
     story_line = story_context.reducers.iterate_storyline(ctx_before)
-    assert story_line is not []
-    for story_part in story_line:
-        assert story_part != ctx_before
-        assert story_part.message is not ctx_before.message
-        assert story_part.message['session'] is not ctx_before.message['session']
-        assert story_part.message['session']['stack'] is not ctx_before.message['session']['stack']
-        assert story_part.message['session']['stack'][-1] is not ctx_before.message['session']['stack'][-1]
+
+    story_part = next(story_line)
+    while True:
+        try:
+            assert story_part != ctx_before
+            assert story_part.message is not ctx_before.message
+            assert story_part.message['session'] is not ctx_before.message['session']
+            assert story_part.message['session']['stack'] is not ctx_before.message['session']['stack']
+            assert story_part.message['session']['stack'][-1] is not ctx_before.message['session']['stack'][-1]
+            story_line.send(story_part)
+        except StopIteration:
+            break
+
+
+def test_iterate_storyline_send_ctx_back(build_mock_context):
+    ctx_before = build_mock_context({
+        'session': {
+            'stack': [{
+                'data': None,
+                'step': 0,
+                'topic': 'one_story',
+            }],
+        },
+        'user': None,
+        'data': None,
+    })
+
+    story_line = story_context.reducers.iterate_storyline(ctx_before)
+    ctx_after = next(story_line)
+    ctx_before = ctx_after
+    ctx_before.message['session']['stack'][-1]['data'] = 'hello world!'
+
+    ctx_after = story_line.send(ctx_before)
+    assert ctx_before.message['session']['stack'][-1]['data'] == \
+           ctx_after.message['session']['stack'][-1]['data']
+    compare_ctx(ctx_before, ctx_after)
+    ctx_before = ctx_after
+
+    ctx_after = story_line.send(ctx_before)
+    compare_ctx(ctx_before, ctx_after)
+    with pytest.raises(StopIteration):
+        story_line.send(ctx_before)
+
+
+def compare_ctx(ctx1, ctx2):
+    assert ctx1 != ctx2
+    assert ctx1.message != ctx2.message
 
 
 def test_scope_out_immutability(build_mock_context):

@@ -161,9 +161,9 @@ async def test_should_match_group_of_matchers_between_parts_of_story():
             def then(ctx):
                 trigger_2.passed()
 
-        say_pure_text('hi there!')
-        say_location({'lat': 1, 'lng': 1})
-        say_pure_text('hi there!')
+        await say_pure_text('hi there!')
+        await say_location({'lat': 1, 'lng': 1})
+        await say_pure_text('hi there!')
 
         assert trigger_1.is_triggered
         assert trigger_2.is_triggered
