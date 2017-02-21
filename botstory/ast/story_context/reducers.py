@@ -34,7 +34,6 @@ async def execute(ctx):
         ctx.waiting_for = waiting_for
 
     tail_data = ctx.message['session']['stack'][tail_depth]['data']
-    tail_step = ctx.message['session']['stack'][tail_depth]['step']
     if ctx.is_waiting_for_input():
         if isinstance(ctx.waiting_for, callable.EndOfStory):
             if isinstance(ctx.waiting_for.data, dict):
@@ -45,25 +44,16 @@ async def execute(ctx):
                 **ctx.message,
                 'data': new_data,
             }
-            tail_step += 1
-        elif isinstance(ctx.waiting_for, loop.ScopeMatcher):
-            tail_data = matchers.serialize(
-                matchers.get_validator(ctx.waiting_for)
-            )
-            # shouldn't go to the next story part
-            # because we're still in a loop
-            # tail_step += 1
         else:
             tail_data = matchers.serialize(
                 matchers.get_validator(ctx.waiting_for)
             )
-            tail_step += 1
 
     ctx.message = modify_stack_in_message(ctx.message,
                                           lambda stack: stack[:tail_depth] +
                                                         [{
                                                             'data': tail_data,
-                                                            'step': tail_step,
+                                                            'step': stack[tail_depth]['step'] + 1,
                                                             'topic': stack[tail_depth]['topic'],
                                                         }] +
                                                         stack[tail_depth + 1:])

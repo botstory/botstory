@@ -61,9 +61,6 @@ class StoriesLoopNode:
 
     def __call__(self, *args, **kwargs):
         return None
-        # return ScopeMatcher(
-        #     middlewares.any.AnyOf(self.local_scope.all_filters())
-        # )
 
     def get_child_by_validation_result(self, topic):
         case_stories = self.local_scope.by_topic(topic)
