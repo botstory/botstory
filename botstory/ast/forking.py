@@ -17,6 +17,7 @@ class Undefined:
 
 class StoryPartFork:
     def __init__(self):
+        # TODO: should make scope here (like in StoryLoop)
         self.children = []
 
     @classmethod
@@ -45,6 +46,7 @@ class StoryPartFork:
             logger.debug('# [!] do not have any fork here')
             logger.debug('# context = {}'.format(self))
             logger.debug('# validation_result = {}'.format(validation_result))
+            logger.debug('#######################################')
             return None
 
         return case_stories[0]

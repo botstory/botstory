@@ -1,8 +1,6 @@
+from botstory import di
 import logging
 import json
-
-from . import forking
-from .. import di
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +19,7 @@ class StoriesScope:
         self.stories.append(story)
 
     def all_filters(self):
-        return [s.extensions['validator'] for s in self.stories]
+        return {s.topic: s.extensions['validator'] for s in self.stories}
 
     def match(self, message):
         matched_stories = [
@@ -94,9 +92,15 @@ class StoriesLibrary:
         parent = self.get_story_by_topic(stack[-1]['topic'], stack[:-1])
         if not parent:
             return None
+
+        if hasattr(parent, 'local_scope'):
+            # for loop.StoriesLoopNode
+            return parent.get_child_by_validation_result(topic)
+
+        # for forking.StoryPartFork
         inner_stories = [
-            story.children for story in parent.story_line if isinstance(story, forking.StoryPartFork)
-            ]
+            story.children for story in parent.story_line if hasattr(story, 'children')
+        ]
 
         inner_stories = [item for sublist in inner_stories for item in sublist]
 
@@ -106,4 +110,4 @@ class StoriesLibrary:
         elif len(child_options) == 1:
             return child_options[0]
         else:
-            raise Error('We have few options with the same name {}'.format(topic))
+            raise Exception('We have few options with the same name {}'.format(topic))

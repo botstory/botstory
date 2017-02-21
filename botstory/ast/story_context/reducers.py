@@ -1,5 +1,5 @@
 from botstory import matchers
-from botstory.ast import callable, stack_utils, story_context
+from botstory.ast import callable, forking, loop, stack_utils, story_context
 import logging
 import inspect
 
@@ -34,6 +34,7 @@ async def execute(ctx):
         ctx.waiting_for = waiting_for
 
     tail_data = ctx.message['session']['stack'][tail_depth]['data']
+    tail_step = ctx.message['session']['stack'][tail_depth]['step']
     if ctx.is_waiting_for_input():
         if isinstance(ctx.waiting_for, callable.EndOfStory):
             if isinstance(ctx.waiting_for.data, dict):
@@ -44,16 +45,25 @@ async def execute(ctx):
                 **ctx.message,
                 'data': new_data,
             }
+            tail_step += 1
+        elif isinstance(ctx.waiting_for, loop.ScopeMatcher):
+            tail_data = matchers.serialize(
+                matchers.get_validator(ctx.waiting_for)
+            )
+            # shouldn't go to the next story part
+            # because we're still in a loop
+            # tail_step += 1
         else:
             tail_data = matchers.serialize(
                 matchers.get_validator(ctx.waiting_for)
             )
+            tail_step += 1
 
     ctx.message = modify_stack_in_message(ctx.message,
                                           lambda stack: stack[:tail_depth] +
                                                         [{
                                                             'data': tail_data,
-                                                            'step': stack[tail_depth]['step'] + 1,
+                                                            'step': tail_step,
                                                             'topic': stack[tail_depth]['topic'],
                                                         }] +
                                                         stack[tail_depth + 1:])
@@ -87,7 +97,6 @@ def iterate_storyline(ctx):
         ctx = yield ctx
 
 
-
 def scope_in(ctx):
     """
     - build new scope on the top of stack
@@ -96,6 +105,8 @@ def scope_in(ctx):
     :param ctx:
     :return:
     """
+    logger.debug('# scope_in')
+    logger.debug(ctx)
     ctx = ctx.clone()
 
     compiled_story = None
@@ -127,6 +138,8 @@ def scope_out(ctx):
     :param ctx:
     :return:
     """
+    logger.debug('# scope_out')
+    logger.debug(ctx)
     # we reach the end of story line
     # so we could collapse previous scope and related stack item
     if ctx.is_tail_of_story() and not ctx.could_scope_out():
@@ -146,3 +159,21 @@ def modify_stack_in_message(message, mutator):
             'stack': mutator(message['session']['stack']),
         }
     }
+
+
+def jumping_in_a_loop(ctx):
+    logger.debug('# jumping in a scope loop')
+    ctx = ctx.clone()
+    story_loop = ctx.get_current_story_part()
+    ctx.waiting_for = matchers.serialize(
+        forking.Switch(story_loop.local_scope.all_filters())
+    )
+    ctx.message = modify_stack_in_message(ctx.message,
+                                          lambda stack: stack[:-1] + [{
+                                              'data': ctx.waiting_for,
+                                              'step': stack[-1]['step'],
+                                              'topic': stack[-1]['topic'],
+                                          }])
+
+    logger.debug(ctx)
+    return ctx

@@ -1,5 +1,5 @@
 from botstory import di
-from botstory.ast import story_context
+from botstory.ast import loop, story_context
 from botstory.integrations import mocktracker
 
 import logging
@@ -90,8 +90,14 @@ class StoryProcessor:
         # back to iterator
         while True:
             try:
-                logger.debug('# in a loop')
-                logger.debug(story_part_ctx)
+                if isinstance(story_part_ctx.get_current_story_part(), loop.StoriesLoopNode):
+                    # TODO:
+                    # if upcoming part is the loop:
+                    # - and we have result from last story part
+                    #   then try to jump in a loop
+                    # - don't have result
+                    #   should wait for user input
+                    return story_context.reducers.jumping_in_a_loop(story_part_ctx)
 
                 self.tracker.story(story_part_ctx)
 
