@@ -60,7 +60,7 @@ class StoriesLoopNode:
         return self.local_scope.stories
 
     def __call__(self, *args, **kwargs):
-        return None
+        return ScopeMatcher(forking.Switch(self.local_scope.all_filters()))
 
     def get_child_by_validation_result(self, topic):
         case_stories = self.local_scope.by_topic(topic)
@@ -105,9 +105,6 @@ class ScopeMatcher:
     def serialize(self):
         return self.all_filters.serialize()
 
-    def process(self):
-        return True
-
     @classmethod
     def deserialize(cls, data):
-        return cls(middlewares.any.AnyOf.deserialize(data))
+        return cls(forking.Switch.deserialize(data))

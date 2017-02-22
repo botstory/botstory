@@ -1,5 +1,5 @@
 from botstory import matchers
-from botstory.ast import callable, forking, loop, stack_utils, story_context
+from botstory.ast import callable, loop, stack_utils, story_context
 import logging
 import inspect
 
@@ -34,6 +34,7 @@ async def execute(ctx):
         ctx.waiting_for = waiting_for
 
     tail_data = ctx.message['session']['stack'][tail_depth]['data']
+    tail_step = ctx.message['session']['stack'][tail_depth]['step']
     if ctx.is_waiting_for_input():
         if isinstance(ctx.waiting_for, callable.EndOfStory):
             if isinstance(ctx.waiting_for.data, dict):
@@ -44,16 +45,21 @@ async def execute(ctx):
                 **ctx.message,
                 'data': new_data,
             }
+            tail_step += 1
+        elif isinstance(ctx.waiting_for, loop.ScopeMatcher):
+            # jumping in a loop
+            tail_data = matchers.serialize(ctx.waiting_for)
         else:
             tail_data = matchers.serialize(
                 matchers.get_validator(ctx.waiting_for)
             )
+            tail_step += 1
 
     ctx.message = modify_stack_in_message(ctx.message,
                                           lambda stack: stack[:tail_depth] +
                                                         [{
                                                             'data': tail_data,
-                                                            'step': stack[tail_depth]['step'] + 1,
+                                                            'step': tail_step,
                                                             'topic': stack[tail_depth]['topic'],
                                                         }] +
                                                         stack[tail_depth + 1:])
@@ -149,21 +155,3 @@ def modify_stack_in_message(message, mutator):
             'stack': mutator(message['session']['stack']),
         }
     }
-
-
-def jumping_in_a_loop(ctx):
-    logger.debug('# jumping in a scope loop')
-    ctx = ctx.clone()
-    story_loop = ctx.get_current_story_part()
-    ctx.waiting_for = matchers.serialize(
-        forking.Switch(story_loop.local_scope.all_filters())
-    )
-    ctx.message = modify_stack_in_message(ctx.message,
-                                          lambda stack: stack[:-1] + [{
-                                              'data': ctx.waiting_for,
-                                              'step': stack[-1]['step'],
-                                              'topic': stack[-1]['topic'],
-                                          }])
-
-    logger.debug(ctx)
-    return ctx
