@@ -19,10 +19,6 @@ class StoryPartFork:
     def __init__(self):
         self.local_scope = ast.library.StoriesScope()
 
-    @classmethod
-    def factory(cls):
-        return cls()
-
     @property
     def __name__(self):
         return 'StoryPartFork'
@@ -35,11 +31,11 @@ class StoryPartFork:
         return None
 
     def get_child_by_validation_result(self, validation_result):
-        case_stories = self.match_children('case_id', validation_result)
+        case_stories = self.local_scope.get_story_by(case_id=validation_result)
         if len(case_stories) == 0:
-            case_stories = self.match_children('case_equal', validation_result)
+            case_stories = self.local_scope.get_story_by(case_equal=validation_result)
         if len(case_stories) == 0:
-            case_stories = self.match_children('default_case', True)
+            case_stories = self.local_scope.get_story_by(default_case=True)
 
         if len(case_stories) == 0:
             logger.debug('#######################################')
@@ -50,10 +46,6 @@ class StoryPartFork:
             return None
 
         return case_stories[0]
-
-    def match_children(self, key, value):
-        return [child for child in self.local_scope.stories
-                if child.extensions.get(key, Undefined) == value]
 
     def to_json(self):
         return {

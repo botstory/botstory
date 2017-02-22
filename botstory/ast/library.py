@@ -1,4 +1,5 @@
 from botstory import di
+from botstory.ast import forking
 import logging
 import json
 
@@ -26,6 +27,11 @@ class StoriesScope:
             story for story in self.stories
             if story.extensions['validator'].validate(message)]
         return matched_stories[0] if len(matched_stories) > 0 else None
+
+    def get_story_by(self, **kwargs):
+        return [child for child in self.stories
+                if all(child.extensions.get(key, forking.Undefined) == kwargs[key]
+                       for key in kwargs.keys())]
 
     def by_topic(self, topic):
         return [s for s in self.stories if s.topic == topic]
