@@ -34,9 +34,6 @@ class StoryPartFork:
     def __call__(self, *args, **kwargs):
         return None
 
-    def add_child(self, child_story_line):
-        self.local_scope.add(child_story_line)
-
     def get_child_by_validation_result(self, validation_result):
         case_stories = self.match_children('case_id', validation_result)
         if len(case_stories) == 0:

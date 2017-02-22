@@ -94,6 +94,7 @@ class ASTNode:
 
         self.story_names.add(part_name)
         self.story_line.append(story_part)
+        return story_part
 
     def to_json(self):
         return {
