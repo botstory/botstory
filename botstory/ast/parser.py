@@ -41,13 +41,21 @@ class Parser:
     def go_deeper(self, one_story, buildScopePart):
         if len(self.current_node.story_line) == 0 or \
                 inspect.isfunction(self.current_node.story_line[-1]):
-            self.current_node.story_line.append(buildScopePart())
+            scope_node = buildScopePart()
+            self.current_node.story_line.append(scope_node)
+        else:
+            scope_node = self.current_node.story_line[-1]
 
-        parent_node = self.current_node
-        child_story = self.compile(one_story, self.middlewares)
-        parent_node.add_child(child_story)
-        self.current_node = parent_node
-        return child_story
+        parent_scope = self.current_scope
+        self.current_scope = scope_node.local_scope
+
+        compiled_story = self.compile(one_story, self.middlewares)
+
+        self.current_scope.add(compiled_story)
+
+        self.current_scope = parent_scope
+
+        return compiled_story
 
     def part(self, story_part):
         for m in self.middlewares:

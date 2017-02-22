@@ -1,4 +1,4 @@
-from botstory import matchers
+from botstory import ast, matchers
 import logging
 import json
 
@@ -17,8 +17,7 @@ class Undefined:
 
 class StoryPartFork:
     def __init__(self):
-        # TODO: should make scope here (like in StoryLoop)
-        self.children = []
+        self.local_scope = ast.library.StoriesScope()
 
     @classmethod
     def factory(cls):
@@ -28,11 +27,15 @@ class StoryPartFork:
     def __name__(self):
         return 'StoryPartFork'
 
+    @property
+    def children(self):
+        return self.local_scope.stories
+
     def __call__(self, *args, **kwargs):
         return None
 
     def add_child(self, child_story_line):
-        self.children.append(child_story_line)
+        self.local_scope.add(child_story_line)
 
     def get_child_by_validation_result(self, validation_result):
         case_stories = self.match_children('case_id', validation_result)
@@ -52,13 +55,13 @@ class StoryPartFork:
         return case_stories[0]
 
     def match_children(self, key, value):
-        return [child for child in self.children
+        return [child for child in self.local_scope.stories
                 if child.extensions.get(key, Undefined) == value]
 
     def to_json(self):
         return {
             'type': 'StoryPartFork',
-            'children': list(map(lambda c: c.to_json(), self.children))
+            'children': self.local_scope.to_json(),
         }
 
     def __repr__(self):
@@ -108,7 +111,7 @@ class ForkingStoriesAPI:
 
     def case(self, default=Undefined, equal_to=Undefined, match=Undefined):
         def decorate(story_part):
-            compiled_story = self.parser_instance.go_deeper(story_part, StoryPartFork.factory)
+            compiled_story = self.parser_instance.go_deeper(story_part, StoryPartFork)
             if default is True:
                 compiled_story.extensions['default_case'] = True
             if equal_to is not Undefined:
