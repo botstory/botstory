@@ -100,7 +100,13 @@ class ForkingStoriesAPI:
 
     def case(self, default=Undefined, equal_to=Undefined, match=Undefined):
         def decorate(story_part):
-            compiled_story = self.parser_instance.go_deeper(story_part, StoryPartFork)
+            fork_node = self.parser_instance.get_last_story_part()
+            if not isinstance(fork_node, StoryPartFork):
+                fork_node = StoryPartFork()
+                self.parser_instance.add_to_current_node(fork_node)
+
+            compiled_story = self.parser_instance.compile_fork(fork_node, story_part)
+
             if default is True:
                 compiled_story.extensions['default_case'] = True
             if equal_to is not Undefined:

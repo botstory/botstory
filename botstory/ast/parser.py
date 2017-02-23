@@ -25,6 +25,18 @@ class Parser:
         self.current_node = previous_node
         return res
 
+    def compile_fork(self, fork_node, one_story):
+        parent_scope = self.current_scope
+        self.current_scope = fork_node.local_scope
+
+        compiled_story = self.compile(one_story, self.middlewares)
+
+        self.current_scope.add(compiled_story)
+
+        self.current_scope = parent_scope
+
+        return compiled_story
+
     def compile_scope(self, scope_node, scope_func):
         self.current_node.append(scope_node)
         parent_scope = self.current_scope
@@ -38,24 +50,12 @@ class Parser:
         # with self.attach_scope():
         #     one_scope()
 
-    def go_deeper(self, one_story, buildScopePart):
-        if len(self.current_node.story_line) == 0 or \
-                inspect.isfunction(self.current_node.story_line[-1]):
-            scope_node = buildScopePart()
-            self.current_node.story_line.append(scope_node)
-        else:
-            scope_node = self.current_node.story_line[-1]
+    def get_last_story_part(self):
+        return self.current_node.story_line[-1] \
+            if len(self.current_node.story_line) > 0 else None
 
-        parent_scope = self.current_scope
-        self.current_scope = scope_node.local_scope
-
-        compiled_story = self.compile(one_story, self.middlewares)
-
-        self.current_scope.add(compiled_story)
-
-        self.current_scope = parent_scope
-
-        return compiled_story
+    def add_to_current_node(self, node):
+        self.parser_instance.current_node.story_line.append(node)
 
     def part(self, story_part):
         for m in self.middlewares:
