@@ -11,11 +11,9 @@ class Parser:
     def __init__(self, library):
         self.current_node = None
         self.current_scope = library.global_scope
-        self.middlewares = []
 
-    def compile(self, one_story, middlewares=[]):
+    def compile(self, one_story):
         topic = one_story.__name__
-        self.middlewares = middlewares
         previous_node = self.current_node
         self.current_node = ASTNode(topic=topic)
 
@@ -29,7 +27,7 @@ class Parser:
         parent_scope = self.current_scope
         self.current_scope = fork_node.local_scope
 
-        compiled_story = self.compile(one_story, self.middlewares)
+        compiled_story = self.compile(one_story)
 
         self.current_scope.add(compiled_story)
 
@@ -55,13 +53,9 @@ class Parser:
             if len(self.current_node.story_line) > 0 else None
 
     def add_to_current_node(self, node):
-        self.parser_instance.current_node.story_line.append(node)
+        self.current_node.story_line.append(node)
 
     def part(self, story_part):
-        for m in self.middlewares:
-            if hasattr(m, 'process_part') and m.process_part(self, story_part):
-                return True
-
         self.current_node.append(story_part)
         return True
 
