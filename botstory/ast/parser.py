@@ -36,7 +36,6 @@ class Parser:
         return compiled_story
 
     def compile_scope(self, scope_node, scope_func):
-        self.current_node.append(scope_node)
         parent_scope = self.current_scope
         self.current_scope = scope_node.local_scope
 
@@ -51,7 +50,7 @@ class Parser:
             if len(self.current_node.story_line) > 0 else None
 
     def add_to_current_node(self, node):
-        self.current_node.story_line.append(node)
+        self.current_node.append(node)
 
     def part(self, story_part):
         self.current_node.append(story_part)

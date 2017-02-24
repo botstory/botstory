@@ -27,8 +27,9 @@ class StoryLoopAPI:
 
     def loop(self):
         def fn(one_loop):
-            self.parser_instance.compile_scope(
-                StoriesLoopNode(one_loop), one_loop)
+            scope_node = StoriesLoopNode(one_loop)
+            self.parser_instance.add_to_current_node(scope_node)
+            self.parser_instance.compile_scope(scope_node, one_loop)
             # TODO: crawl scope for matchers and handlers
 
             # 1) we already have hierarchy of stories and stack of execution
