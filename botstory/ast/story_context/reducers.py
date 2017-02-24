@@ -142,6 +142,16 @@ def scope_out(ctx):
         logger.debug('# [<] return')
         ctx = ctx.clone()
         ctx.message['session']['stack'] = ctx.message['session']['stack'][:-1]
+        if not ctx.is_empty_stack() and \
+                isinstance(ctx.get_current_story_part(), loop.StoriesLoopNode) and \
+                isinstance(ctx.waiting_for, callable.EndOfStory):
+            ctx.message = modify_stack_in_message(ctx.message,
+                                                  lambda stack: stack[:-1] + [{
+                                                      'data': stack[-1]['data'],
+                                                      'step': stack[-1]['step'] + 1,
+                                                      'topic': stack[-1]['topic'],
+                                                  }])
+
         logger.debug(ctx)
 
     return ctx
