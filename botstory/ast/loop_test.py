@@ -80,3 +80,51 @@ async def test_do_not_propagate_previous_message_to_the_loop():
         await talk.pure_text('hi!')
 
     assert trigger_hi_again.is_triggered is not True
+
+
+@pytest.mark.asyncio
+async def test_loop_inside_of_loop():
+    trigger_global_action1 = SimpleTrigger()
+    trigger_inner_action1 = SimpleTrigger()
+
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.on('action1')
+        def global_action1():
+            @story.part()
+            def trigger_action1(ctx):
+                trigger_global_action1.passed()
+
+        @story.on('action2')
+        def global_action2():
+            @story.loop()
+            def outer_loop():
+                @story.on('action1')
+                def outer_action1():
+                    @story.loop()
+                    def inner_loop():
+                        @story.on('action1')
+                        def inner_action1():
+                            @story.part()
+                            def inner_action1_part(ctx):
+                                trigger_inner_action1.passed()
+
+                        @story.on('action2')
+                        def inner_action2():
+                            @story.part()
+                            def inner_action2_part(ctx):
+                                pass
+
+                @story.on('action2')
+                def outer_action2():
+                    @story.part()
+                    def do_some_job(ctx):
+                        pass
+
+        await talk.pure_text('action2')
+        await talk.pure_text('action1')
+        await talk.pure_text('action1')
+
+    assert trigger_inner_action1.is_triggered is True
+    assert trigger_global_action1.is_triggered is not True

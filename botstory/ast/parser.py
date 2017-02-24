@@ -45,8 +45,6 @@ class Parser:
         res = self.current_scope
         self.current_scope = parent_scope
         return res
-        # with self.attach_scope():
-        #     one_scope()
 
     def get_last_story_part(self):
         return self.current_node.story_line[-1] \
