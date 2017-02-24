@@ -107,11 +107,14 @@ def scope_in(ctx):
 
     compiled_story = None
     if not ctx.is_empty_stack():
+        inc_step = 0
+        if not isinstance(ctx.get_current_story_part(), loop.StoriesLoopNode):
+            inc_step = 1
         compiled_story = ctx.get_child_story()
         ctx.message = modify_stack_in_message(ctx.message,
                                               lambda stack: stack[:-1] + [{
                                                   'data': matchers.serialize(callable.WaitForReturn()),
-                                                  'step': stack[-1]['step'] + 1,
+                                                  'step': stack[-1]['step'] + inc_step,
                                                   'topic': stack[-1]['topic']
                                               }])
     if not compiled_story:

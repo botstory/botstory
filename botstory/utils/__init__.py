@@ -49,6 +49,9 @@ class SimpleTrigger:
         self.is_triggered = True
         self.triggered_times += 1
 
+    def inc(self):
+        self.value += 1
+
     def receive(self, value):
         self.value = value
 
