@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 # 1. once we trap on StoriesLoopNode we should stop execution
-# and wait any user import
+# and wait any user input
 # 2. once we got any user import we should come to StoriesLoopNode
 # add check whether input match received request.
 # 3. execute matched story
@@ -31,18 +31,6 @@ class StoryLoopAPI:
             scope_node = StoriesLoopNode(one_loop)
             self.parser_instance.add_to_current_node(scope_node)
             self.parser_instance.compile_scope(scope_node, one_loop)
-            # TODO: crawl scope for matchers and handlers
-
-            # 1) we already have hierarchy of stories and stack of execution
-            # it works that way -- we trying to match request to some story validator
-            # by getting story one-by-one from stack
-
-            # 2) we cold add validator for catching all stories from one scope
-
-            # 3) if we didn't match scope we bubble up to previous scope
-
-            # 4) if we match scope-validator we should choose one of its story
-
             return one_loop
 
         return fn
