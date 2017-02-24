@@ -1,8 +1,16 @@
-from botstory import ast, matchers, middlewares
+from botstory import ast, matchers
+from botstory.ast import forking
 import logging
 import json
 
 logger = logging.getLogger(__name__)
+
+
+# 1. once we trap on StoriesLoopNode we should stop execution
+# and wait any user import
+# 2. once we got any user import we should come to StoriesLoopNode
+# add check whether input match received request.
+# 3. execute matched story
 
 
 class StoryLoopAPI:
@@ -20,8 +28,9 @@ class StoryLoopAPI:
 
     def loop(self):
         def fn(one_loop):
-            self.parser_instance.compile_scope(
-                StoriesScopeNode(one_loop), one_loop)
+            scope_node = StoriesLoopNode(one_loop)
+            self.parser_instance.add_to_current_node(scope_node)
+            self.parser_instance.compile_scope(scope_node, one_loop)
             # TODO: crawl scope for matchers and handlers
 
             # 1) we already have hierarchy of stories and stack of execution
@@ -39,6 +48,53 @@ class StoryLoopAPI:
         return fn
 
 
+class StoriesLoopNode:
+    def __init__(self, target):
+        self.target = target
+        self.local_scope = ast.library.StoriesScope()
+
+    @property
+    def __name__(self):
+        return self.target.__name__
+
+    @property
+    def children(self):
+        return self.local_scope.stories
+
+    def should_loop(self):
+        return True
+
+    def __call__(self, *args, **kwargs):
+        return ScopeMatcher(forking.Switch(self.local_scope.all_filters()))
+
+    def get_child_by_validation_result(self, topic):
+        case_stories = self.local_scope.by_topic(topic)
+
+        if len(case_stories) == 0:
+            logger.debug('#######################################')
+            logger.debug('# [!] do not have any child here')
+            logger.debug('# story node = {}'.format(self))
+            logger.debug('# topic = {}'.format(topic))
+            logger.debug('#######################################')
+            return None
+
+        return case_stories[0]
+
+    def match_children(self, key, value):
+        return [child for child in self.local_scope.stories
+                if child.extensions.get(key, forking.Undefined) == value]
+
+    def to_json(self):
+        return {
+            'type': 'StoriesLoopNode',
+            'name': self.__name__,
+            'local_scope': self.local_scope.to_json()
+        }
+
+    def __repr__(self):
+        return json.dumps(self.to_json())
+
+
 @matchers.matcher()
 class ScopeMatcher:
     def __init__(self, all_filters):
@@ -54,34 +110,6 @@ class ScopeMatcher:
     def serialize(self):
         return self.all_filters.serialize()
 
-    def process(self):
-        return True
-
     @classmethod
     def deserialize(cls, data):
-        return cls(middlewares.any.AnyOf.deserialize(data))
-
-
-class StoriesScopeNode:
-    def __init__(self, target):
-        self.target = target
-        self.local_scope = ast.library.StoriesScope()
-
-    @property
-    def __name__(self):
-        return self.target.__name__
-
-    def __call__(self, *args, **kwargs):
-        return ScopeMatcher(
-            middlewares.any.AnyOf(self.local_scope.all_filters())
-        )
-
-    def to_json(self):
-        return {
-            'type': 'StoriesScopeNode',
-            'name': self.__name__,
-            'local_scope': self.local_scope.to_json()
-        }
-
-    def __repr__(self):
-        return json.dumps(self.to_json())
+        return cls(forking.Switch.deserialize(data))

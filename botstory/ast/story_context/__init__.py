@@ -36,8 +36,8 @@ class StoryContext:
 
         :return:
         """
-        return self.waiting_for and \
-               not isinstance(self.waiting_for, callable.EndOfStory)
+        return not self.waiting_for or \
+               isinstance(self.waiting_for, callable.EndOfStory)
 
     def current_step(self):
         return self.stack_tail()['step']

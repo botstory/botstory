@@ -1,8 +1,7 @@
+from botstory import di
+from botstory.ast import forking
 import logging
 import json
-
-from . import forking
-from .. import di
 
 logger = logging.getLogger(__name__)
 
@@ -21,13 +20,18 @@ class StoriesScope:
         self.stories.append(story)
 
     def all_filters(self):
-        return [s.extensions['validator'] for s in self.stories]
+        return {s.topic: s.extensions['validator'] for s in self.stories}
 
     def match(self, message):
         matched_stories = [
             story for story in self.stories
             if story.extensions['validator'].validate(message)]
         return matched_stories[0] if len(matched_stories) > 0 else None
+
+    def get_story_by(self, **kwargs):
+        return [child for child in self.stories
+                if all(child.extensions.get(key, forking.Undefined) == kwargs[key]
+                       for key in kwargs.keys())]
 
     def by_topic(self, topic):
         return [s for s in self.stories if s.topic == topic]
@@ -94,9 +98,15 @@ class StoriesLibrary:
         parent = self.get_story_by_topic(stack[-1]['topic'], stack[:-1])
         if not parent:
             return None
+
+        if hasattr(parent, 'local_scope'):
+            # for loop.StoriesLoopNode
+            return parent.get_child_by_validation_result(topic)
+
+        # for forking.StoryPartFork
         inner_stories = [
-            story.children for story in parent.story_line if isinstance(story, forking.StoryPartFork)
-            ]
+            story.children for story in parent.story_line if hasattr(story, 'children')
+        ]
 
         inner_stories = [item for sublist in inner_stories for item in sublist]
 
@@ -106,4 +116,4 @@ class StoriesLibrary:
         elif len(child_options) == 1:
             return child_options[0]
         else:
-            raise Error('We have few options with the same name {}'.format(topic))
+            raise Exception('We have few options with the same name {}'.format(topic))

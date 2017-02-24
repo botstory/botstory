@@ -1,7 +1,6 @@
 from botstory import di
 import logging
 import json
-import inspect
 
 logger = logging.getLogger(__name__)
 
@@ -11,11 +10,9 @@ class Parser:
     def __init__(self, library):
         self.current_node = None
         self.current_scope = library.global_scope
-        self.middlewares = []
 
-    def compile(self, one_story, middlewares=[]):
+    def compile(self, one_story):
         topic = one_story.__name__
-        self.middlewares = middlewares
         previous_node = self.current_node
         self.current_node = ASTNode(topic=topic)
 
@@ -25,8 +22,19 @@ class Parser:
         self.current_node = previous_node
         return res
 
+    def compile_fork(self, fork_node, one_story):
+        parent_scope = self.current_scope
+        self.current_scope = fork_node.local_scope
+
+        compiled_story = self.compile(one_story)
+
+        self.current_scope.add(compiled_story)
+
+        self.current_scope = parent_scope
+
+        return compiled_story
+
     def compile_scope(self, scope_node, scope_func):
-        self.current_node.append(scope_node)
         parent_scope = self.current_scope
         self.current_scope = scope_node.local_scope
 
@@ -35,25 +43,15 @@ class Parser:
         res = self.current_scope
         self.current_scope = parent_scope
         return res
-        # with self.attach_scope():
-        #     one_scope()
 
-    def go_deeper(self, one_story, buildScopePart):
-        if len(self.current_node.story_line) == 0 or \
-                inspect.isfunction(self.current_node.story_line[-1]):
-            self.current_node.story_line.append(buildScopePart())
+    def get_last_story_part(self):
+        return self.current_node.story_line[-1] \
+            if len(self.current_node.story_line) > 0 else None
 
-        parent_node = self.current_node
-        child_story = self.compile(one_story, self.middlewares)
-        parent_node.add_child(child_story)
-        self.current_node = parent_node
-        return child_story
+    def add_to_current_node(self, node):
+        self.current_node.append(node)
 
     def part(self, story_part):
-        for m in self.middlewares:
-            if hasattr(m, 'process_part') and m.process_part(self, story_part):
-                return True
-
         self.current_node.append(story_part)
         return True
 
@@ -86,6 +84,7 @@ class ASTNode:
 
         self.story_names.add(part_name)
         self.story_line.append(story_part)
+        return story_part
 
     def to_json(self):
         return {
@@ -104,7 +103,13 @@ class StoryPartLeaf:
     def __init__(self, fn):
         self.fn = fn
 
+    @property
+    def __name__(self):
+        return self.fn.__name__
+
     def __call__(self, *args, **kwargs):
+        # TODO: because we could have async and sync parts
+        # we should check it here
         return self.fn(*args, **kwargs)
 
     def __repr__(self):

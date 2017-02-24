@@ -6,9 +6,9 @@ from . import forking, library, parser
 def story_library():
     l = library.StoriesLibrary()
     story_1 = parser.ASTNode('hi!')
-    story_1.append(forking.StoryPartFork())
+    fork = story_1.append(forking.StoryPartFork())
     story_1_1 = parser.ASTNode('How do you feel?')
-    story_1.add_child(story_1_1)
+    fork.local_scope.add(story_1_1)
 
     story_2 = parser.ASTNode('bye!')
     story_3 = parser.ASTNode('where to go?')

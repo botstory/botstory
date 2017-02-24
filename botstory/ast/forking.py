@@ -1,4 +1,4 @@
-from botstory import matchers
+from botstory import ast, matchers
 import logging
 import json
 
@@ -17,46 +17,43 @@ class Undefined:
 
 class StoryPartFork:
     def __init__(self):
-        self.children = []
-
-    @classmethod
-    def factory(cls):
-        return cls()
+        self.local_scope = ast.library.StoriesScope()
 
     @property
     def __name__(self):
         return 'StoryPartFork'
 
+    @property
+    def children(self):
+        return self.local_scope.stories
+
+    def should_loop(self):
+        return False
+
     def __call__(self, *args, **kwargs):
         return None
 
-    def add_child(self, child_story_line):
-        self.children.append(child_story_line)
-
     def get_child_by_validation_result(self, validation_result):
-        case_stories = self.match_children('case_id', validation_result)
+        case_stories = self.local_scope.get_story_by(case_id=validation_result)
         if len(case_stories) == 0:
-            case_stories = self.match_children('case_equal', validation_result)
+            case_stories = self.local_scope.get_story_by(case_equal=validation_result)
         if len(case_stories) == 0:
-            case_stories = self.match_children('default_case', True)
+            case_stories = self.local_scope.get_story_by(default_case=True)
 
         if len(case_stories) == 0:
             logger.debug('#######################################')
             logger.debug('# [!] do not have any fork here')
             logger.debug('# context = {}'.format(self))
             logger.debug('# validation_result = {}'.format(validation_result))
+            logger.debug('#######################################')
             return None
 
         return case_stories[0]
 
-    def match_children(self, key, value):
-        return [child for child in self.children
-                if child.extensions.get(key, Undefined) == value]
-
     def to_json(self):
         return {
             'type': 'StoryPartFork',
-            'children': list(map(lambda c: c.to_json(), self.children))
+            'children': self.local_scope.to_json(),
         }
 
     def __repr__(self):
@@ -106,7 +103,13 @@ class ForkingStoriesAPI:
 
     def case(self, default=Undefined, equal_to=Undefined, match=Undefined):
         def decorate(story_part):
-            compiled_story = self.parser_instance.go_deeper(story_part, StoryPartFork.factory)
+            fork_node = self.parser_instance.get_last_story_part()
+            if not isinstance(fork_node, StoryPartFork):
+                fork_node = StoryPartFork()
+                self.parser_instance.add_to_current_node(fork_node)
+
+            compiled_story = self.parser_instance.compile_fork(fork_node, story_part)
+
             if default is True:
                 compiled_story.extensions['default_case'] = True
             if equal_to is not Undefined:
