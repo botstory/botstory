@@ -138,7 +138,7 @@ def scope_out(ctx):
     logger.debug(ctx)
     # we reach the end of story line
     # so we could collapse previous scope and related stack item
-    if ctx.is_tail_of_story() and not ctx.could_scope_out():
+    if ctx.is_tail_of_story() and ctx.could_scope_out():
         logger.debug('# [<] return')
         ctx = ctx.clone()
         ctx.message['session']['stack'] = ctx.message['session']['stack'][:-1]

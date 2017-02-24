@@ -49,7 +49,7 @@ class StoryProcessor:
             ctx = await self.process_story(ctx)
             ctx = story_context.reducers.scope_out(ctx)
 
-        while not ctx.could_scope_out() and not ctx.is_empty_stack():
+        while ctx.could_scope_out() and not ctx.is_empty_stack():
             logger.debug('# in a loop')
             logger.debug(ctx)
 

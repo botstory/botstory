@@ -1,5 +1,6 @@
 import pytest
 
+from botstory.ast import callable
 from botstory.utils import answer, SimpleTrigger
 
 
@@ -171,3 +172,46 @@ async def test_looping_the_loop():
 
     assert trigger_show_local_help.value == 3
     assert trigger_show_global_help.is_triggered is not True
+
+
+@pytest.mark.asyncio
+async def test_breaking_the_loop():
+    trigger_show_global_help = SimpleTrigger()
+    trigger_show_local_help = SimpleTrigger(0)
+
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.on('?')
+        def global_help_story():
+            @story.part()
+            def show_global_help(ctx):
+                trigger_show_global_help.passed()
+
+        @story.on('start job')
+        def one_job():
+            @story.part()
+            def show_do_job(ctx):
+                pass
+
+            @story.loop()
+            def job_scope():
+                @story.on('?')
+                def local_help_story():
+                    @story.part()
+                    def show_local_help(ctx):
+                        trigger_show_local_help.inc()
+
+                @story.on('work')
+                def job_story():
+                    @story.part()
+                    def do_some_job(ctx):
+                        return callable.EndOfStory()
+
+        await talk.pure_text('start job')
+        await talk.pure_text('?')
+        await talk.pure_text('work')
+        await talk.pure_text('?')
+
+    assert trigger_show_local_help.value == 1
+    assert trigger_show_global_help.is_triggered is True
