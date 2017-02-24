@@ -1,4 +1,4 @@
-from botstory import ast, matchers, middlewares
+from botstory import ast, matchers
 from botstory.ast import forking
 import logging
 import json

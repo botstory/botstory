@@ -1,7 +1,6 @@
 from botstory import di
 import logging
 import json
-import inspect
 
 logger = logging.getLogger(__name__)
 
