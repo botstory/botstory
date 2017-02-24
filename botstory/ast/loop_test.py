@@ -215,3 +215,46 @@ async def test_breaking_the_loop():
 
     assert trigger_show_local_help.value == 1
     assert trigger_show_global_help.is_triggered is True
+
+
+@pytest.mark.asyncio
+async def test_break_loop_on_unmatched_message():
+    action1_trigger = SimpleTrigger(0)
+    action3_trigger = SimpleTrigger(0)
+
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.on('action2')
+        def action2():
+            @story.part()
+            def action2_part(ctx):
+                pass
+
+            @story.loop()
+            def action2_loop():
+                @story.on('action1')
+                def action2_loop_action1():
+                    @story.part()
+                    def action2_loop_action1_part(ctx):
+                        action1_trigger.inc()
+
+                @story.on('action2')
+                def action2_loop_action2():
+                    @story.part()
+                    def action2_loop_action2_part(ctx):
+                        pass
+
+        @story.on('action3')
+        def action3():
+            @story.part()
+            def action3_part(ctx):
+                action3_trigger.inc()
+
+        await talk.pure_text('action2')
+        await talk.pure_text('action1')
+        await talk.pure_text('action1')
+        await talk.pure_text('action3')
+
+    assert action1_trigger.value == 2
+    assert action3_trigger.value == 1
