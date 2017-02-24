@@ -5,6 +5,7 @@ import json
 
 logger = logging.getLogger(__name__)
 
+
 # 1. once we trap on StoriesLoopNode we should stop execution
 # and wait any user import
 # 2. once we got any user import we should come to StoriesLoopNode
@@ -59,6 +60,9 @@ class StoriesLoopNode:
     @property
     def children(self):
         return self.local_scope.stories
+
+    def should_loop(self):
+        return True
 
     def __call__(self, *args, **kwargs):
         return ScopeMatcher(forking.Switch(self.local_scope.all_filters()))

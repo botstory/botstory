@@ -27,6 +27,9 @@ class StoryPartFork:
     def children(self):
         return self.local_scope.stories
 
+    def should_loop(self):
+        return False
+
     def __call__(self, *args, **kwargs):
         return None
 

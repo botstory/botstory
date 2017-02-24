@@ -103,7 +103,13 @@ class StoryPartLeaf:
     def __init__(self, fn):
         self.fn = fn
 
+    @property
+    def __name__(self):
+        return self.fn.__name__
+
     def __call__(self, *args, **kwargs):
+        # TODO: because we could have async and sync parts
+        # we should check it here
         return self.fn(*args, **kwargs)
 
     def __repr__(self):
