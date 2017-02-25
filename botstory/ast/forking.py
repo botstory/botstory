@@ -69,7 +69,7 @@ class Switch:
         for case_id, validator in self.cases.items():
             if validator.validate(message):
                 return case_id
-        return False
+        return None
 
     def serialize(self):
         return [{
