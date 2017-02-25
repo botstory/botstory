@@ -220,6 +220,54 @@ async def test_breaking_the_loop():
 @pytest.mark.asyncio
 async def test_break_loop_on_unmatched_message():
     action1_trigger = SimpleTrigger(0)
+    action2_after_part_trigger = SimpleTrigger(0)
+
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.on('action1')
+        def action1():
+            @story.part()
+            def action1_part(ctx):
+                pass
+
+        @story.on('action2')
+        def action2():
+            @story.part()
+            def action2_part(ctx):
+                pass
+
+            @story.loop()
+            def action2_loop():
+                @story.on('action1')
+                def action2_loop_action1():
+                    @story.part()
+                    def action2_loop_action1_part(ctx):
+                        action1_trigger.inc()
+
+                @story.on('action2')
+                def action2_loop_action2():
+                    @story.part()
+                    def action2_loop_action2_part(ctx):
+                        pass
+
+            @story.part()
+            def action2_after_part(ctx):
+                action2_after_part_trigger.inc()
+
+        await talk.pure_text('action2')
+        await talk.pure_text('action1')
+        await talk.pure_text('action1')
+        await talk.pure_text('action3')
+
+    assert action1_trigger.value == 2
+    assert action2_after_part_trigger.value == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.skip
+async def test_break_loop_on_unmatched_message_and_jump_to_another_story():
+    action1_trigger = SimpleTrigger(0)
     action3_trigger = SimpleTrigger(0)
 
     with answer.Talk() as talk:
