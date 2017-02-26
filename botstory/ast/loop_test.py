@@ -1,6 +1,6 @@
 import pytest
 
-from botstory.ast import callable
+from botstory.ast import loop
 from botstory.utils import answer, SimpleTrigger
 
 
@@ -206,7 +206,7 @@ async def test_breaking_the_loop():
                 def job_story():
                     @story.part()
                     def do_some_job(ctx):
-                        return callable.EndOfStory()
+                        return loop.BreakLoop()
 
         await talk.pure_text('start job')
         await talk.pure_text('?')

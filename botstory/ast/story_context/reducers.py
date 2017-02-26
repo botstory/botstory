@@ -60,6 +60,8 @@ async def execute(ctx):
         elif isinstance(ctx.waiting_for, loop.ScopeMatcher):
             # jumping in a loop
             tail_data = matchers.serialize(ctx.waiting_for)
+        elif isinstance(ctx.waiting_for, loop.BreakLoop):
+            tail_step += 1
         else:
             tail_data = matchers.serialize(
                 matchers.get_validator(ctx.waiting_for)
@@ -161,9 +163,10 @@ def scope_out(ctx):
         ctx = ctx.clone()
         ctx.message['session']['stack'] = ctx.message['session']['stack'][:-1]
         if not ctx.is_empty_stack() and \
-                ctx.is_scope_level_part():
-                # isinstance(ctx.get_current_story_part(), loop.StoriesLoopNode) and \
-                # isinstance(ctx.waiting_for, callable.EndOfStory) or \
+                (ctx.is_scope_level_part() or \
+                         ctx.is_breaking_a_loop()):
+            # isinstance(ctx.get_current_story_part(), loop.StoriesLoopNode) and \
+            # isinstance(ctx.waiting_for, callable.EndOfStory) or \
             ctx.message = modify_stack_in_message(ctx.message,
                                                   lambda stack: stack[:-1] + [{
                                                       'data': stack[-1]['data'],

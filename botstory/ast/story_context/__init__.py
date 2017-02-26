@@ -41,7 +41,8 @@ class StoryContext:
         :return:
         """
         return not self.waiting_for or \
-               isinstance(self.waiting_for, callable.EndOfStory)
+               isinstance(self.waiting_for, callable.EndOfStory) or \
+               self.is_breaking_a_loop()
 
     def current_step(self):
         return self.stack_tail()['step']
@@ -88,6 +89,9 @@ class StoryContext:
 
     def has_child_story(self):
         return self.get_child_story() is not None
+
+    def is_breaking_a_loop(self):
+        return isinstance(self.waiting_for, loop.BreakLoop)
 
     def is_empty_stack(self):
         return len(self.stack()) == 0

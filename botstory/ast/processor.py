@@ -61,9 +61,16 @@ class StoryProcessor:
                                  'so no once has receive this message')
                     return ctx.message
 
-                if ctx.is_scope_level() and ctx.has_child_story() or \
-                                not ctx.is_scope_level() and not ctx.is_end_of_story():
-                    # if we haven't reach last step in list of story so we can parse result
+                if ctx.is_scope_level() and \
+                        ctx.has_child_story() and \
+                        not ctx.is_breaking_a_loop() or \
+                                not ctx.is_scope_level() and \
+                                not ctx.is_end_of_story():
+                    # if we
+                    # - haven't reach last step in list of story
+                    # - isn't breaking a loop
+                    # - inside of child scope and have matching sub-stories
+                    # so we can parse result
                     break
 
                 ctx = story_context.reducers.scope_out(ctx)
@@ -73,7 +80,7 @@ class StoryProcessor:
             ctx = await self.process_story(ctx)
             ctx = story_context.reducers.scope_out(ctx)
 
-            if ctx.is_scope_level():
+            if ctx.is_scope_level() and not ctx.is_breaking_a_loop():
                 logger.debug('# the end of one story scope')
                 break
 

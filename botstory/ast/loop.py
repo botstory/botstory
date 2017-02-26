@@ -13,6 +13,13 @@ logger = logging.getLogger(__name__)
 # 3. execute matched story
 
 
+class BreakLoop:
+    """
+    break outsize of story loop
+    """
+    type = 'BreakLoop'
+
+
 class StoryLoopAPI:
     """
     loop (scope) concept similar to switch (forking)
