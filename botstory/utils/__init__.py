@@ -31,10 +31,13 @@ def build_fake_session(user=None):
 
 
 def safe_get(dct, *keys, default=None):
+    if dct is None:
+        return None
+
     for key in keys:
         try:
             dct = dct[key]
-        except KeyError:
+        except (KeyError, TypeError):
             return default
     return dct
 

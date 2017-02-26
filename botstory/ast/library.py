@@ -97,6 +97,12 @@ class StoriesLibrary:
         if not parent:
             return None
 
+        # is topic name matching storyline?
+        try:
+            return next(filter(lambda part: getattr(part, 'topic', None) == topic, parent.story_line))
+        except StopIteration:
+            pass
+
         if hasattr(parent, 'local_scope'):
             # for loop.StoriesLoopNode
             return parent.get_child_by_validation_result(topic)

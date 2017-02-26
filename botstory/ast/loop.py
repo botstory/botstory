@@ -38,21 +38,24 @@ class StoryLoopAPI:
 
 class StoriesLoopNode:
     def __init__(self, target):
-        self.target = target
         self.local_scope = ast.library.StoriesScope()
+        self.story_line = []
+        self.target = target
+        self.topic = target.__name__
 
     @property
     def __name__(self):
         return self.target.__name__
 
+    def by_topic(self, topic):
+        stories = self.local_scope.by_topic(topic)
+        return stories[0] if len(stories) > 0 else None
+
     @property
     def children(self):
         return self.local_scope.stories
 
-    def should_loop(self):
-        return True
-
-    def __call__(self, *args, **kwargs):
+    def children_matcher(self):
         return ScopeMatcher(forking.Switch(self.local_scope.all_filters()))
 
     def get_child_by_validation_result(self, topic):

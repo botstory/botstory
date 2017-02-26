@@ -1,5 +1,5 @@
 from botstory import matchers
-from botstory.ast import callable, forking
+from botstory.ast import callable, forking, loop
 from botstory.ast.story_context import reducers
 
 import json
@@ -7,6 +7,10 @@ import logging
 import uuid
 
 logger = logging.getLogger(__name__)
+
+
+class MissedStoryPart(Exception):
+    pass
 
 
 class StoryContext:
@@ -50,6 +54,16 @@ class StoryContext:
         try child story that match message and get scope of it
         :return:
         """
+        story_loop = self.compiled_story()
+        if isinstance(story_loop, loop.StoriesLoopNode):
+            validator = story_loop.children_matcher()
+            topic = validator.validate(self.message)
+            # if topic == None:
+            # we inside story loop scope
+            # but got message that doesn't match
+            # any local stories
+            return story_loop.by_topic(topic)
+
         story_part = self.get_current_story_part()
 
         if not hasattr(story_part, 'get_child_by_validation_result'):
@@ -67,7 +81,10 @@ class StoryContext:
         return None
 
     def get_current_story_part(self):
-        return self.compiled_story().story_line[self.current_step()]
+        try:
+            return self.compiled_story().story_line[self.current_step()]
+        except IndexError:
+            return None
 
     def has_child_story(self):
         return self.get_child_story() is not None
@@ -77,6 +94,12 @@ class StoryContext:
 
     def is_end_of_story(self):
         return self.current_step() >= len(self.compiled_story().story_line)
+
+    def is_scope_level(self):
+        return isinstance(self.compiled_story(), loop.StoriesLoopNode)
+
+    def is_scope_level_part(self):
+        return isinstance(self.get_current_story_part(), loop.StoriesLoopNode)
 
     def is_tail_of_story(self):
         return self.current_step() >= len(self.compiled_story().story_line) - 1
@@ -93,7 +116,10 @@ class StoryContext:
         return self.message['session']['stack']
 
     def stack_tail(self):
-        return self.stack()[-1]
+        stack = self.stack()
+        if len(stack) == 0:
+            raise MissedStoryPart()
+        return stack[-1]
 
     def to_json(self):
         return {

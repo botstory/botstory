@@ -6,6 +6,17 @@ import inspect
 logger = logging.getLogger(__name__)
 
 
+def enter_new_scope(ctx):
+    """
+    we inside new scope with it onw
+    :param ctx:
+    :return:
+    """
+    ctx = ctx.clone()
+    ctx.waiting_for = ctx.compiled_story().children_matcher()
+    return ctx
+
+
 async def execute(ctx):
     """
     execute story part at the current context
@@ -114,6 +125,13 @@ def scope_in(ctx):
                                                   'step': stack[-1]['step'],
                                                   'topic': stack[-1]['topic']
                                               }])
+
+    try:
+        if not compiled_story and ctx.is_scope_level_part():
+            compiled_story = ctx.get_current_story_part()
+    except story_context.MissedStoryPart:
+        pass
+
     if not compiled_story:
         compiled_story = ctx.compiled_story()
 
@@ -143,8 +161,9 @@ def scope_out(ctx):
         ctx = ctx.clone()
         ctx.message['session']['stack'] = ctx.message['session']['stack'][:-1]
         if not ctx.is_empty_stack() and \
-                isinstance(ctx.get_current_story_part(), loop.StoriesLoopNode) and \
-                isinstance(ctx.waiting_for, callable.EndOfStory):
+                ctx.is_scope_level_part():
+                # isinstance(ctx.get_current_story_part(), loop.StoriesLoopNode) and \
+                # isinstance(ctx.waiting_for, callable.EndOfStory) or \
             ctx.message = modify_stack_in_message(ctx.message,
                                                   lambda stack: stack[:-1] + [{
                                                       'data': stack[-1]['data'],

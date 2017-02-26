@@ -61,7 +61,8 @@ class StoryProcessor:
                                  'so no once has receive this message')
                     return ctx.message
 
-                if not ctx.is_end_of_story():
+                if ctx.is_scope_level() and ctx.has_child_story() or \
+                                not ctx.is_scope_level() and not ctx.is_end_of_story():
                     # if we haven't reach last step in list of story so we can parse result
                     break
 
@@ -72,6 +73,10 @@ class StoryProcessor:
             ctx = await self.process_story(ctx)
             ctx = story_context.reducers.scope_out(ctx)
 
+            if ctx.is_scope_level():
+                logger.debug('# the end of one story scope')
+                break
+
         return ctx.message
 
     async def process_story(self, ctx):
@@ -79,6 +84,9 @@ class StoryProcessor:
         logger.debug('# process_story')
         logger.debug('')
         logger.debug(ctx)
+
+        if ctx.is_scope_level():
+            return story_context.reducers.enter_new_scope(ctx)
 
         # integrate over parts of story
         last_story_part = None
@@ -92,7 +100,7 @@ class StoryProcessor:
             try:
                 self.tracker.story(story_part_ctx)
 
-                if story_part_ctx.has_child_story():
+                if story_part_ctx.has_child_story() or story_part_ctx.is_scope_level_part():
                     story_part_ctx = story_context.reducers.scope_in(story_part_ctx)
                     story_part_ctx = await self.process_story(story_part_ctx)
                     story_part_ctx = story_context.reducers.scope_out(story_part_ctx)
