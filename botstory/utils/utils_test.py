@@ -29,3 +29,13 @@ def test_safe_get_fail_to_default():
             }
         }
     }, 'c', 'b', 'a', default='default-value') == 'default-value'
+
+
+def test_safe_get_of_none_is_none():
+    assert utils.safe_get(None, 'c', 'b', 'a') is None
+
+
+def test_safe_get_of_dict_with_none():
+    assert utils.safe_get({
+        'c': None
+    }, 'c', 'b', 'a') is None

@@ -6,6 +6,17 @@ import inspect
 logger = logging.getLogger(__name__)
 
 
+def enter_new_scope(ctx):
+    """
+    we inside new scope with it onw
+    :param ctx:
+    :return:
+    """
+    ctx = ctx.clone()
+    ctx.waiting_for = ctx.compiled_story().children_matcher()
+    return ctx
+
+
 async def execute(ctx):
     """
     execute story part at the current context
@@ -49,6 +60,8 @@ async def execute(ctx):
         elif isinstance(ctx.waiting_for, loop.ScopeMatcher):
             # jumping in a loop
             tail_data = matchers.serialize(ctx.waiting_for)
+        elif isinstance(ctx.waiting_for, loop.BreakLoop):
+            tail_step += 1
         else:
             tail_data = matchers.serialize(
                 matchers.get_validator(ctx.waiting_for)
@@ -108,12 +121,22 @@ def scope_in(ctx):
     compiled_story = None
     if not ctx.is_empty_stack():
         compiled_story = ctx.get_child_story()
+        # we match child story loop once by message
+        # what should prevent multiple matching by the same message
+        ctx.matched = True
         ctx.message = modify_stack_in_message(ctx.message,
                                               lambda stack: stack[:-1] + [{
                                                   'data': matchers.serialize(callable.WaitForReturn()),
                                                   'step': stack[-1]['step'],
                                                   'topic': stack[-1]['topic']
                                               }])
+
+    try:
+        if not compiled_story and ctx.is_scope_level_part():
+            compiled_story = ctx.get_current_story_part()
+    except story_context.MissedStoryPart:
+        pass
+
     if not compiled_story:
         compiled_story = ctx.compiled_story()
 
@@ -143,14 +166,18 @@ def scope_out(ctx):
         ctx = ctx.clone()
         ctx.message['session']['stack'] = ctx.message['session']['stack'][:-1]
         if not ctx.is_empty_stack() and \
-                isinstance(ctx.get_current_story_part(), loop.StoriesLoopNode) and \
-                isinstance(ctx.waiting_for, callable.EndOfStory):
+                (ctx.is_scope_level_part() or \
+                         ctx.is_breaking_a_loop()):
+            # isinstance(ctx.get_current_story_part(), loop.StoriesLoopNode) and \
+            # isinstance(ctx.waiting_for, callable.EndOfStory) or \
             ctx.message = modify_stack_in_message(ctx.message,
                                                   lambda stack: stack[:-1] + [{
                                                       'data': stack[-1]['data'],
                                                       'step': stack[-1]['step'] + 1,
                                                       'topic': stack[-1]['topic'],
                                                   }])
+            if ctx.is_breaking_a_loop() and not ctx.is_scope_level():
+                ctx.waiting_for = None
 
         logger.debug(ctx)
 

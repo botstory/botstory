@@ -36,7 +36,10 @@ class StoryProcessor:
         logger.debug('')
         logger.debug(message_ctx)
 
-        ctx = story_context.StoryContext(message_ctx, self.library)
+        ctx = story_context.StoryContext(library=self.library,
+                                         matched=False,
+                                         message=message_ctx,
+                                         )
 
         self.tracker.new_message(ctx)
 
@@ -57,20 +60,42 @@ class StoryProcessor:
             while True:
                 if ctx.is_empty_stack():
                     # we have reach the bottom of stack
-                    logger.debug('  we have reach the bottom of stack '
-                                 'so no once has receive this message')
-                    return ctx.message
+                    if ctx.does_it_match_any_story():
+                        # but sometimes we could jump on other global matcher
+                        ctx = story_context.reducers.scope_in(ctx)
+                        ctx = await self.process_story(ctx)
+                        ctx = story_context.reducers.scope_out(ctx)
+                        if ctx.is_empty_stack():
+                            return ctx.message
+                    else:
+                        logger.debug('  we have reach the bottom of stack '
+                                     'so no once has receive this message')
+                        return ctx.message
 
-                if not ctx.is_end_of_story():
-                    # if we haven't reach last step in list of story so we can parse result
+                if ctx.is_scope_level() and \
+                        (ctx.has_child_story() or ctx.matched) and \
+                        not ctx.is_breaking_a_loop() or \
+                                not ctx.is_scope_level() and \
+                                not ctx.is_end_of_story():
+                    # if we
+                    # - haven't reach last step in list of story
+                    # - isn't breaking a loop
+                    # - inside of child scope and have matching sub-stories
+                    # so we can parse result
                     break
 
+                logger.debug('# tuning scope_out')
                 ctx = story_context.reducers.scope_out(ctx)
 
             if ctx.has_child_story():
                 ctx = story_context.reducers.scope_in(ctx)
             ctx = await self.process_story(ctx)
+            logger.debug('# match_message scope_out')
             ctx = story_context.reducers.scope_out(ctx)
+
+            if ctx.is_scope_level() and not ctx.is_breaking_a_loop():
+                logger.debug('# the end of one story scope')
+                break
 
         return ctx.message
 
@@ -79,6 +104,9 @@ class StoryProcessor:
         logger.debug('# process_story')
         logger.debug('')
         logger.debug(ctx)
+
+        if ctx.is_scope_level():
+            return story_context.reducers.enter_new_scope(ctx)
 
         # integrate over parts of story
         last_story_part = None
@@ -92,9 +120,10 @@ class StoryProcessor:
             try:
                 self.tracker.story(story_part_ctx)
 
-                if story_part_ctx.has_child_story():
+                if story_part_ctx.has_child_story() or story_part_ctx.is_scope_level_part():
                     story_part_ctx = story_context.reducers.scope_in(story_part_ctx)
                     story_part_ctx = await self.process_story(story_part_ctx)
+                    logger.debug('# process_story scope_out')
                     story_part_ctx = story_context.reducers.scope_out(story_part_ctx)
                 else:
                     story_part_ctx = await story_context.reducers.execute(story_part_ctx)

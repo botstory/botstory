@@ -7,10 +7,17 @@ logger = logging.getLogger(__name__)
 
 
 # 1. once we trap on StoriesLoopNode we should stop execution
-# and wait any user import
+# and wait any user input
 # 2. once we got any user import we should come to StoriesLoopNode
 # add check whether input match received request.
 # 3. execute matched story
+
+
+class BreakLoop:
+    """
+    break outsize of story loop
+    """
+    type = 'BreakLoop'
 
 
 class StoryLoopAPI:
@@ -31,18 +38,6 @@ class StoryLoopAPI:
             scope_node = StoriesLoopNode(one_loop)
             self.parser_instance.add_to_current_node(scope_node)
             self.parser_instance.compile_scope(scope_node, one_loop)
-            # TODO: crawl scope for matchers and handlers
-
-            # 1) we already have hierarchy of stories and stack of execution
-            # it works that way -- we trying to match request to some story validator
-            # by getting story one-by-one from stack
-
-            # 2) we cold add validator for catching all stories from one scope
-
-            # 3) if we didn't match scope we bubble up to previous scope
-
-            # 4) if we match scope-validator we should choose one of its story
-
             return one_loop
 
         return fn
@@ -50,21 +45,24 @@ class StoryLoopAPI:
 
 class StoriesLoopNode:
     def __init__(self, target):
-        self.target = target
         self.local_scope = ast.library.StoriesScope()
+        self.story_line = []
+        self.target = target
+        self.topic = target.__name__
 
     @property
     def __name__(self):
         return self.target.__name__
 
+    def by_topic(self, topic):
+        stories = self.local_scope.by_topic(topic)
+        return stories[0] if len(stories) > 0 else None
+
     @property
     def children(self):
         return self.local_scope.stories
 
-    def should_loop(self):
-        return True
-
-    def __call__(self, *args, **kwargs):
+    def children_matcher(self):
         return ScopeMatcher(forking.Switch(self.local_scope.all_filters()))
 
     def get_child_by_validation_result(self, topic):

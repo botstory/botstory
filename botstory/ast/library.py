@@ -93,11 +93,15 @@ class StoriesLibrary:
         # so we're trying to find root of last story and than
         # get right sub story
 
-        # TODO: should it be:
-        # parent = self.get_story_by_topic(stack[-1]['topic'], stack[:-1])
         parent = self.get_story_by_topic(stack[-1]['topic'], stack[:-1])
         if not parent:
             return None
+
+        # is topic name matching storyline?
+        try:
+            return next(filter(lambda part: getattr(part, 'topic', None) == topic, parent.story_line))
+        except StopIteration:
+            pass
 
         if hasattr(parent, 'local_scope'):
             # for loop.StoriesLoopNode
