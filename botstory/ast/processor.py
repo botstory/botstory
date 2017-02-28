@@ -60,9 +60,17 @@ class StoryProcessor:
             while True:
                 if ctx.is_empty_stack():
                     # we have reach the bottom of stack
-                    logger.debug('  we have reach the bottom of stack '
-                                 'so no once has receive this message')
-                    return ctx.message
+                    if ctx.does_it_match_any_story():
+                        # but sometimes we could jump on other global matcher
+                        ctx = story_context.reducers.scope_in(ctx)
+                        ctx = await self.process_story(ctx)
+                        ctx = story_context.reducers.scope_out(ctx)
+                        if ctx.is_empty_stack():
+                            return ctx.message
+                    else:
+                        logger.debug('  we have reach the bottom of stack '
+                                     'so no once has receive this message')
+                        return ctx.message
 
                 if ctx.is_scope_level() and \
                         (ctx.has_child_story() or ctx.matched) and \

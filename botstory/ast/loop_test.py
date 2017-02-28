@@ -380,7 +380,6 @@ async def test_break_loop_on_unmatched_message():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip
 async def test_break_loop_on_unmatched_message_and_jump_to_another_story():
     action1_trigger = SimpleTrigger(0)
     action3_trigger = SimpleTrigger(0)
