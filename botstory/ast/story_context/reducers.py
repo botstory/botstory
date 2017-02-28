@@ -121,6 +121,9 @@ def scope_in(ctx):
     compiled_story = None
     if not ctx.is_empty_stack():
         compiled_story = ctx.get_child_story()
+        # we match child story loop once by message
+        # what should prevent multiple matching by the same message
+        ctx.matched = True
         ctx.message = modify_stack_in_message(ctx.message,
                                               lambda stack: stack[:-1] + [{
                                                   'data': matchers.serialize(callable.WaitForReturn()),
@@ -173,6 +176,8 @@ def scope_out(ctx):
                                                       'step': stack[-1]['step'] + 1,
                                                       'topic': stack[-1]['topic'],
                                                   }])
+            if ctx.is_breaking_a_loop() and not ctx.is_scope_level():
+                ctx.waiting_for = None
 
         logger.debug(ctx)
 

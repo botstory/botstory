@@ -14,18 +14,21 @@ class MissedStoryPart(Exception):
 
 
 class StoryContext:
-    def __init__(self, message, library, waiting_for=None, parent_uid=None):
+    def __init__(self, message, library, matched=False, waiting_for=None, parent_uid=None):
         self.uid = str(uuid.uuid4())
         self.parent_uid = parent_uid
         self.library = library
+        # whether message was passed validation and was matched one story
+        self.matched = matched
         self.message = message
         self.waiting_for = waiting_for
 
     def clone(self):
-        return StoryContext(self.message,
-                            self.library,
-                            self.waiting_for,
+        return StoryContext(library=self.library,
+                            matched=self.matched,
+                            message=self.message,
                             parent_uid=self.uid,
+                            waiting_for=self.waiting_for,
                             )
 
     def compiled_story(self):
@@ -56,7 +59,8 @@ class StoryContext:
         :return:
         """
         story_loop = self.compiled_story()
-        if isinstance(story_loop, loop.StoriesLoopNode):
+        if isinstance(story_loop, loop.StoriesLoopNode) and \
+                not self.matched:
             validator = story_loop.children_matcher()
             topic = validator.validate(self.message)
             # if topic == None:
@@ -74,7 +78,7 @@ class StoryContext:
             return story_part.get_child_by_validation_result(self.waiting_for.value)
 
         stack_tail = self.stack_tail()
-        if stack_tail['data'] is not None:
+        if stack_tail['data'] is not None and not self.matched:
             validator = matchers.deserialize(stack_tail['data'])
             validation_result = validator.validate(self.message)
             return story_part.get_child_by_validation_result(validation_result)
@@ -129,6 +133,7 @@ class StoryContext:
         return {
             'uid': self.uid,
             'parent_uid': self.parent_uid,
+            'matched': self.matched,
             'message': self.message,
             'waiting_for': str(self.waiting_for),
         }
