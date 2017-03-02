@@ -144,7 +144,7 @@ class StoryContext:
 
     def __repr__(self):
         try:
-            return advanced_json_encoder.AdvancedJSONEncoder().encode(self.to_json(), skipkeys=True, sort_keys=True)
+            return advanced_json_encoder.AdvancedJSONEncoder().encode(self.to_json())
         except Exception as err:
             logger.warn(err)
             logger.warn('fail to dump json of message {} '
