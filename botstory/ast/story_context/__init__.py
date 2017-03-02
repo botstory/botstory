@@ -1,6 +1,7 @@
 from botstory import matchers
 from botstory.ast import callable, forking, loop
 from botstory.ast.story_context import reducers
+from botstory.utils import advanced_json_encoder
 
 import json
 import logging
@@ -143,7 +144,7 @@ class StoryContext:
 
     def __repr__(self):
         try:
-            return json.dumps(self.to_json(), skipkeys=True, sort_keys=True)
+            return advanced_json_encoder.AdvancedJSONEncoder().encode(self.to_json())
         except Exception as err:
             logger.warn(err)
             logger.warn('fail to dump json of message {} '
