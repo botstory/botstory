@@ -3,7 +3,6 @@ from botstory.ast import callable, forking, loop
 from botstory.ast.story_context import reducers
 from botstory.utils import advanced_json_encoder
 
-import json
 import logging
 import uuid
 

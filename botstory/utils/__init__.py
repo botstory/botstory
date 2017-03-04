@@ -52,6 +52,9 @@ class SimpleTrigger:
         self.is_triggered = True
         self.triggered_times += 1
 
+    def is_passed(self):
+        return self.is_triggered
+
     def inc(self):
         self.value += 1
 

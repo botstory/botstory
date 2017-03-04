@@ -328,3 +328,66 @@ async def test_sync_end_of_story():
         assert part_2.is_triggered
         assert not part_3.is_triggered
         assert res == 'Break Point'
+
+
+@pytest.mark.asyncio
+async def test_story_loop_inside_of_callable():
+    inside_of_loop = SimpleTrigger()
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.callable()
+        def one_callable():
+            @story.part()
+            def story_init(ctx):
+                pass
+
+            @story.loop()
+            def inner_loop():
+                @story.on('jump')
+                def jump_story():
+                    @story.part()
+                    def inner_job(ctx):
+                        inside_of_loop.passed()
+
+        # TODO: add wrapper for getting result context from callable to talk
+        ctx = await one_callable(session=talk.session, user=talk.user,
+                                 value='Hello World!')
+
+        talk.session = ctx.message['session']
+
+        await talk.pure_text('jump')
+
+        assert inside_of_loop.is_passed()
+
+
+@pytest.mark.asyncio
+@pytest.mark.skip
+async def test_propagate_arguments_inside_of_story_loop():
+    inner_job_receive = SimpleTrigger()
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.callable()
+        def one_callable():
+            @story.part()
+            def story_init(ctx):
+                pass
+
+            @story.loop()
+            def inner_loop():
+                @story.on('jump')
+                def jump_story():
+                    @story.part()
+                    def inner_job(ctx):
+                        inner_job_receive.receive(ctx['data']['value'])
+
+        ctx = await one_callable(session=talk.session, user=talk.user,
+                                 value='Hello World!')
+
+        # TODO: add wrapper for talk
+        talk.session = ctx.message['session']
+
+        await talk.pure_text('jump')
+
+        assert inner_job_receive.result() == 'Hello World!'
