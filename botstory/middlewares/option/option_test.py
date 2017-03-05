@@ -1,3 +1,4 @@
+from botstory.middlewares import option
 import logging
 import pytest
 from . import option
@@ -35,7 +36,7 @@ async def test_should_ask_with_options():
 
             @story.part()
             def get_health(ctx):
-                trigger.receive(ctx['session']['data']['option'])
+                trigger.receive(option.get_option(ctx))
 
         await talk.pure_text('How are you?')
         await talk.option({'health': 1})

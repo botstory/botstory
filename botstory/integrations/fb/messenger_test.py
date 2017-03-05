@@ -1,4 +1,5 @@
 import asyncio
+from botstory.ast import story_context
 import logging
 from unittest import mock
 import pytest
@@ -434,13 +435,13 @@ async def test_handler_raw_text(build_fb_interface):
     def correct_story():
         @story.part()
         def store_result(ctx):
-            correct_trigger.receive(ctx['session']['data'])
+            correct_trigger.receive(story_context.get_user_data(ctx))
 
     @story.on('Goodbye, world!')
     def incorrect_story():
         @story.part()
         def store_result(ctx):
-            incorrect_trigger.receive(ctx['session']['data'])
+            incorrect_trigger.receive(story_context.get_user_data(ctx))
 
     await fb_interface.handle({
         'object': 'page',
@@ -485,13 +486,13 @@ async def test_handler_selected_option(build_fb_interface):
     def correct_story():
         @story.part()
         def store_result(ctx):
-            correct_trigger.receive(ctx['session']['data'])
+            correct_trigger.receive(story_context.get_user_data(ctx))
 
     @story.on(receive=option.Match('BLUE'))
     def incorrect_story():
         @story.part()
         def store_result(ctx):
-            incorrect_trigger.receive(ctx['session']['data'])
+            incorrect_trigger.receive(story_context.get_user_data(ctx))
 
     await fb_interface.handle({
         'object': 'page',
@@ -538,13 +539,13 @@ async def test_handler_postback(build_fb_interface):
     def correct_story():
         @story.part()
         def store_result(ctx):
-            correct_trigger.receive(ctx['session']['data'])
+            correct_trigger.receive(story_context.get_user_data(ctx))
 
     @story.on(receive=option.Match('BLUE'))
     def incorrect_story():
         @story.part()
         def store_result(ctx):
-            incorrect_trigger.receive(ctx['session']['data'])
+            incorrect_trigger.receive(story_context.get_user_data(ctx))
 
     await fb_interface.handle({
         'object': 'page',

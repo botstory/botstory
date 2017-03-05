@@ -49,7 +49,7 @@ async def execute(ctx):
     if ctx.is_waiting_for_input():
         if isinstance(ctx.waiting_for, callable.EndOfStory):
             if isinstance(ctx.waiting_for.data, dict):
-                new_data = {**ctx.message['session']['data'], **ctx.waiting_for.data}
+                new_data = {**ctx.get_user_data(), **ctx.waiting_for.data}
             else:
                 new_data = ctx.waiting_for.data
             ctx.message = {

@@ -5,6 +5,7 @@ social: network, action [, target ]
 timing: category, variable, time [, label ]
 """
 
+from botstory.ast import story_context
 import functools
 import json
 import logging

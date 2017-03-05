@@ -239,7 +239,9 @@ class FBInterface:
                             ctx = await self.story_processor.match_message(ctx)
 
                     elif 'postback' in m:
+                        data = session.get('data', {})
                         ctx['session']['data'] = {
+                            **data,
                             'option': m['postback']['payload'],
                         }
                         ctx = await self.story_processor.match_message(ctx)

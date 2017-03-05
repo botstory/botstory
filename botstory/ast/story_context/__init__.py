@@ -91,6 +91,9 @@ class StoryContext:
         except IndexError:
             return None
 
+    def get_user_data(self):
+        return get_user_data(self.message)
+
     def has_child_story(self):
         return self.get_child_story() is not None
 

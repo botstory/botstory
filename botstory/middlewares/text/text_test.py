@@ -168,13 +168,13 @@ async def test_should_catch_text_message_that_match_regex():
         def one_story():
             @story.part()
             def then(ctx):
-                trigger_buy.receive(ctx['session']['data']['text']['matches'][0])
+                trigger_buy.receive(text.get_text(ctx)['matches'][0])
 
         @story.on(text.Match('sell (.*)btc'))
         def another_story():
             @story.part()
             def then(ctx):
-                trigger_sell.receive(ctx['session']['data']['text']['matches'][0])
+                trigger_sell.receive(text.get_text(ctx)['matches'][0])
 
         await talk.pure_text('buy 700btc')
         await talk.pure_text('sell 600btc')
@@ -196,7 +196,7 @@ async def test_should_catch_text_message_that_match_regex_with_flags():
             def then(ctx):
                 logger.debug('ctx')
                 logger.debug(ctx)
-                trigger_destination.receive(ctx['session']['data']['text']['matches'][0])
+                trigger_destination.receive(text.get_text(ctx)['matches'][0])
 
         await talk.pure_text('Going to Pripyat')
 

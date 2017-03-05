@@ -2,6 +2,10 @@ from botstory import matchers, utils
 import re
 
 
+def get_text(ctx, default=None):
+    return utils.safe_get(ctx, 'session', 'data', 'text', default=default)
+
+
 def get_raw_text(ctx, default=None):
     return utils.safe_get(ctx, 'session', 'data', 'text', 'raw', default=default)
 
