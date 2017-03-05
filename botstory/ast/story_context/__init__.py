@@ -150,4 +150,8 @@ class StoryContext:
                         'waiting for {}'.format(str(self.message), str(self.waiting_for)))
 
 
-__all__ = [reducers, StoryContext]
+def get_user_data(ctx):
+    return ctx['session']['data']
+
+
+__all__ = [get_user_data, reducers, StoryContext]
