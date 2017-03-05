@@ -1,8 +1,9 @@
-from botstory import matchers, utils
+from botstory import matchers
+from botstory.ast import story_context
 
 
 def get_location(ctx):
-    return utils.safe_get(ctx, 'session', 'data', 'location')
+    return story_context.get_message_data(ctx, 'location')
 
 
 @matchers.matcher()

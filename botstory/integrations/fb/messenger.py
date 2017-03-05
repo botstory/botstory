@@ -209,10 +209,10 @@ class FBInterface:
                             user=user,
                         )
 
-                    ctx = {
+                    ctx = story_context.clean_message_data({
                         'session': session,
                         'user': user,
-                    }
+                    })
 
                     if 'message' in m:
                         logger.debug('message notification')
@@ -222,32 +222,25 @@ class FBInterface:
                             # for example storing for debug purpose
                             logger.debug('just echo message')
                         else:
-                            data = session.get('data', {})
                             text = raw_message.get('text', None)
                             if text is not None:
-                                # story_content.set_user_message(ctx, 'text', 'raw', text)
-                                data['text'] = {
-                                    'raw': text,
-                                }
+                                ctx = story_context.set_message_data(ctx,
+                                                                     'text', {
+                                                                         'raw': text,
+                                                                     })
                             else:
                                 logger.warning('  entry {} "text"'.format(e))
 
                             quick_reply = raw_message.get('quick_reply', None)
                             if quick_reply is not None:
-                                data['option'] = quick_reply['payload']
-
-                            ctx['session']['data'] = data
+                                ctx = story_context.set_message_data(ctx,
+                                                                     'option', quick_reply['payload'])
 
                             ctx = await self.story_processor.match_message(ctx)
 
                     elif 'postback' in m:
-                        # story_content.set_user_message(ctx,
-                        #                                'option', m['postback']['payload'])
-                        data = session.get('data', {})
-                        ctx['session']['data'] = {
-                            **data,
-                            'option': m['postback']['payload'],
-                        }
+                        ctx = story_context.set_message_data(ctx,
+                                                             'option', m['postback']['payload'])
                         ctx = await self.story_processor.match_message(ctx)
                     elif 'delivery' in m:
                         logger.debug('delivery notification')
@@ -283,9 +276,9 @@ class FBInterface:
             )
 
         # check whether we have `On Start Story`
-        have_on_start_story = not not self.library.get_global_story({
-            'session': {'data': {'option': option.OnStart.DEFAULT_OPTION_PAYLOAD}}
-        })
+        have_on_start_story = not not self.library.get_global_story(story_context.set_message_data({
+            'session': {}
+        }, 'option', option.OnStart.DEFAULT_OPTION_PAYLOAD))
         if have_on_start_story:
             await self.remove_greeting_call_to_action_payload()
             await self.set_greeting_call_to_action_payload(option.OnStart.DEFAULT_OPTION_PAYLOAD)

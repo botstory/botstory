@@ -4,11 +4,11 @@ import re
 
 
 def get_text(ctx, default=None):
-    return utils.safe_get(ctx, 'session', 'data', 'text', default=default)
+    return story_context.get_message_data(ctx, 'text', default=default)
 
 
 def get_raw_text(ctx, default=None):
-    return utils.safe_get(ctx, 'session', 'data', 'text', 'raw', default=default)
+    return story_context.get_message_data(ctx, 'text', 'raw', default=default)
 
 
 @matchers.matcher()
@@ -79,8 +79,7 @@ class Match:
         if len(matches) == 0:
             return False
 
-        # story_context.set_user_message(ctx, 'text', 'matches', matches)
-        ctx['session']['data']['text']['matches'] = matches
+        story_context.set_message_data(ctx, 'text', 'matches', matches)
         return True
 
     def serialize(self):

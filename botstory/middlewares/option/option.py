@@ -1,9 +1,9 @@
-from botstory import utils
+from botstory.ast import story_context
 from ... import matchers
 
 
 def get_option(ctx):
-    return utils.safe_get(ctx, 'session', 'data', 'option')
+    return story_context.get_message_data(ctx, 'option')
 
 
 @matchers.matcher()

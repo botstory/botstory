@@ -1,3 +1,5 @@
+from botstory.ast import story_context
+from botstory.middlewares import text
 import logging
 import os
 
@@ -5,7 +7,7 @@ import pytest
 
 from . import fake_server
 from .. import aiohttp, fb, mongodb, mockhttp
-from ... import di, Story, utils
+from ... import Story, utils
 
 logger = logging.getLogger(__name__)
 
@@ -146,7 +148,7 @@ async def test_integrate_mongodb_with_facebook(open_db, build_context):
         ))
 
         assert trigger.value['user'] == user
-        assert trigger.value['session']['data'] == {
+        assert story_context.get_message_data(trigger.value) == {
             'text': {
                 'raw': 'hello, world!'
             }
@@ -171,7 +173,7 @@ async def test_integrate_mongodb_with_facebook_with_none_session(open_db, build_
         }))
 
         assert trigger.value
-        assert trigger.value['session']['data']['text']['raw'] == 'hello, world!'
+        assert text.get_text(trigger.value)['raw'] == 'hello, world!'
         assert trigger.value['user']['facebook_user_id'] == 'some-facebook-id'
 
 

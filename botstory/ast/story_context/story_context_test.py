@@ -29,6 +29,26 @@ def test_clean_message_data():
     }
 
 
+def test_get_message_data():
+    assert story_context.get_message_data({
+        'session': {
+            'data': {
+                'message': {
+                    'text': {
+                        'raw': 'I\'m going to Mars',
+                    },
+                    'location': {
+                        'lat': 12,
+                        'lng': 21,
+                    }
+                }
+            }
+        }
+    }, 'text') == {
+               'raw': 'I\'m going to Mars',
+           }
+
+
 def test_set_message_data():
     ctx = {
         'session': {

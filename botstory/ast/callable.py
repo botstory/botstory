@@ -24,13 +24,6 @@ class EndOfStory:
         self.data = data
 
 
-def process_end_of_story(message, waiting_for):
-    logger.debug('  got EndOfStory!')
-    if message:
-        message['data'] = {**message['data'], **waiting_for.data}
-    return waiting_for
-
-
 class CallableNodeWrapper:
     """
     helps start processing callable story

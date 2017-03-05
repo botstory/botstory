@@ -161,8 +161,8 @@ def get_user_data(ctx):
     return ctx['session']['data']
 
 
-def get_user_message(ctx):
-    return get_user_data(ctx)['message']
+def get_message_data(ctx, *args, **kwargs):
+    return utils.safe_get(get_user_data(ctx)['message'], *args, **kwargs)
 
 
 def set_user_data(ctx, data):
@@ -170,6 +170,7 @@ def set_user_data(ctx, data):
         **get_user_data(ctx),
         **data,
     }
+    return ctx
 
 
 def set_message_data(ctx, *args):
