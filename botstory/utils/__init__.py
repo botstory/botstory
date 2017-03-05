@@ -61,13 +61,7 @@ def safe_set(input_dict, *args):
     except StopIteration:
         pass
 
-    if isinstance(value, dict):
-        res[last_key] = {
-            **res.get(last_key, {}),
-            **value,
-        }
-    else:
-        res[last_key] = value
+    res[last_key] = value
     return input_dict
 
 

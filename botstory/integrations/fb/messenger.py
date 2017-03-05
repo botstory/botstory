@@ -1,4 +1,5 @@
 import asyncio
+from botstory.ast import story_context
 import logging
 from . import validate
 from .. import commonhttp
@@ -224,6 +225,7 @@ class FBInterface:
                             data = session.get('data', {})
                             text = raw_message.get('text', None)
                             if text is not None:
+                                # story_content.set_user_message(ctx, 'text', 'raw', text)
                                 data['text'] = {
                                     'raw': text,
                                 }
@@ -239,6 +241,8 @@ class FBInterface:
                             ctx = await self.story_processor.match_message(ctx)
 
                     elif 'postback' in m:
+                        # story_content.set_user_message(ctx,
+                        #                                'option', m['postback']['payload'])
                         data = session.get('data', {})
                         ctx['session']['data'] = {
                             **data,

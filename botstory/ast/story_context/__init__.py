@@ -1,4 +1,4 @@
-from botstory import matchers
+from botstory import matchers, utils
 from botstory.ast import callable, forking, loop
 from botstory.ast.story_context import reducers
 from botstory.utils import advanced_json_encoder
@@ -153,6 +153,10 @@ class StoryContext:
                         'waiting for {}'.format(str(self.message), str(self.waiting_for)))
 
 
+def clean_message_data(ctx):
+    return utils.safe_set(ctx, 'session', 'data', 'message', {})
+
+
 def get_user_data(ctx):
     return ctx['session']['data']
 
@@ -168,9 +172,8 @@ def set_user_data(ctx, data):
     }
 
 
-def set_user_message(ctx, *args):
-    message = get_user_message(ctx)
-    # TODO:
+def set_message_data(ctx, *args):
+    return utils.safe_set(ctx, 'session', 'data', 'message', *args)
 
 
 __all__ = [get_user_data, reducers, set_user_data, StoryContext]

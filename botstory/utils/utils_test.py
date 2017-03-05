@@ -90,12 +90,12 @@ def test_safe_set_updates_by_dict():
                 'radius': 6052,
             },
             'Earth': {
-                'gravity': None,
-                'radius': 6371,
+                'error': 'missed',
             }
         }
     }, 'planets', 'Earth', {
         'gravity': 9.8,
+        'radius': 6371,
         'mass': 1,
     }) == {
            'planets': {
