@@ -1,3 +1,4 @@
+from botstory.ast import story_context
 import json
 import logging
 import pytest
@@ -36,7 +37,7 @@ async def test_cases():
             def location_case():
                 @story.part()
                 def store_location(ctx):
-                    trigger_location.receive(location.get_location(ctx))
+                    trigger_location.receive(story_context.get_message_data(ctx))
 
             @story.case(match='text')
             def text_case():
@@ -51,7 +52,9 @@ async def test_cases():
         await say_pure_text('Hi there!')
         await say_location({'x': 123, 'y': 321})
 
-        assert trigger_location.result() == {'x': 123, 'y': 321}
+        assert trigger_location.result() == {
+            'location': {'x': 123, 'y': 321}
+        }
         assert not trigger_text.result()
         assert trigger_after_switch.is_triggered
 
