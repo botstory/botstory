@@ -53,6 +53,7 @@ async def location(loc, session=None, user=None, story=None):
         'session': {
             **session,
             'data': {
+                **session['data'],
                 'location': loc,
             },
         },
@@ -65,6 +66,7 @@ async def pure_text(text, session=None, user=None, story=None):
         'session': {
             **session,
             'data': {
+                **session['data'],
                 'text': {'raw': text},
             },
         },
@@ -77,6 +79,7 @@ async def option(payload, session=None, user=None, story=None):
         'session': {
             **session,
             'data': {
+                **session['data'],
                 'option': payload,
             },
         },

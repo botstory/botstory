@@ -390,7 +390,6 @@ async def test_story_loop_inside_of_callable():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip
 async def test_propagate_arguments_inside_of_story_loop():
     inner_job_receive = SimpleTrigger()
     with answer.Talk() as talk:
