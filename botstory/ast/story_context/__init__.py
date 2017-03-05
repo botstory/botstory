@@ -157,4 +157,20 @@ def get_user_data(ctx):
     return ctx['session']['data']
 
 
-__all__ = [get_user_data, reducers, StoryContext]
+def get_user_message(ctx):
+    return get_user_data(ctx)['message']
+
+
+def set_user_data(ctx, data):
+    ctx['session']['data'] = {
+        **get_user_data(ctx),
+        **data,
+    }
+
+
+def set_user_message(ctx, *args):
+    message = get_user_message(ctx)
+    # TODO:
+
+
+__all__ = [get_user_data, reducers, set_user_data, StoryContext]

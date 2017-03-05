@@ -1,4 +1,5 @@
 from botstory import matchers, utils
+from botstory.ast import story_context
 import re
 
 
@@ -77,6 +78,8 @@ class Match:
         matches = self.matcher.findall(get_raw_text(ctx))
         if len(matches) == 0:
             return False
+
+        # story_context.set_user_message(ctx, 'text', 'matches', matches)
         ctx['session']['data']['text']['matches'] = matches
         return True
 

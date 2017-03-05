@@ -43,6 +43,34 @@ def safe_get(dct, *keys, default=None):
     return dct
 
 
+def safe_set(input_dict, *args):
+    res = input_dict
+    keys, last_key, value = args[:-2], args[-2], args[-1]
+    keys_iter = iter(keys)
+    try:
+        key = None
+        try:
+            while True:
+                key = next(keys_iter)
+                res = res[key]
+        except (KeyError, TypeError):
+            while True:
+                res[key] = {}
+                res = res[key]
+                key = next(keys_iter)
+    except StopIteration:
+        pass
+
+    if isinstance(value, dict):
+        res[last_key] = {
+            **res.get(last_key, {}),
+            **value,
+        }
+    else:
+        res[last_key] = value
+    return input_dict
+
+
 class SimpleTrigger:
     def __init__(self, value=None):
         self.is_triggered = False
