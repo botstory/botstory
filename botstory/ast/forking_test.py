@@ -41,7 +41,7 @@ async def test_cases():
             @story.case(match='text')
             def text_case():
                 @story.part()
-                def store_location(ctx):
+                def store_text(ctx):
                     trigger_text.receive(text.get_text(ctx)['raw'])
 
             @story.part()
