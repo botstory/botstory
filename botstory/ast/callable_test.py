@@ -20,7 +20,7 @@ async def test_begin_of_callable_story():
         def one_story():
             @story.part()
             def store_arguments(ctx):
-                data = ctx['data']
+                data = ctx['session']['data']
                 trigger.receive({
                     'value1': data['arg1'],
                     'value2': data['arg2'],
@@ -55,13 +55,13 @@ async def test_parts_of_callable_story():
             async def ask_age(ctx):
                 trigger_1.passed()
                 return await story.ask(
-                    'Nice to see you {}. What do you do here?'.format(ctx['data']['text']['raw']),
+                    'Nice to see you {}. What do you do here?'.format(ctx['session']['data']['text']['raw']),
                     user=ctx['user'],
                 )
 
             @story.part()
             async def store_arguments(ctx):
-                age = int(ctx['data']['text']['raw'])
+                age = int(ctx['session']['data']['text']['raw'])
                 if age < 30:
                     res = 'You are so young! '
                 else:
@@ -115,7 +115,7 @@ async def test_call_story_from_common_story():
 
             @story.part()
             def parse(ctx):
-                trigger.receive(ctx['data']['text']['raw'])
+                trigger.receive(ctx['session']['data']['text']['raw'])
 
         await say_pure_text('Hi!')
         await say_pure_text('I\'m fine')
@@ -207,7 +207,7 @@ async def test_async_end_of_story_with_switch():
 
             @story.part()
             async def flip(ctx):
-                user_side = ctx['data']['text']['raw']
+                user_side = ctx['session']['data']['text']['raw']
                 await story.say('Thanks!', user=ctx['user'])
                 await story.say('And I am flipping a Coin', user=ctx['user'])
                 coin_side = random.choice(sides)
@@ -254,7 +254,7 @@ async def test_async_end_of_story_with_switch():
             def game_over(ctx):
                 logger.debug('game_over')
                 logger.debug(ctx)
-                game_result.receive(ctx['data']['game_result'])
+                game_result.receive(ctx['session']['data']['game_result'])
 
         await talk.pure_text('enter to the saloon')
 
@@ -291,7 +291,7 @@ async def test_async_end_of_story():
             def game_over(ctx):
                 logger.debug('game_over')
                 logger.debug(ctx)
-                game_result.receive(ctx['data']['game_result'])
+                game_result.receive(ctx['session']['data']['game_result'])
 
         await talk.pure_text('enter to the saloon')
 
@@ -407,7 +407,7 @@ async def test_propagate_arguments_inside_of_story_loop():
                 def jump_story():
                     @story.part()
                     def inner_job(ctx):
-                        inner_job_receive.receive(ctx['data']['value'])
+                        inner_job_receive.receive(ctx['session']['data']['value'])
 
         ctx = await one_callable(session=talk.session, user=talk.user,
                                  value='Hello World!')

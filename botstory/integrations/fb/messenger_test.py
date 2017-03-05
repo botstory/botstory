@@ -434,13 +434,13 @@ async def test_handler_raw_text(build_fb_interface):
     def correct_story():
         @story.part()
         def store_result(ctx):
-            correct_trigger.receive(ctx['data'])
+            correct_trigger.receive(ctx['session']['data'])
 
     @story.on('Goodbye, world!')
     def incorrect_story():
         @story.part()
         def store_result(ctx):
-            incorrect_trigger.receive(ctx['data'])
+            incorrect_trigger.receive(ctx['session']['data'])
 
     await fb_interface.handle({
         'object': 'page',
@@ -485,13 +485,13 @@ async def test_handler_selected_option(build_fb_interface):
     def correct_story():
         @story.part()
         def store_result(ctx):
-            correct_trigger.receive(ctx['data'])
+            correct_trigger.receive(ctx['session']['data'])
 
     @story.on(receive=option.Match('BLUE'))
     def incorrect_story():
         @story.part()
         def store_result(ctx):
-            incorrect_trigger.receive(ctx['data'])
+            incorrect_trigger.receive(ctx['session']['data'])
 
     await fb_interface.handle({
         'object': 'page',
@@ -538,13 +538,13 @@ async def test_handler_postback(build_fb_interface):
     def correct_story():
         @story.part()
         def store_result(ctx):
-            correct_trigger.receive(ctx['data'])
+            correct_trigger.receive(ctx['session']['data'])
 
     @story.on(receive=option.Match('BLUE'))
     def incorrect_story():
         @story.part()
         def store_result(ctx):
-            incorrect_trigger.receive(ctx['data'])
+            incorrect_trigger.receive(ctx['session']['data'])
 
     await fb_interface.handle({
         'object': 'page',

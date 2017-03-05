@@ -1,8 +1,11 @@
+import logging
 import pytest
 import re
 from . import text
 from ... import matchers
 from ...utils import answer, SimpleTrigger
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.mark.asyncio
@@ -165,13 +168,13 @@ async def test_should_catch_text_message_that_match_regex():
         def one_story():
             @story.part()
             def then(ctx):
-                trigger_buy.receive(ctx['data']['text']['matches'][0])
+                trigger_buy.receive(ctx['session']['data']['text']['matches'][0])
 
         @story.on(text.Match('sell (.*)btc'))
         def another_story():
             @story.part()
             def then(ctx):
-                trigger_sell.receive(ctx['data']['text']['matches'][0])
+                trigger_sell.receive(ctx['session']['data']['text']['matches'][0])
 
         await talk.pure_text('buy 700btc')
         await talk.pure_text('sell 600btc')
@@ -191,7 +194,9 @@ async def test_should_catch_text_message_that_match_regex_with_flags():
         def one_story():
             @story.part()
             def then(ctx):
-                trigger_destination.receive(ctx['data']['text']['matches'][0])
+                logger.debug('ctx')
+                logger.debug(ctx)
+                trigger_destination.receive(ctx['session']['data']['text']['matches'][0])
 
         await talk.pure_text('Going to Pripyat')
 

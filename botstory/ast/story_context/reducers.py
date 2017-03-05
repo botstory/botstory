@@ -49,12 +49,15 @@ async def execute(ctx):
     if ctx.is_waiting_for_input():
         if isinstance(ctx.waiting_for, callable.EndOfStory):
             if isinstance(ctx.waiting_for.data, dict):
-                new_data = {**ctx.message['data'], **ctx.waiting_for.data}
+                new_data = {**ctx.message['session']['data'], **ctx.waiting_for.data}
             else:
                 new_data = ctx.waiting_for.data
             ctx.message = {
                 **ctx.message,
-                'data': new_data,
+                'session': {
+                    **ctx.message['session'],
+                    'data': new_data,
+                },
             }
             tail_step += 1
         elif isinstance(ctx.waiting_for, loop.ScopeMatcher):

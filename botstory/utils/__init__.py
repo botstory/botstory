@@ -24,6 +24,7 @@ def build_fake_user():
 def build_fake_session(user=None):
     user = user or {}
     return {
+        'data': {},
         'stack': [],
         'facebook_user_id': user.get('facebook_user_id', uniq_id()),
         'user_id': user.get('_id', uniq_id()),

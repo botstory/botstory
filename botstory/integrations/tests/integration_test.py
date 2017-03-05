@@ -136,8 +136,8 @@ async def test_integrate_mongodb_with_facebook(open_db, build_context):
         @story.on('hello, world!')
         def correct_story():
             @story.part()
-            def store_result(message):
-                trigger.receive(message)
+            def store_result(ctx):
+                trigger.receive(ctx)
 
         await facebook.handle(build_message(
             user['facebook_user_id'], {
@@ -145,13 +145,10 @@ async def test_integrate_mongodb_with_facebook(open_db, build_context):
             }
         ))
 
-        del trigger.value['session']
-        assert trigger.value == {
-            'user': user,
-            'data': {
-                'text': {
-                    'raw': 'hello, world!'
-                }
+        assert trigger.value['user'] == user
+        assert trigger.value['session']['data'] == {
+            'text': {
+                'raw': 'hello, world!'
             }
         }
 
@@ -174,7 +171,7 @@ async def test_integrate_mongodb_with_facebook_with_none_session(open_db, build_
         }))
 
         assert trigger.value
-        assert trigger.value['data']['text']['raw'] == 'hello, world!'
+        assert trigger.value['session']['data']['text']['raw'] == 'hello, world!'
         assert trigger.value['user']['facebook_user_id'] == 'some-facebook-id'
 
 
@@ -188,7 +185,7 @@ async def test_story_on_start(open_db, build_context):
         @story.on_start()
         def just_meet():
             @story.part()
-            def greeting(message):
+            def greeting(ctx):
                 trigger.passed()
 
         await story.setup()

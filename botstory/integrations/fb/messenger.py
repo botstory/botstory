@@ -208,7 +208,7 @@ class FBInterface:
                             user=user,
                         )
 
-                    message = {
+                    ctx = {
                         'session': session,
                         'user': user,
                     }
@@ -221,7 +221,7 @@ class FBInterface:
                             # for example storing for debug purpose
                             logger.debug('just echo message')
                         else:
-                            data = {}
+                            data = session.get('data', {})
                             text = raw_message.get('text', None)
                             if text is not None:
                                 data['text'] = {
@@ -234,15 +234,15 @@ class FBInterface:
                             if quick_reply is not None:
                                 data['option'] = quick_reply['payload']
 
-                            message['data'] = data
+                            ctx['session']['data'] = data
 
-                            message = await self.story_processor.match_message(message)
+                            ctx = await self.story_processor.match_message(ctx)
 
                     elif 'postback' in m:
-                        message['data'] = {
+                        ctx['session']['data'] = {
                             'option': m['postback']['payload'],
                         }
-                        message = await self.story_processor.match_message(message)
+                        ctx = await self.story_processor.match_message(ctx)
                     elif 'delivery' in m:
                         logger.debug('delivery notification')
                     elif 'read' in m:
@@ -252,8 +252,8 @@ class FBInterface:
 
                     # after message were processed session and user information could change
                     # so we should store it for the next usage
-                    await self.storage.set_session(message['session'])
-                    await self.storage.set_user(message['user'])
+                    await self.storage.set_session(ctx['session'])
+                    await self.storage.set_user(ctx['user'])
 
         except BaseException as err:
             logger.exception(err)
@@ -278,7 +278,7 @@ class FBInterface:
 
         # check whether we have `On Start Story`
         have_on_start_story = not not self.library.get_global_story({
-            'data': {'option': option.OnStart.DEFAULT_OPTION_PAYLOAD}
+            'session': {'data': {'option': option.OnStart.DEFAULT_OPTION_PAYLOAD}}
         })
         if have_on_start_story:
             await self.remove_greeting_call_to_action_payload()

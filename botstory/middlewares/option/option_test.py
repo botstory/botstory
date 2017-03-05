@@ -35,7 +35,7 @@ async def test_should_ask_with_options():
 
             @story.part()
             def get_health(ctx):
-                trigger.receive(ctx['data']['option'])
+                trigger.receive(ctx['session']['data']['option'])
 
         await talk.pure_text('How are you?')
         await talk.option({'health': 1})

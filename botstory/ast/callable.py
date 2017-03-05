@@ -56,6 +56,7 @@ class CallableNodeWrapper:
         logger.debug('  action: extend stack by +1')
         session = {
             **session,
+            'data': kwargs,
             'stack': session['stack'] + [stack_utils.build_empty_stack_item(self.ast_node.topic)],
         }
 
@@ -63,7 +64,6 @@ class CallableNodeWrapper:
             'session': session,
             # TODO: should get user from context
             'user': user,
-            'data': kwargs,
         }, library=self.library)
         ctx = await self.processor.process_story(ctx)
         ctx = story_context.reducers.scope_out(ctx)
