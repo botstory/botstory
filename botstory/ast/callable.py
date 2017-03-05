@@ -42,11 +42,15 @@ class CallableNodeWrapper:
         self.processor = processor
 
     async def startpoint(self, *args, **kwargs):
-        if {'session', 'user'} > set(kwargs):
-            raise AttributeError('Got {} and {}. Should pass session as well'.format(args, kwargs))
-
-        # TODO: should get session from context
-        session = kwargs.pop('session')
+        if len(args) > 0:
+            parent_ctx = args[0]
+            session = parent_ctx['session']
+            user = parent_ctx['user']
+        else:
+            if {'session', 'user'} > set(kwargs):
+                raise AttributeError('Got {} and {}. Should pass session as well'.format(args, kwargs))
+            session = kwargs.pop('session')
+            user = kwargs.pop('user')
 
         # we are going deeper so prepare one more item in stack
         logger.debug('  action: extend stack by +1')
@@ -58,7 +62,7 @@ class CallableNodeWrapper:
         ctx = story_context.StoryContext(message={
             'session': session,
             # TODO: should get user from context
-            'user': kwargs.pop('user'),
+            'user': user,
             'data': kwargs,
         }, library=self.library)
         ctx = await self.processor.process_story(ctx)

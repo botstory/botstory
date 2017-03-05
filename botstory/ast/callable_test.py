@@ -331,6 +331,33 @@ async def test_sync_end_of_story():
 
 
 @pytest.mark.asyncio
+async def test_could_just_past_context_to_callable():
+    session_storage = SimpleTrigger()
+    user_storage = SimpleTrigger()
+
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.callable()
+        def one_story():
+            @story.part()
+            def one_story_part(ctx):
+                session_storage.receive(ctx['session']['user_id'])
+                user_storage.receive(ctx['user'])
+
+        @story.on('hi')
+        def hi_story():
+            @story.part()
+            async def run_one_story(ctx):
+                await one_story(ctx)
+
+        await talk.pure_text('hi')
+
+        assert session_storage.value == talk.session['user_id']
+        assert user_storage.value == talk.user
+
+
+@pytest.mark.asyncio
 async def test_story_loop_inside_of_callable():
     inside_of_loop = SimpleTrigger()
     with answer.Talk() as talk:
