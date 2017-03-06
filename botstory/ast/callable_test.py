@@ -358,6 +358,9 @@ async def test_could_just_past_context_to_callable():
         assert user_storage.value == talk.user
 
 
+# Loop & Callable Stories
+
+
 @pytest.mark.asyncio
 async def test_story_loop_inside_of_callable():
     inside_of_loop = SimpleTrigger()
@@ -422,8 +425,8 @@ async def test_propagate_arguments_inside_of_story_loop():
 
 @pytest.mark.asyncio
 async def test_exit_outside_of_callable_and_loop():
-    in_progress_inside_callable_trigger = SimpleTrigger(0)
     exit_inside_callable_trigger = SimpleTrigger(0)
+    in_progress_inside_callable_trigger = SimpleTrigger(0)
     in_progress_outside_callable_trigger = SimpleTrigger(0)
     with answer.Talk() as talk:
         story = talk.story
@@ -469,3 +472,48 @@ async def test_exit_outside_of_callable_and_loop():
         assert exit_inside_callable_trigger.result() == 1
         assert in_progress_inside_callable_trigger.result() == 1
         assert in_progress_outside_callable_trigger.result() == 1
+
+
+@pytest.mark.asyncio
+async def test_exit_outside_of_callable_and_loop_but_do_not_match_again():
+    exit_outside_callable_trigger = SimpleTrigger(0)
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.callable()
+        def one_callable():
+            @story.part()
+            def inner_init(ctx):
+                pass
+
+            @story.loop()
+            def inner_loop():
+                @story.on('in-progress')
+                def in_progress():
+                    @story.part()
+                    def do_in_progress(ctx):
+                        pass
+
+                @story.on('exit')
+                def exit():
+                    @story.part()
+                    def break_loop(ctx):
+                        return loop.BreakLoop()
+
+        @story.on('start')
+        def start_story():
+            @story.part()
+            async def call_callable(ctx):
+                return await one_callable(ctx)
+
+        @story.on('exit')
+        def exit_outside_callable():
+            @story.part()
+            async def exit_outside_callable_store(ctx):
+                exit_outside_callable_trigger.inc()
+
+        await talk.pure_text('start')
+        await talk.pure_text('in-progress')
+        await talk.pure_text('exit')
+
+        assert exit_outside_callable_trigger.result() == 0

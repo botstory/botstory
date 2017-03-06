@@ -51,7 +51,7 @@ class StoryContext:
         return self.stack_tail()['step']
 
     def does_it_match_any_story(self):
-        return self.compiled_story() is not None
+        return self.compiled_story() is not None and not self.matched
 
     def get_child_story(self):
         """
