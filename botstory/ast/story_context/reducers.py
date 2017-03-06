@@ -40,6 +40,7 @@ async def execute(ctx):
         # because story context from callable story already has
         # few stack items above our tail
         ctx = waiting_for.clone()
+        ctx.waiting_for = callable.WaitForReturn()
     else:
         ctx = ctx.clone()
         ctx.waiting_for = waiting_for

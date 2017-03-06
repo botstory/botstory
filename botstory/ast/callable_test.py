@@ -2,7 +2,7 @@ import logging
 import pytest
 import random
 
-from botstory.ast import callable, story_context
+from botstory.ast import callable, loop, story_context
 from botstory.middlewares import text
 from .. import EndOfStory, SwitchOnValue
 from ..utils import answer, SimpleTrigger
@@ -418,3 +418,54 @@ async def test_propagate_arguments_inside_of_story_loop():
         await talk.pure_text('jump')
 
         assert inner_job_receive.result() == 'Hello World!'
+
+
+@pytest.mark.asyncio
+async def test_exit_outside_of_callable_and_loop():
+    in_progress_inside_callable_trigger = SimpleTrigger(0)
+    exit_inside_callable_trigger = SimpleTrigger(0)
+    in_progress_outside_callable_trigger = SimpleTrigger(0)
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.callable()
+        def one_callable():
+            @story.part()
+            def inner_init(ctx):
+                pass
+
+            @story.loop()
+            def inner_loop():
+                @story.on('in-progress')
+                def in_progress():
+                    @story.part()
+                    def do_in_progress(ctx):
+                        in_progress_inside_callable_trigger.inc()
+
+                @story.on('exit')
+                def exit():
+                    @story.part()
+                    def break_loop(ctx):
+                        exit_inside_callable_trigger.inc()
+                        return loop.BreakLoop()
+
+        @story.on('start')
+        def start_story():
+            @story.part()
+            async def call_callable(ctx):
+                return await one_callable(ctx)
+
+        @story.on('in-progress')
+        def in_progress_outside_callable():
+            @story.part()
+            async def in_progress_outside_callable_store(ctx):
+                in_progress_outside_callable_trigger.inc()
+
+        await talk.pure_text('start')
+        await talk.pure_text('in-progress')
+        await talk.pure_text('exit')
+        await talk.pure_text('in-progress')
+
+        assert exit_inside_callable_trigger.result() == 1
+        assert in_progress_inside_callable_trigger.result() == 1
+        assert in_progress_outside_callable_trigger.result() == 1
