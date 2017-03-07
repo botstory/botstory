@@ -1,8 +1,9 @@
-from ... import matchers
+from botstory import matchers
+from botstory.ast import story_context
 
 
-def is_location(message):
-    return message.get('data', {}).get('location', False)
+def get_location(ctx):
+    return story_context.get_message_data(ctx, 'location')
 
 
 @matchers.matcher()
@@ -12,5 +13,5 @@ class Any:
     def __init__(self):
         pass
 
-    def validate(self, message):
-        return is_location(message)
+    def validate(self, ctx):
+        return get_location(ctx)

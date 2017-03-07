@@ -1,4 +1,5 @@
 import botstory
+from botstory.ast import story_context
 from botstory.utils import build_fake_session, build_fake_user
 
 
@@ -49,30 +50,29 @@ class Talk:
 
 
 async def location(loc, session=None, user=None, story=None):
-    return await story.match_message({
-        'data': {
-            'location': loc,
-        },
-        'session': session,
-        'user': user
-    })
+    return await story.match_message(
+        story_context.set_message_data(
+            story_context.clean_message_data({
+                'session': session,
+                'user': user,
+            }), 'location', loc))
 
 
 async def pure_text(text, session=None, user=None, story=None):
-    return await story.match_message({
-        'data': {
-            'text': {'raw': text},
-        },
-        'session': session,
-        'user': user
-    })
+    return await story.match_message(
+        story_context.set_message_data(
+            story_context.clean_message_data({
+                'session': session,
+                'user': user,
+            }), 'text', {
+                'raw': text,
+            }))
 
 
 async def option(payload, session=None, user=None, story=None):
-    return await story.match_message({
-        'data': {
-            'option': payload,
-        },
-        'session': session,
-        'user': user
-    })
+    return await story.match_message(
+        story_context.set_message_data(
+            story_context.clean_message_data({
+                'session': session,
+                'user': user,
+            }), 'option', payload))

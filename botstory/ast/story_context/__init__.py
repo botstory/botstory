@@ -1,9 +1,8 @@
-from botstory import matchers
+from botstory import matchers, utils
 from botstory.ast import callable, forking, loop
 from botstory.ast.story_context import reducers
 from botstory.utils import advanced_json_encoder
 
-import json
 import logging
 import uuid
 
@@ -52,7 +51,7 @@ class StoryContext:
         return self.stack_tail()['step']
 
     def does_it_match_any_story(self):
-        return self.compiled_story() is not None
+        return self.compiled_story() is not None and not self.matched
 
     def get_child_story(self):
         """
@@ -91,6 +90,9 @@ class StoryContext:
             return self.compiled_story().story_line[self.current_step()]
         except IndexError:
             return None
+
+    def get_user_data(self):
+        return get_user_data(self.message)
 
     def has_child_story(self):
         return self.get_child_story() is not None
@@ -151,4 +153,28 @@ class StoryContext:
                         'waiting for {}'.format(str(self.message), str(self.waiting_for)))
 
 
-__all__ = [reducers, StoryContext]
+def clean_message_data(ctx):
+    return utils.safe_set(ctx, 'session', 'data', 'message', {})
+
+
+def get_user_data(ctx):
+    return ctx['session']['data']
+
+
+def get_message_data(ctx, *args, **kwargs):
+    return utils.safe_get(get_user_data(ctx)['message'], *args, **kwargs)
+
+
+def set_user_data(ctx, data):
+    ctx['session']['data'] = {
+        **get_user_data(ctx),
+        **data,
+    }
+    return ctx
+
+
+def set_message_data(ctx, *args):
+    return utils.safe_set(ctx, 'session', 'data', 'message', *args)
+
+
+__all__ = [get_user_data, reducers, set_user_data, StoryContext]

@@ -1,5 +1,14 @@
+from botstory import matchers, utils
+from botstory.ast import story_context
 import re
-from ... import matchers, utils
+
+
+def get_text(ctx, default=None):
+    return story_context.get_message_data(ctx, 'text', default=default)
+
+
+def get_raw_text(ctx, default=None):
+    return story_context.get_message_data(ctx, 'text', 'raw', default=default)
 
 
 @matchers.matcher()
@@ -12,8 +21,8 @@ class Any:
     def __init__(self):
         pass
 
-    def validate(self, message):
-        return utils.safe_get(message, 'data', 'text', 'raw')
+    def validate(self, ctx):
+        return get_raw_text(ctx)
 
 
 @matchers.matcher()
@@ -26,8 +35,8 @@ class Equal:
     def __init__(self, test_string):
         self.test_string = test_string
 
-    def validate(self, message):
-        return self.test_string == utils.safe_get(message, 'data', 'text', 'raw')
+    def validate(self, ctx):
+        return get_raw_text(ctx) == self.test_string
 
     def serialize(self):
         return self.test_string
@@ -51,8 +60,8 @@ class EqualCaseIgnore:
     def __init__(self, test_string):
         self.test_string = test_string.lower()
 
-    def validate(self, message):
-        return self.test_string == utils.safe_get(message, 'data', 'text', 'raw', default='').lower()
+    def validate(self, ctx):
+        return get_raw_text(ctx, '').lower() == self.test_string
 
     def serialize(self):
         return self.test_string
@@ -65,11 +74,12 @@ class Match:
     def __init__(self, pattern, flags=0):
         self.matcher = re.compile(pattern, flags=flags)
 
-    def validate(self, message):
-        matches = self.matcher.findall(utils.safe_get(message, 'data', 'text', 'raw'))
+    def validate(self, ctx):
+        matches = self.matcher.findall(get_raw_text(ctx))
         if len(matches) == 0:
             return False
-        message['data']['text']['matches'] = matches
+
+        story_context.set_message_data(ctx, 'text', 'matches', matches)
         return True
 
     def serialize(self):

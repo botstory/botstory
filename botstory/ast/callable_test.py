@@ -2,7 +2,8 @@ import logging
 import pytest
 import random
 
-from botstory.ast import callable
+from botstory.ast import callable, loop, story_context
+from botstory.middlewares import text
 from .. import EndOfStory, SwitchOnValue
 from ..utils import answer, SimpleTrigger
 
@@ -20,7 +21,7 @@ async def test_begin_of_callable_story():
         def one_story():
             @story.part()
             def store_arguments(ctx):
-                data = ctx['data']
+                data = story_context.get_user_data(ctx)
                 trigger.receive({
                     'value1': data['arg1'],
                     'value2': data['arg2'],
@@ -55,13 +56,13 @@ async def test_parts_of_callable_story():
             async def ask_age(ctx):
                 trigger_1.passed()
                 return await story.ask(
-                    'Nice to see you {}. What do you do here?'.format(ctx['data']['text']['raw']),
+                    'Nice to see you {}. What do you do here?'.format(story_context.get_user_data(ctx)),
                     user=ctx['user'],
                 )
 
             @story.part()
             async def store_arguments(ctx):
-                age = int(ctx['data']['text']['raw'])
+                age = int(text.get_raw_text(ctx))
                 if age < 30:
                     res = 'You are so young! '
                 else:
@@ -115,7 +116,7 @@ async def test_call_story_from_common_story():
 
             @story.part()
             def parse(ctx):
-                trigger.receive(ctx['data']['text']['raw'])
+                trigger.receive(text.get_raw_text(ctx))
 
         await say_pure_text('Hi!')
         await say_pure_text('I\'m fine')
@@ -207,7 +208,7 @@ async def test_async_end_of_story_with_switch():
 
             @story.part()
             async def flip(ctx):
-                user_side = ctx['data']['text']['raw']
+                user_side = text.get_raw_text(ctx)
                 await story.say('Thanks!', user=ctx['user'])
                 await story.say('And I am flipping a Coin', user=ctx['user'])
                 coin_side = random.choice(sides)
@@ -254,7 +255,7 @@ async def test_async_end_of_story_with_switch():
             def game_over(ctx):
                 logger.debug('game_over')
                 logger.debug(ctx)
-                game_result.receive(ctx['data']['game_result'])
+                game_result.receive(story_context.get_user_data(ctx)['game_result'])
 
         await talk.pure_text('enter to the saloon')
 
@@ -291,7 +292,7 @@ async def test_async_end_of_story():
             def game_over(ctx):
                 logger.debug('game_over')
                 logger.debug(ctx)
-                game_result.receive(ctx['data']['game_result'])
+                game_result.receive(story_context.get_user_data(ctx)['game_result'])
 
         await talk.pure_text('enter to the saloon')
 
@@ -328,3 +329,191 @@ async def test_sync_end_of_story():
         assert part_2.is_triggered
         assert not part_3.is_triggered
         assert res == 'Break Point'
+
+
+@pytest.mark.asyncio
+async def test_could_just_past_context_to_callable():
+    session_storage = SimpleTrigger()
+    user_storage = SimpleTrigger()
+
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.callable()
+        def one_story():
+            @story.part()
+            def one_story_part(ctx):
+                session_storage.receive(ctx['session']['user_id'])
+                user_storage.receive(ctx['user'])
+
+        @story.on('hi')
+        def hi_story():
+            @story.part()
+            async def run_one_story(ctx):
+                await one_story(ctx)
+
+        await talk.pure_text('hi')
+
+        assert session_storage.value == talk.session['user_id']
+        assert user_storage.value == talk.user
+
+
+# Loop & Callable Stories
+
+
+@pytest.mark.asyncio
+async def test_story_loop_inside_of_callable():
+    inside_of_loop = SimpleTrigger()
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.callable()
+        def one_callable():
+            @story.part()
+            def story_init(ctx):
+                pass
+
+            @story.loop()
+            def inner_loop():
+                @story.on('jump')
+                def jump_story():
+                    @story.part()
+                    def inner_job(ctx):
+                        inside_of_loop.passed()
+
+        # TODO: add wrapper for getting result context from callable to talk
+        ctx = await one_callable(session=talk.session, user=talk.user,
+                                 value='Hello World!')
+
+        talk.session = ctx.message['session']
+
+        await talk.pure_text('jump')
+
+        assert inside_of_loop.is_passed()
+
+
+@pytest.mark.asyncio
+async def test_propagate_arguments_inside_of_story_loop():
+    inner_job_receive = SimpleTrigger()
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.callable()
+        def one_callable():
+            @story.part()
+            def story_init(ctx):
+                pass
+
+            @story.loop()
+            def inner_loop():
+                @story.on('jump')
+                def jump_story():
+                    @story.part()
+                    def inner_job(ctx):
+                        inner_job_receive.receive(story_context.get_user_data(ctx)['value'])
+
+        ctx = await one_callable(session=talk.session, user=talk.user,
+                                 value='Hello World!')
+
+        # TODO: add wrapper for talk
+        talk.session = ctx.message['session']
+
+        await talk.pure_text('jump')
+
+        assert inner_job_receive.result() == 'Hello World!'
+
+
+@pytest.mark.asyncio
+async def test_exit_outside_of_callable_and_loop():
+    exit_inside_callable_trigger = SimpleTrigger(0)
+    in_progress_inside_callable_trigger = SimpleTrigger(0)
+    in_progress_outside_callable_trigger = SimpleTrigger(0)
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.callable()
+        def one_callable():
+            @story.part()
+            def inner_init(ctx):
+                pass
+
+            @story.loop()
+            def inner_loop():
+                @story.on('in-progress')
+                def in_progress():
+                    @story.part()
+                    def do_in_progress(ctx):
+                        in_progress_inside_callable_trigger.inc()
+
+                @story.on('exit')
+                def exit():
+                    @story.part()
+                    def break_loop(ctx):
+                        exit_inside_callable_trigger.inc()
+                        return loop.BreakLoop()
+
+        @story.on('start')
+        def start_story():
+            @story.part()
+            async def call_callable(ctx):
+                return await one_callable(ctx)
+
+        @story.on('in-progress')
+        def in_progress_outside_callable():
+            @story.part()
+            async def in_progress_outside_callable_store(ctx):
+                in_progress_outside_callable_trigger.inc()
+
+        await talk.pure_text('start')
+        await talk.pure_text('in-progress')
+        await talk.pure_text('exit')
+        await talk.pure_text('in-progress')
+
+        assert exit_inside_callable_trigger.result() == 1
+        assert in_progress_inside_callable_trigger.result() == 1
+        assert in_progress_outside_callable_trigger.result() == 1
+
+
+@pytest.mark.asyncio
+async def test_exit_outside_of_callable_and_loop_but_do_not_match_again():
+    exit_outside_callable_trigger = SimpleTrigger(0)
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.callable()
+        def one_callable():
+            @story.part()
+            def inner_init(ctx):
+                pass
+
+            @story.loop()
+            def inner_loop():
+                @story.on('in-progress')
+                def in_progress():
+                    @story.part()
+                    def do_in_progress(ctx):
+                        pass
+
+                @story.on('exit')
+                def exit():
+                    @story.part()
+                    def break_loop(ctx):
+                        return loop.BreakLoop()
+
+        @story.on('start')
+        def start_story():
+            @story.part()
+            async def call_callable(ctx):
+                return await one_callable(ctx)
+
+        @story.on('exit')
+        def exit_outside_callable():
+            @story.part()
+            async def exit_outside_callable_store(ctx):
+                exit_outside_callable_trigger.inc()
+
+        await talk.pure_text('start')
+        await talk.pure_text('in-progress')
+        await talk.pure_text('exit')
+
+        assert exit_outside_callable_trigger.result() == 0

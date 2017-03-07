@@ -2,6 +2,7 @@ import aiohttp
 import logging
 import pytest
 
+from botstory.middlewares import location
 import botstory.integrations.fb.messenger
 from . import Story
 from .utils import answer, build_fake_session, build_fake_user, SimpleTrigger
@@ -87,12 +88,12 @@ async def test_get_location_as_result_of_asking_of_location(mock_interface):
     @story.on('SOS!')
     def one_story():
         @story.part()
-        def then(message):
-            return story.ask_location('Hey, bro! Where is your rocket?', message['user'])
+        def then(ctx):
+            return story.ask_location('Hey, bro! Where is your rocket?', ctx['user'])
 
         @story.part()
-        def then(message):
-            trigger.receive(message['data']['location'])
+        def then(ctx):
+            trigger.receive(location.get_location(ctx))
 
     await answer.pure_text('SOS!', session, user, story)
     await answer.location('somewhere', session, user, story)

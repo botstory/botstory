@@ -24,13 +24,6 @@ class EndOfStory:
         self.data = data
 
 
-def process_end_of_story(message, waiting_for):
-    logger.debug('  got EndOfStory!')
-    if message:
-        message['data'] = {**message['data'], **waiting_for.data}
-    return waiting_for
-
-
 class CallableNodeWrapper:
     """
     helps start processing callable story
@@ -42,24 +35,28 @@ class CallableNodeWrapper:
         self.processor = processor
 
     async def startpoint(self, *args, **kwargs):
-        if {'session', 'user'} > set(kwargs):
-            raise AttributeError('Got {} and {}. Should pass session as well'.format(args, kwargs))
-
-        # TODO: should get session from context
-        session = kwargs.pop('session')
+        if len(args) > 0:
+            parent_ctx = args[0]
+            session = parent_ctx['session']
+            user = parent_ctx['user']
+        else:
+            if {'session', 'user'} > set(kwargs):
+                raise AttributeError('Got {} and {}. Should pass session as well'.format(args, kwargs))
+            session = kwargs.pop('session')
+            user = kwargs.pop('user')
 
         # we are going deeper so prepare one more item in stack
         logger.debug('  action: extend stack by +1')
         session = {
             **session,
+            'data': kwargs,
             'stack': session['stack'] + [stack_utils.build_empty_stack_item(self.ast_node.topic)],
         }
 
         ctx = story_context.StoryContext(message={
             'session': session,
             # TODO: should get user from context
-            'user': kwargs.pop('user'),
-            'data': kwargs,
+            'user': user,
         }, library=self.library)
         ctx = await self.processor.process_story(ctx)
         ctx = story_context.reducers.scope_out(ctx)

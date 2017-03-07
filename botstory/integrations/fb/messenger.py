@@ -1,4 +1,5 @@
 import asyncio
+from botstory.ast import story_context
 import logging
 from . import validate
 from .. import commonhttp
@@ -208,10 +209,10 @@ class FBInterface:
                             user=user,
                         )
 
-                    message = {
+                    ctx = story_context.clean_message_data({
                         'session': session,
                         'user': user,
-                    }
+                    })
 
                     if 'message' in m:
                         logger.debug('message notification')
@@ -221,28 +222,26 @@ class FBInterface:
                             # for example storing for debug purpose
                             logger.debug('just echo message')
                         else:
-                            data = {}
                             text = raw_message.get('text', None)
                             if text is not None:
-                                data['text'] = {
-                                    'raw': text,
-                                }
+                                ctx = story_context.set_message_data(ctx,
+                                                                     'text', {
+                                                                         'raw': text,
+                                                                     })
                             else:
                                 logger.warning('  entry {} "text"'.format(e))
 
                             quick_reply = raw_message.get('quick_reply', None)
                             if quick_reply is not None:
-                                data['option'] = quick_reply['payload']
+                                ctx = story_context.set_message_data(ctx,
+                                                                     'option', quick_reply['payload'])
 
-                            message['data'] = data
-
-                            message = await self.story_processor.match_message(message)
+                            ctx = await self.story_processor.match_message(ctx)
 
                     elif 'postback' in m:
-                        message['data'] = {
-                            'option': m['postback']['payload'],
-                        }
-                        message = await self.story_processor.match_message(message)
+                        ctx = story_context.set_message_data(ctx,
+                                                             'option', m['postback']['payload'])
+                        ctx = await self.story_processor.match_message(ctx)
                     elif 'delivery' in m:
                         logger.debug('delivery notification')
                     elif 'read' in m:
@@ -252,8 +251,8 @@ class FBInterface:
 
                     # after message were processed session and user information could change
                     # so we should store it for the next usage
-                    await self.storage.set_session(message['session'])
-                    await self.storage.set_user(message['user'])
+                    await self.storage.set_session(ctx['session'])
+                    await self.storage.set_user(ctx['user'])
 
         except BaseException as err:
             logger.exception(err)
@@ -277,9 +276,9 @@ class FBInterface:
             )
 
         # check whether we have `On Start Story`
-        have_on_start_story = not not self.library.get_global_story({
-            'data': {'option': option.OnStart.DEFAULT_OPTION_PAYLOAD}
-        })
+        have_on_start_story = not not self.library.get_global_story(story_context.set_message_data({
+            'session': {}
+        }, 'option', option.OnStart.DEFAULT_OPTION_PAYLOAD))
         if have_on_start_story:
             await self.remove_greeting_call_to_action_payload()
             await self.set_greeting_call_to_action_payload(option.OnStart.DEFAULT_OPTION_PAYLOAD)

@@ -62,7 +62,10 @@ async def test_should_put_in_queue_new_message_tracker(tracker_mock):
 
     ga.new_message(
         story_context.StoryContext(
-            {'user': user, 'data': {'text': {'raw': 'hi!'}}}, None
+            {
+                'user': user,
+                'session': {'data': {'text': {'raw': 'hi!'}}},
+            }, None
         )
     )
 

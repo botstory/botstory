@@ -71,6 +71,7 @@ async def test_execute_immutability(build_mock_context):
 async def test_execute_immutability_with_end_of_story(build_mock_context):
     ctx_before = build_mock_context({
         'session': {
+            'data': None,
             'stack': [{
                 'data': None,
                 'step': 2,
@@ -78,14 +79,13 @@ async def test_execute_immutability_with_end_of_story(build_mock_context):
             }],
         },
         'user': None,
-        'data': None,
     })
 
     ctx_after = await story_context.reducers.execute(ctx_before)
     assert ctx_after is not ctx_before
     assert ctx_after.waiting_for is not ctx_before.waiting_for
     assert ctx_after.message is not ctx_before.message
-    assert ctx_after.message['data'] is not ctx_before.message['data']
+    assert ctx_after.get_user_data() is not ctx_before.get_user_data()
 
 
 def test_iterate_storyline_immutability(build_mock_context):

@@ -1,3 +1,5 @@
+from botstory.ast import story_context
+from botstory.middlewares import text
 import logging
 import os
 
@@ -5,7 +7,7 @@ import pytest
 
 from . import fake_server
 from .. import aiohttp, fb, mongodb, mockhttp
-from ... import di, Story, utils
+from ... import Story, utils
 
 logger = logging.getLogger(__name__)
 
@@ -136,8 +138,8 @@ async def test_integrate_mongodb_with_facebook(open_db, build_context):
         @story.on('hello, world!')
         def correct_story():
             @story.part()
-            def store_result(message):
-                trigger.receive(message)
+            def store_result(ctx):
+                trigger.receive(ctx)
 
         await facebook.handle(build_message(
             user['facebook_user_id'], {
@@ -145,13 +147,10 @@ async def test_integrate_mongodb_with_facebook(open_db, build_context):
             }
         ))
 
-        del trigger.value['session']
-        assert trigger.value == {
-            'user': user,
-            'data': {
-                'text': {
-                    'raw': 'hello, world!'
-                }
+        assert trigger.value['user'] == user
+        assert story_context.get_message_data(trigger.value) == {
+            'text': {
+                'raw': 'hello, world!'
             }
         }
 
@@ -174,7 +173,7 @@ async def test_integrate_mongodb_with_facebook_with_none_session(open_db, build_
         }))
 
         assert trigger.value
-        assert trigger.value['data']['text']['raw'] == 'hello, world!'
+        assert text.get_text(trigger.value)['raw'] == 'hello, world!'
         assert trigger.value['user']['facebook_user_id'] == 'some-facebook-id'
 
 
@@ -188,7 +187,7 @@ async def test_story_on_start(open_db, build_context):
         @story.on_start()
         def just_meet():
             @story.part()
-            def greeting(message):
+            def greeting(ctx):
                 trigger.passed()
 
         await story.setup()

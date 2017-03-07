@@ -1,3 +1,4 @@
+from botstory.ast import story_context
 import json
 import logging
 import pytest
@@ -25,8 +26,8 @@ async def test_cases():
         @story.on('Hi there!')
         def one_story():
             @story.part()
-            async def start(message):
-                await story.say('Where do you go?', user=message['user'])
+            async def start(ctx):
+                await story.say('Where do you go?', user=ctx['user'])
                 return forking.Switch({
                     'location': location.Any(),
                     'text': text.Any(),
@@ -35,23 +36,25 @@ async def test_cases():
             @story.case(match='location')
             def location_case():
                 @story.part()
-                def store_location(message):
-                    trigger_location.receive(message['data']['location'])
+                def store_location(ctx):
+                    trigger_location.receive(story_context.get_message_data(ctx))
 
             @story.case(match='text')
             def text_case():
                 @story.part()
-                def store_location(message):
-                    trigger_text.receive(message['data']['text']['raw'])
+                def store_text(ctx):
+                    trigger_text.receive(text.get_text(ctx)['raw'])
 
             @story.part()
-            def after_switch(message):
+            def after_switch(ctx):
                 trigger_after_switch.passed()
 
         await say_pure_text('Hi there!')
         await say_location({'x': 123, 'y': 321})
 
-        assert trigger_location.result() == {'x': 123, 'y': 321}
+        assert trigger_location.result() == {
+            'location': {'x': 123, 'y': 321}
+        }
         assert not trigger_text.result()
         assert trigger_after_switch.is_triggered
 
@@ -448,58 +451,58 @@ async def test_one_sync_switch_inside_of_another_async_switch():
         @story.on('enter')
         def labyrinth():
             @story.part()
-            async def enter(message):
+            async def enter(ctx):
                 visited_rooms.receive(visited_rooms.value + 1)
-                return await story.ask('Which turn to choose?', user=message['user'])
+                return await story.ask('Which turn to choose?', user=ctx['user'])
 
             @story.part()
-            def parse_direction_0(message):
-                return forking.SwitchOnValue(message['data']['text']['raw'])
+            def parse_direction_0(ctx):
+                return forking.SwitchOnValue(text.get_text(ctx)['raw'])
 
             @story.case(equal_to='left')
             def room_1():
                 @story.part()
-                async def next_room_1(message):
+                async def next_room_1(ctx):
                     visited_rooms.receive(visited_rooms.value + 1)
-                    return await story.ask('Which turn to choose?', user=message['user'])
+                    return await story.ask('Which turn to choose?', user=ctx['user'])
 
                 @story.part()
-                def parse_direction_1(message):
-                    return forking.SwitchOnValue(message['data']['text']['raw'])
+                def parse_direction_1(ctx):
+                    return forking.SwitchOnValue(text.get_text(ctx)['raw'])
 
                 @story.case(equal_to='left')
                 def room_1_1():
                     @story.part()
-                    def next_room_1_1(message):
+                    def next_room_1_1(ctx):
                         visited_rooms.receive(visited_rooms.value + 1)
 
                 @story.case(equal_to='right')
                 def room_1_2():
                     @story.part()
-                    def next_room_1_2(message):
+                    def next_room_1_2(ctx):
                         visited_rooms.receive(visited_rooms.value + 1)
 
             @story.case(equal_to='right')
             def room_2():
                 @story.part()
-                async def next_room_2(message):
+                async def next_room_2(ctx):
                     visited_rooms.receive(visited_rooms.value + 1)
-                    return await story.ask('Which turn to choose?', user=message['user'])
+                    return await story.ask('Which turn to choose?', user=ctx['user'])
 
                 @story.part()
-                def parse_direction_2(message):
-                    return forking.SwitchOnValue(message['data']['text']['raw'])
+                def parse_direction_2(ctx):
+                    return forking.SwitchOnValue(text.get_text(ctx)['raw'])
 
                 @story.case(equal_to='left')
                 def room_2_1():
                     @story.part()
-                    def next_room_2_1(message):
+                    def next_room_2_1(ctx):
                         visited_rooms.receive(visited_rooms.value + 1)
 
                 @story.case(equal_to='right')
                 def room_2_2():
                     @story.part()
-                    def next_room_2_2(message):
+                    def next_room_2_2(ctx):
                         visited_rooms.receive(visited_rooms.value + 1)
 
         await talk.pure_text('enter')
@@ -527,25 +530,25 @@ async def test_switch_inside_of_callable_inside_of_switch():
 
             @story.part()
             def switch_by_kind_of_spell(ctx):
-                return forking.SwitchOnValue(ctx['data']['text']['raw'])
+                return forking.SwitchOnValue(text.get_text(ctx)['raw'])
 
             @story.case(equal_to='fireball')
             def fireball():
                 @story.part()
                 async def power_of_spell(ctx):
-                    spell_type.receive(ctx['data']['text']['raw'])
+                    spell_type.receive(text.get_text(ctx)['raw'])
                     return await story.ask('What is the power of fireball?', user=ctx['user'])
 
             @story.case(equal_to='lightning')
             def lightning():
                 @story.part()
                 async def power_of_spell(ctx):
-                    spell_type.receive(ctx['data']['text']['raw'])
+                    spell_type.receive(text.get_text(ctx)['raw'])
                     return await story.ask('What is the power of lightning?', user=ctx['user'])
 
             @story.part()
             def store_power(ctx):
-                spell_power.receive(ctx['data']['text']['raw'])
+                spell_power.receive(text.get_text(ctx)['raw'])
 
         @story.on('enter')
         def dungeon():
@@ -558,7 +561,7 @@ async def test_switch_inside_of_callable_inside_of_switch():
 
             @story.part()
             def parser_direction(ctx):
-                return forking.SwitchOnValue(ctx['data']['text']['raw'])
+                return forking.SwitchOnValue(text.get_text(ctx)['raw'])
 
             @story.case(equal_to='left')
             def room_1():
@@ -609,8 +612,8 @@ async def test_switch_without_right_case():
                 )
 
             @story.part()
-            def parse_result(message):
-                return forking.SwitchOnValue(message['data']['text']['raw'])
+            def parse_result(ctx):
+                return forking.SwitchOnValue(text.get_text(ctx)['raw'])
 
             @story.case(equal_to='yes')
             def yes():
