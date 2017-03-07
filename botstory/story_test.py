@@ -201,6 +201,38 @@ async def test_can_combine_async_with_sync_parts():
 
 
 @pytest.mark.asyncio
+async def test_should_drop_session_once_found_that_it_does_not_match_current_story_structure():
+    trigger = SimpleTrigger()
+    another_trigger = SimpleTrigger()
+
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.on('one')
+        def one_story():
+            @story.part()
+            def async_part(ctx):
+                return text.Any()
+
+            @story.part()
+            def sync_part(ctx):
+                trigger.passed()
+
+        @story.on('two')
+        def another_story():
+            @story.part()
+            def sync_part(ctx):
+                another_trigger.passed()
+
+        await talk.pure_text('one')
+        # now session differs from story struct
+        talk.session['stack'][-1]['topic'] += '_'
+        await talk.pure_text('two')
+        assert not trigger.is_triggered
+        assert another_trigger.is_triggered
+
+
+@pytest.mark.asyncio
 async def test_should_start_middlewares():
     with answer.Talk() as talk:
         story = talk.story

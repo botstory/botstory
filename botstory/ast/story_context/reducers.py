@@ -93,8 +93,12 @@ def iterate_storyline(ctx):
     :return:
     """
     logger.debug('# start iterate')
+    compiled_story = ctx.compiled_story()
+    if not compiled_story:
+        return
+
     for step in range(ctx.current_step(),
-                      len(ctx.compiled_story().story_line)):
+                      len(compiled_story.story_line)):
         ctx = ctx.clone()
         tail = ctx.stack_tail()
         ctx.message = modify_stack_in_message(ctx.message,
