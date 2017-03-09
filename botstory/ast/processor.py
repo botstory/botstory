@@ -111,13 +111,15 @@ class StoryProcessor:
         # integrate over parts of story
         last_story_part = None
         storyline = story_context.reducers.iterate_storyline(ctx)
-        story_part_ctx = next(storyline)
+        if not storyline:
+            return ctx
+        try:
+            story_part_ctx = next(storyline)
 
-        # loop thought storyline
-        # we can't use for here because we should send update context
-        # back to iterator
-        while True:
-            try:
+            # loop thought storyline
+            # we can't use for here because we should send update context
+            # back to iterator
+            while True:
                 self.tracker.story(story_part_ctx)
 
                 if story_part_ctx.has_child_story() or story_part_ctx.is_scope_level_part():
@@ -132,9 +134,10 @@ class StoryProcessor:
                     return story_part_ctx
                 last_story_part = story_part_ctx
                 story_part_ctx = storyline.send(story_part_ctx)
-            except StopIteration:
-                break
+        except StopIteration:
+            pass
 
         if last_story_part is None:
-            raise Exception('story line is empty')
+            logger.warn('# story line is empty or it is differ from what we have in stack')
+            return ctx
         return last_story_part

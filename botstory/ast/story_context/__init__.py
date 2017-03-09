@@ -86,8 +86,11 @@ class StoryContext:
         return None
 
     def get_current_story_part(self):
+        compiled_story = self.compiled_story()
+        if not compiled_story:
+            return None
         try:
-            return self.compiled_story().story_line[self.current_step()]
+            return compiled_story.story_line[self.current_step()]
         except IndexError:
             return None
 
@@ -104,7 +107,10 @@ class StoryContext:
         return len(self.stack()) == 0
 
     def is_end_of_story(self):
-        return self.current_step() >= len(self.compiled_story().story_line)
+        compiled_story = self.compiled_story()
+        if not compiled_story:
+            return True
+        return self.current_step() >= len(compiled_story.story_line)
 
     def is_scope_level(self):
         return isinstance(self.compiled_story(), loop.StoriesLoopNode)
@@ -113,7 +119,10 @@ class StoryContext:
         return isinstance(self.get_current_story_part(), loop.StoriesLoopNode)
 
     def is_tail_of_story(self):
-        return self.current_step() >= len(self.compiled_story().story_line) - 1
+        compiled_story = self.compiled_story()
+        if not compiled_story:
+            return True
+        return self.current_step() >= len(compiled_story.story_line) - 1
 
     def is_waiting_for_input(self):
         """
