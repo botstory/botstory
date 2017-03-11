@@ -154,7 +154,7 @@ async def test_integration():
 
 
 @pytest.mark.asyncio
-async def test_options():
+async def test_quick_replies():
     user = utils.build_fake_user()
 
     global story
@@ -166,7 +166,7 @@ async def test_options():
 
     await story.ask(
         'Which color do you like?',
-        options=[{
+        quick_replies=[{
             'title': 'Red',
             'payload': 0xff0000,
         }, {
