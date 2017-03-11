@@ -70,8 +70,8 @@ class Story:
     def case(self, default=forking.Undefined, equal_to=forking.Undefined, match=forking.Undefined):
         return self.forking_api.case(default, equal_to, match)
 
-    async def ask(self, body, options=None, user=None):
-        return await self.chat.ask(body, options, user)
+    async def ask(self, body, quick_replies=None, options=None, user=None):
+        return await self.chat.ask(body, quick_replies, options, user)
 
     async def say(self, body, user, options=None):
         return await self.chat.say(body, user, options)
