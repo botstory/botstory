@@ -59,15 +59,8 @@ class StoryContext:
         :return:
         """
         story_loop = self.compiled_story()
-        if isinstance(story_loop, loop.StoriesLoopNode) and \
-                not self.matched:
-            validator = story_loop.children_matcher()
-            topic = validator.validate(self.message)
-            # if topic == None:
-            # we inside story loop scope
-            # but got message that doesn't match
-            # any local stories
-            return story_loop.by_topic(topic)
+        if hasattr(story_loop, 'children_matcher') and not self.matched:
+            return self.get_story_scope_child(story_loop)
 
         story_part = self.get_current_story_part()
 
@@ -85,14 +78,21 @@ class StoryContext:
             # or we validate message
             # but can't find right child story
             # maybe we should use independent validators for each story here
-            if res is None and validation_result is True:
-                validator = story_part.children_matcher()
-                topic = validator.validate(self.message)
-                return story_part.by_topic(topic)
+            if res is None:
+                return self.get_story_scope_child(story_part)
             else:
                 return res
 
         return None
+
+    def get_story_scope_child(self, story_part):
+        validator = story_part.children_matcher()
+        topic = validator.validate(self.message)
+        # if topic == None:
+        # we inside story loop scope
+        # but got message that doesn't match
+        # any local stories
+        return story_part.by_topic(topic)
 
     def get_current_story_part(self):
         compiled_story = self.compiled_story()
