@@ -369,8 +369,18 @@ async def test_validator_is_default_case_argument():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip('not implemented yet')
-async def test_simplify_syntax_case_matches_previous_returned_value():
+@pytest.mark.parametrize('return_value, first_condition, second_condition',
+                         [
+                             ('right', 'left', 'right'),
+                             (1, 0, 1),
+                             (True, False, True),
+                         ])
+async def test_matche_previous_returned_value(return_value,
+                                              first_condition, second_condition):
+    """
+    for this moment support only strings and numbers
+    :return:
+    """
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
 
@@ -381,15 +391,15 @@ async def test_simplify_syntax_case_matches_previous_returned_value():
         def labyrinth():
             @story.part()
             def enter(ctx):
-                return 'right'
+                return return_value
 
-            @story.case('left')
+            @story.case(first_condition)
             def left_room():
                 @story.part()
                 def left_room_passed(ctx):
                     return left_trigger.passed()
 
-            @story.case('right')
+            @story.case(second_condition)
             def right_room():
                 @story.part()
                 def right_room_passed(ctx):

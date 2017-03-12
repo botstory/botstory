@@ -68,12 +68,15 @@ class Story:
         return self.callable_stories_instance.callable()
 
     def case(self,
+             value=forking.Undefined,
+             *,
              validator=forking.Undefined,
              default=forking.Undefined,
              equal_to=forking.Undefined,
-             match=forking.Undefined,
+             match=forking.Undefined
              ):
         return self.forking_api.case(
+            value,
             validator,
             default,
             equal_to,

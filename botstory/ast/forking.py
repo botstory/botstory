@@ -123,6 +123,7 @@ class ForkingStoriesAPI:
         self.parser_instance = parser_instance
 
     def case(self,
+             value=Undefined,
              validator=Undefined,
              default=Undefined,
              equal_to=Undefined,
@@ -144,6 +145,10 @@ class ForkingStoriesAPI:
                 compiled_story.extensions['case_id'] = match
             if validator is not Undefined:
                 compiled_story.extensions['validator'] = matchers.get_validator(validator)
+            if value is not Undefined:
+                compiled_story.extensions['validator'] = matchers.get_validator(value)
+                compiled_story.extensions['case_equal'] = value
+
             return story_part
 
         return decorate
