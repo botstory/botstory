@@ -67,8 +67,9 @@ class Story:
     def callable(self):
         return self.callable_stories_instance.callable()
 
-    def case(self, default=forking.Undefined, equal_to=forking.Undefined, match=forking.Undefined):
-        return self.forking_api.case(default, equal_to, match)
+    def case(self, default=forking.Undefined, equal_to=forking.Undefined, match=forking.Undefined,
+             validator=forking.Undefined):
+        return self.forking_api.case(default, equal_to, match, validator)
 
     async def ask(self, body, quick_replies=None, options=None, user=None):
         return await self.chat.ask(body, quick_replies, options, user)

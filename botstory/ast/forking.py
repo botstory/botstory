@@ -37,12 +37,17 @@ class StoryPartFork:
         case_stories = self.local_scope.get_story_by(case_id=validation_result)
         if len(case_stories) == 0:
             case_stories = self.local_scope.get_story_by(case_equal=validation_result)
+        # this one very similar to validation in story loop
+        if len(case_stories) == 0:
+            case_stories = self.local_scope.by_topic(validation_result)
         if len(case_stories) == 0:
             case_stories = self.local_scope.get_story_by(default_case=True)
 
         if len(case_stories) == 0:
             logger.debug('#######################################')
-            logger.debug('# [!] do not have any fork here')
+            logger.debug('# get_child_by_validation_result      #')
+            logger.debug('#######################################')
+            logger.debug('# [!] do not have any fork here       #')
             logger.debug('# context = {}'.format(self))
             logger.debug('# validation_result = {}'.format(validation_result))
             logger.debug('#######################################')
@@ -84,6 +89,15 @@ class Switch:
                           for case in data
                           })
 
+    def to_json(self):
+        return {
+            'type': 'Switch',
+            'cases': self.serialize(),
+        }
+
+    def __repr__(self):
+        return json.dumps(self.to_json())
+
 
 class SwitchOnValue:
     """
@@ -101,7 +115,11 @@ class ForkingStoriesAPI:
     def __init__(self, parser_instance):
         self.parser_instance = parser_instance
 
-    def case(self, default=Undefined, equal_to=Undefined, match=Undefined):
+    def case(self, default=Undefined,
+             equal_to=Undefined,
+             match=Undefined,
+             validator=Undefined,
+             ):
         def decorate(story_part):
             fork_node = self.parser_instance.get_last_story_part()
             if not isinstance(fork_node, StoryPartFork):
@@ -116,6 +134,8 @@ class ForkingStoriesAPI:
                 compiled_story.extensions['case_equal'] = equal_to
             if match is not Undefined:
                 compiled_story.extensions['case_id'] = match
+            if validator is not Undefined:
+                compiled_story.extensions['validator'] = validator
             return story_part
 
         return decorate

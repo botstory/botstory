@@ -81,7 +81,17 @@ class StoryContext:
         if stack_tail['data'] is not None and not self.matched:
             validator = matchers.deserialize(stack_tail['data'])
             validation_result = validator.validate(self.message)
-            return story_part.get_child_by_validation_result(validation_result)
+            res = story_part.get_child_by_validation_result(validation_result)
+            # or we validate message
+            # but can't find right child story
+            # maybe we should use independent validators for each story here
+            if res is None and validation_result is True:
+                filters = story_part.local_scope.all_filters()
+                story_switch = forking.Switch(filters)
+                validation_result = story_switch.validate(self.message)
+                return story_part.get_child_by_validation_result(validation_result)
+            else:
+                return res
 
         return None
 

@@ -176,7 +176,8 @@ async def test_quick_replies():
             'title': 'Blue',
             'payload': 0x0000ff,
         }],
-        user=user)
+        user=user,
+    )
 
     mock_http.post.assert_called_with(
         'https://graph.facebook.com/v2.6/me/messages/',

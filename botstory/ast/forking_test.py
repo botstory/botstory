@@ -303,8 +303,7 @@ async def test_one_sync_switch_inside_of_another_sync_switch_with_failed_switch(
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip('not implemented yet')
-async def test_simplify_syntax_wait_for_any_text():
+async def test_case_could_match_message_direct():
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
 
@@ -312,26 +311,30 @@ async def test_simplify_syntax_wait_for_any_text():
         story = talk.story
 
         @story.on('enter')
-        def labyrinth():
+        def webpage_story():
             @story.part()
-            def enter(ctx):
-                # TODO: !!!!!!!!!!!
-                return [text.Any()]
+            async def are_you_robot(ctx):
+                return await story.ask('Are you robot?', user=ctx['user'])
+                # await story.ask('Are you robot?', user=ctx['user'])
+                # return forking.Switch({
+                #     'yes': text.Equal('yes'),
+                #     'no': text.Equal('no'),
+                # })
 
-            @story.case(equal_to='left')
-            def left_room():
+            @story.case(validator=text.Equal('yes'))
+            def i_am_a_robot():
                 @story.part()
                 def left_room_passed(ctx):
                     return left_trigger.passed()
 
-            @story.case(equal_to='right')
-            def right_room():
+            @story.case(validator=text.Equal('no'))
+            def i_am_not_a_robot():
                 @story.part()
                 def right_room_passed(ctx):
                     return right_trigger.passed()
 
         await talk.pure_text('enter')
-        await talk.pure_text('right')
+        await talk.pure_text('no')
 
         assert not left_trigger.is_triggered
         assert right_trigger.is_triggered
