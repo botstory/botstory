@@ -86,10 +86,9 @@ class StoryContext:
             # but can't find right child story
             # maybe we should use independent validators for each story here
             if res is None and validation_result is True:
-                filters = story_part.local_scope.all_filters()
-                story_switch = forking.Switch(filters)
-                validation_result = story_switch.validate(self.message)
-                return story_part.get_child_by_validation_result(validation_result)
+                validator = story_part.children_matcher()
+                topic = validator.validate(self.message)
+                return story_part.by_topic(topic)
             else:
                 return res
 

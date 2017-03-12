@@ -23,9 +23,19 @@ class StoryPartFork:
     def __name__(self):
         return 'StoryPartFork'
 
+    # this one very similar to validation in story loop
+    def by_topic(self, topic):
+        stories = self.local_scope.by_topic(topic)
+        return stories[0] if len(stories) > 0 else None
+
     @property
     def children(self):
         return self.local_scope.stories
+
+    def children_matcher(self):
+        return Switch(
+            self.local_scope.all_filters()
+        )
 
     def should_loop(self):
         return False
@@ -37,9 +47,6 @@ class StoryPartFork:
         case_stories = self.local_scope.get_story_by(case_id=validation_result)
         if len(case_stories) == 0:
             case_stories = self.local_scope.get_story_by(case_equal=validation_result)
-        # this one very similar to validation in story loop
-        if len(case_stories) == 0:
-            case_stories = self.local_scope.by_topic(validation_result)
         if len(case_stories) == 0:
             case_stories = self.local_scope.get_story_by(default_case=True)
 
