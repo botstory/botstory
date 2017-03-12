@@ -310,16 +310,11 @@ async def test_case_could_match_message_direct():
     with answer.Talk() as talk:
         story = talk.story
 
-        @story.on('enter')
+        @story.on('open')
         def webpage_story():
             @story.part()
             async def are_you_robot(ctx):
                 return await story.ask('Are you robot?', user=ctx['user'])
-                # await story.ask('Are you robot?', user=ctx['user'])
-                # return forking.Switch({
-                #     'yes': text.Equal('yes'),
-                #     'no': text.Equal('no'),
-                # })
 
             @story.case(validator=text.Equal('yes'))
             def i_am_a_robot():
@@ -333,7 +328,7 @@ async def test_case_could_match_message_direct():
                 def right_room_passed(ctx):
                     return right_trigger.passed()
 
-        await talk.pure_text('enter')
+        await talk.pure_text('open')
         await talk.pure_text('no')
 
         assert not left_trigger.is_triggered
@@ -341,34 +336,33 @@ async def test_case_could_match_message_direct():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip('not implemented yet')
-async def test_simplify_syntax_for_case_matching():
+async def test_validator_is_default_case_argument():
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
 
     with answer.Talk() as talk:
         story = talk.story
 
-        @story.on('enter')
-        def labyrinth():
+        @story.on('open')
+        def webpage_story():
             @story.part()
-            def enter(ctx):
-                return [text.Any()]
+            async def are_you_robot(ctx):
+                return await story.ask('Are you robot?', user=ctx['user'])
 
-            @story.case('left')
-            def left_room():
+            @story.case('yes')
+            def i_am_a_robot():
                 @story.part()
                 def left_room_passed(ctx):
                     return left_trigger.passed()
 
-            @story.case('right')
-            def right_room():
+            @story.case('no')
+            def i_am_not_a_robot():
                 @story.part()
                 def right_room_passed(ctx):
                     return right_trigger.passed()
 
-        await talk.pure_text('enter')
-        await talk.pure_text('right')
+        await talk.pure_text('open')
+        await talk.pure_text('no')
 
         assert not left_trigger.is_triggered
         assert right_trigger.is_triggered

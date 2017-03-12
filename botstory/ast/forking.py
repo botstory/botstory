@@ -122,10 +122,11 @@ class ForkingStoriesAPI:
     def __init__(self, parser_instance):
         self.parser_instance = parser_instance
 
-    def case(self, default=Undefined,
+    def case(self,
+             validator=Undefined,
+             default=Undefined,
              equal_to=Undefined,
              match=Undefined,
-             validator=Undefined,
              ):
         def decorate(story_part):
             fork_node = self.parser_instance.get_last_story_part()
@@ -142,7 +143,7 @@ class ForkingStoriesAPI:
             if match is not Undefined:
                 compiled_story.extensions['case_id'] = match
             if validator is not Undefined:
-                compiled_story.extensions['validator'] = validator
+                compiled_story.extensions['validator'] = matchers.get_validator(validator)
             return story_part
 
         return decorate
