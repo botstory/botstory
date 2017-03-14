@@ -23,9 +23,19 @@ class StoryPartFork:
     def __name__(self):
         return 'StoryPartFork'
 
+    # this one very similar to validation in story loop
+    def by_topic(self, topic):
+        stories = self.local_scope.by_topic(topic)
+        return stories[0] if len(stories) > 0 else None
+
     @property
     def children(self):
         return self.local_scope.stories
+
+    def children_matcher(self):
+        return Switch(
+            self.local_scope.all_filters()
+        )
 
     def should_loop(self):
         return False
@@ -42,7 +52,9 @@ class StoryPartFork:
 
         if len(case_stories) == 0:
             logger.debug('#######################################')
-            logger.debug('# [!] do not have any fork here')
+            logger.debug('# get_child_by_validation_result      #')
+            logger.debug('#######################################')
+            logger.debug('# [!] do not have any fork here       #')
             logger.debug('# context = {}'.format(self))
             logger.debug('# validation_result = {}'.format(validation_result))
             logger.debug('#######################################')
@@ -84,6 +96,15 @@ class Switch:
                           for case in data
                           })
 
+    def to_json(self):
+        return {
+            'type': 'Switch',
+            'cases': self.serialize(),
+        }
+
+    def __repr__(self):
+        return json.dumps(self.to_json())
+
 
 class SwitchOnValue:
     """
@@ -101,7 +122,13 @@ class ForkingStoriesAPI:
     def __init__(self, parser_instance):
         self.parser_instance = parser_instance
 
-    def case(self, default=Undefined, equal_to=Undefined, match=Undefined):
+    def case(self,
+             value=Undefined,
+             validator=Undefined,
+             default=Undefined,
+             equal_to=Undefined,
+             match=Undefined,
+             ):
         def decorate(story_part):
             fork_node = self.parser_instance.get_last_story_part()
             if not isinstance(fork_node, StoryPartFork):
@@ -116,6 +143,12 @@ class ForkingStoriesAPI:
                 compiled_story.extensions['case_equal'] = equal_to
             if match is not Undefined:
                 compiled_story.extensions['case_id'] = match
+            if validator is not Undefined:
+                compiled_story.extensions['validator'] = matchers.get_validator(validator)
+            if value is not Undefined:
+                compiled_story.extensions['validator'] = matchers.get_validator(value)
+                compiled_story.extensions['case_equal'] = value
+
             return story_part
 
         return decorate

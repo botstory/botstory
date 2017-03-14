@@ -154,7 +154,7 @@ async def test_integration():
 
 
 @pytest.mark.asyncio
-async def test_options():
+async def test_quick_replies():
     user = utils.build_fake_user()
 
     global story
@@ -166,7 +166,7 @@ async def test_options():
 
     await story.ask(
         'Which color do you like?',
-        options=[{
+        quick_replies=[{
             'title': 'Red',
             'payload': 0xff0000,
         }, {
@@ -176,7 +176,8 @@ async def test_options():
             'title': 'Blue',
             'payload': 0x0000ff,
         }],
-        user=user)
+        user=user,
+    )
 
     mock_http.post.assert_called_with(
         'https://graph.facebook.com/v2.6/me/messages/',

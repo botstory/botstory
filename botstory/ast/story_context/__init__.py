@@ -2,6 +2,7 @@ from botstory import matchers, utils
 from botstory.ast import callable, forking, loop
 from botstory.ast.story_context import reducers
 from botstory.utils import advanced_json_encoder
+import numbers
 
 import logging
 import uuid
@@ -54,20 +55,14 @@ class StoryContext:
         return self.compiled_story() is not None and not self.matched
 
     def get_child_story(self):
+        logger.debug('get_child_story')
         """
         try child story that match message and get scope of it
         :return:
         """
         story_loop = self.compiled_story()
-        if isinstance(story_loop, loop.StoriesLoopNode) and \
-                not self.matched:
-            validator = story_loop.children_matcher()
-            topic = validator.validate(self.message)
-            # if topic == None:
-            # we inside story loop scope
-            # but got message that doesn't match
-            # any local stories
-            return story_loop.by_topic(topic)
+        if hasattr(story_loop, 'children_matcher') and not self.matched:
+            return self.get_story_scope_child(story_loop)
 
         story_part = self.get_current_story_part()
 
@@ -77,13 +72,36 @@ class StoryContext:
         if isinstance(self.waiting_for, forking.SwitchOnValue):
             return story_part.get_child_by_validation_result(self.waiting_for.value)
 
+        # for some base classes we could try validate result direct
+        child_story = story_part.get_child_by_validation_result(self.waiting_for)
+        logger.debug('child_story')
+        logger.debug(child_story)
+        if child_story:
+            return child_story
+
         stack_tail = self.stack_tail()
         if stack_tail['data'] is not None and not self.matched:
             validator = matchers.deserialize(stack_tail['data'])
             validation_result = validator.validate(self.message)
-            return story_part.get_child_by_validation_result(validation_result)
+            res = story_part.get_child_by_validation_result(validation_result)
+            # or we validate message
+            # but can't find right child story
+            # maybe we should use independent validators for each story here
+            if res is None:
+                return self.get_story_scope_child(story_part)
+            else:
+                return res
 
         return None
+
+    def get_story_scope_child(self, story_part):
+        validator = story_part.children_matcher()
+        topic = validator.validate(self.message)
+        # if topic == None:
+        # we inside story loop scope
+        # but got message that doesn't match
+        # any local stories
+        return story_part.by_topic(topic)
 
     def get_current_story_part(self):
         compiled_story = self.compiled_story()
@@ -130,7 +148,8 @@ class StoryContext:
         :return:
         """
         return self.waiting_for and \
-               not isinstance(self.waiting_for, forking.SwitchOnValue)
+               not isinstance(self.waiting_for, forking.SwitchOnValue) and \
+               not is_base_type(self.waiting_for)
 
     def stack(self):
         return self.message['session']['stack']
@@ -161,6 +180,9 @@ class StoryContext:
             logger.warn('fail to dump json of message {} '
                         'waiting for {}'.format(str(self.message), str(self.waiting_for)))
 
+
+def is_base_type(value):
+    return isinstance(value, str) or isinstance(value, numbers.Number)
 
 def clean_message_data(ctx):
     return utils.safe_set(ctx, 'session', 'data', 'message', {})

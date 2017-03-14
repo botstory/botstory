@@ -303,77 +303,84 @@ async def test_one_sync_switch_inside_of_another_sync_switch_with_failed_switch(
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip('not implemented yet')
-async def test_simplify_syntax_wait_for_any_text():
+async def test_case_could_match_message_direct():
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
 
     with answer.Talk() as talk:
         story = talk.story
 
-        @story.on('enter')
-        def labyrinth():
+        @story.on('open')
+        def webpage_story():
             @story.part()
-            def enter(ctx):
-                # TODO: !!!!!!!!!!!
-                return [text.Any()]
+            async def are_you_robot(ctx):
+                return await story.ask('Are you robot?', user=ctx['user'])
 
-            @story.case(equal_to='left')
-            def left_room():
+            @story.case(validator=text.Equal('yes'))
+            def i_am_a_robot():
                 @story.part()
                 def left_room_passed(ctx):
                     return left_trigger.passed()
 
-            @story.case(equal_to='right')
-            def right_room():
+            @story.case(validator=text.Equal('no'))
+            def i_am_not_a_robot():
                 @story.part()
                 def right_room_passed(ctx):
                     return right_trigger.passed()
 
-        await talk.pure_text('enter')
-        await talk.pure_text('right')
+        await talk.pure_text('open')
+        await talk.pure_text('no')
 
         assert not left_trigger.is_triggered
         assert right_trigger.is_triggered
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip('not implemented yet')
-async def test_simplify_syntax_for_case_matching():
+async def test_validator_is_default_case_argument():
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
 
     with answer.Talk() as talk:
         story = talk.story
 
-        @story.on('enter')
-        def labyrinth():
+        @story.on('open')
+        def webpage_story():
             @story.part()
-            def enter(ctx):
-                return [text.Any()]
+            async def are_you_robot(ctx):
+                return await story.ask('Are you robot?', user=ctx['user'])
 
-            @story.case('left')
-            def left_room():
+            @story.case('yes')
+            def i_am_a_robot():
                 @story.part()
                 def left_room_passed(ctx):
                     return left_trigger.passed()
 
-            @story.case('right')
-            def right_room():
+            @story.case('no')
+            def i_am_not_a_robot():
                 @story.part()
                 def right_room_passed(ctx):
                     return right_trigger.passed()
 
-        await talk.pure_text('enter')
-        await talk.pure_text('right')
+        await talk.pure_text('open')
+        await talk.pure_text('no')
 
         assert not left_trigger.is_triggered
         assert right_trigger.is_triggered
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip('not implemented yet')
-async def test_simplify_syntax_case_matches_previous_returned_value():
+@pytest.mark.parametrize('return_value, first_condition, second_condition',
+                         [
+                             ('right', 'left', 'right'),
+                             (1, 0, 1),
+                             (True, False, True),
+                         ])
+async def test_matche_previous_returned_value(return_value,
+                                              first_condition, second_condition):
+    """
+    for this moment support only strings and numbers
+    :return:
+    """
     left_trigger = SimpleTrigger()
     right_trigger = SimpleTrigger()
 
@@ -384,15 +391,15 @@ async def test_simplify_syntax_case_matches_previous_returned_value():
         def labyrinth():
             @story.part()
             def enter(ctx):
-                return 'right'
+                return return_value
 
-            @story.case('left')
+            @story.case(first_condition)
             def left_room():
                 @story.part()
                 def left_room_passed(ctx):
                     return left_trigger.passed()
 
-            @story.case('right')
+            @story.case(second_condition)
             def right_room():
                 @story.part()
                 def right_room_passed(ctx):

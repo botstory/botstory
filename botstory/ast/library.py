@@ -20,7 +20,8 @@ class StoriesScope:
         self.stories.append(story)
 
     def all_filters(self):
-        return {s.topic: s.extensions['validator'] for s in self.stories}
+        return {s.topic: s.extensions['validator']
+                for s in self.stories if 'validator' in s.extensions}
 
     def match(self, message):
         matched_stories = [

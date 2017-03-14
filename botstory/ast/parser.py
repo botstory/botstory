@@ -89,6 +89,7 @@ class ASTNode:
     def to_json(self):
         return {
             'type': 'ASTNode',
+            'extensions': str(self.extensions),
             'topic': self.topic,
             'story_line': list(
                 [l.to_json() if hasattr(l, 'to_json') else 'part: {}'.format(l.__name__) for l in self.story_line]
