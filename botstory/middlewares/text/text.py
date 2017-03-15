@@ -75,7 +75,11 @@ class Match:
         self.matcher = re.compile(pattern, flags=flags)
 
     def validate(self, ctx):
-        matches = self.matcher.findall(get_raw_text(ctx))
+        raw_txt = get_raw_text(ctx)
+        if not raw_txt:
+            return False
+
+        matches = self.matcher.findall(raw_txt)
         if len(matches) == 0:
             return False
 
