@@ -7,7 +7,7 @@ import pytest
 from . import messenger
 from .. import commonhttp, mockdb, mockhttp
 from ... import di, Story, utils
-from ...middlewares import any, option
+from ...middlewares import any, option, sticker
 
 logger = logging.getLogger(__name__)
 
@@ -572,6 +572,41 @@ async def test_handler_postback(build_fb_interface):
     assert correct_trigger.value == {
         'option': 'GREEN',
     }
+
+
+@pytest.mark.asyncio
+async def test_handler_thumbsup(build_fb_interface):
+    fb_interface, story = await build_fb_interface()
+
+    like_is_here_trigger = utils.SimpleTrigger()
+
+    @story.on(receive=sticker.Like())
+    def like_story():
+        @story.part()
+        def store_result(ctx):
+            like_is_here_trigger.passed()
+
+    await fb_interface.handle({
+        'object': 'page',
+        'entry': [{
+            'id': 'PAGE_ID',
+            'time': 1473204787206,
+            'messaging': [{
+                'sender': {
+                    'id': 'USER_ID'
+                },
+                'recipient': {
+                    'id': 'PAGE_ID'
+                },
+                'timestamp': 1458692752478,
+                "message": {
+                    'sticker_id': sticker.SMALL_LIKE,
+                }
+            }]
+        }]
+    })
+
+    assert like_is_here_trigger.is_passed()
 
 
 @pytest.mark.asyncio
