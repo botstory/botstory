@@ -36,6 +36,18 @@ class Talk:
     async def option(self, payload):
         return await self.wrap_user_talk(option)(payload)
 
+    async def ask(self, payload):
+        if payload is None:
+            return await self.story.match_message(
+                story_context.set_message_data(
+                    story_context.clean_message_data({
+                        'session': self.session,
+                        'user': self.user,
+                    }), {}))
+        if 'sticker_id' in payload:
+            return await self.wrap_user_talk(sticker)(payload)
+        raise NotImplementedError('put all other message types here')
+
     def wrap_user_talk(self, fn):
         async def fn_wrapper(payload):
             mutated_ctx = await fn(payload,
@@ -76,3 +88,12 @@ async def option(payload, session=None, user=None, story=None):
                 'session': session,
                 'user': user,
             }), 'option', payload))
+
+
+async def sticker(payload, session=None, user=None, story=None):
+    return await story.match_message(
+        story_context.set_message_data(
+            story_context.clean_message_data({
+                'session': session,
+                'user': user,
+            }), 'sticker_id', payload['sticker_id']))

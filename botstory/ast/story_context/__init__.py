@@ -184,6 +184,7 @@ class StoryContext:
 def is_base_type(value):
     return isinstance(value, str) or isinstance(value, numbers.Number)
 
+
 def clean_message_data(ctx):
     return utils.safe_set(ctx, 'session', 'data', 'message', {})
 

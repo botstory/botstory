@@ -203,6 +203,20 @@ async def test_should_catch_text_message_that_match_regex_with_flags():
         assert trigger_destination.result() == 'Pripyat'
 
 
+@pytest.mark.asyncio
+async def test_should_not_fail_on_empty_message():
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.on(text.Match('going to (.*)', re.IGNORECASE))
+        def one_story():
+            @story.part()
+            def then(ctx):
+                pass
+
+        await talk.ask(None)
+
+
 def test_serialize_text_match():
     m_old = text.Match('hello (.*)', re.IGNORECASE)
     m_new = matchers.deserialize(matchers.serialize(m_old))
