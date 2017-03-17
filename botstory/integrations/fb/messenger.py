@@ -150,6 +150,8 @@ class FBInterface:
         # except
         # ....
 
+        buttons = [{**b, 'type': b.get('type', 'postback')} for b in buttons]
+
         return await self.send_template(recipient, {
             'template_type': 'list',
             'elements': elements,

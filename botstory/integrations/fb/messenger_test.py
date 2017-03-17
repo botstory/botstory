@@ -212,7 +212,6 @@ async def test_send_list():
                 }]
             }], buttons=[{
                 'title': 'View More',
-                'type': 'postback',
                 'payload': 'payload',
             }])
         mock_http.post.assert_called_with(
