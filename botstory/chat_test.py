@@ -2,19 +2,12 @@ import aiohttp
 import logging
 import pytest
 
-from botstory.middlewares import location
+from botstory import Story
 import botstory.integrations.fb.messenger
-from . import Story
-from .utils import answer, build_fake_session, build_fake_user, SimpleTrigger
+from botstory.middlewares import location
+from botstory.utils import answer, SimpleTrigger
 
 logger = logging.getLogger(__name__)
-
-story = None
-
-
-def teardown_function(function):
-    logger.debug('tear down!')
-    story.clear()
 
 
 @pytest.fixture()
@@ -34,76 +27,67 @@ def mock_interface(mocker):
 
 @pytest.mark.asyncio
 async def test_should_say(mock_interface):
-    session = build_fake_session()
-    user = build_fake_user()
+    with answer.Talk() as talk:
+        story = talk.story
+        story.use(mock_interface)
 
-    global story
-    story = Story()
-    story.use(mock_interface)
+        @story.on('hi there!')
+        def one_story():
+            @story.part()
+            async def then(message):
+                await story.say('Nice to see you!', message['user'])
 
-    @story.on('hi there!')
-    def one_story():
-        @story.part()
-        async def then(message):
-            await story.say('Nice to see you!', message['user'])
+        await talk.pure_text('hi there!')
 
-    await answer.pure_text('hi there!', session, user, story)
-
-    mock_interface.send_text_message.assert_called_once_with(
-        recipient=user,
-        text='Nice to see you!',
-        options=None,
-    )
+        mock_interface.send_text_message.assert_called_once_with(
+            recipient=talk.user,
+            text='Nice to see you!',
+            options=None,
+        )
 
 
 # TODO: move to middlewares/location/test_location.py
 @pytest.mark.asyncio
 @pytest.mark.skip
 async def test_ask_location(mock_interface):
-    session = build_fake_session()
-    user = build_fake_user()
+    with answer.Talk() as talk:
+        story = talk.story
+        story.use(mock_interface)
 
-    global story
-    story = Story()
-    story.use(mock_interface)
+        @story.on('SOS!')
+        def one_story():
+            @story.part()
+            async def then(message):
+                await story.ask_location('Hey, bro! Where is your rocket?', message['user'])
 
-    @story.on('SOS!')
-    def one_story():
-        @story.part()
-        async def then(message):
-            await story.ask_location('Hey, bro! Where is your rocket?', message['user'])
+        await talk.pure_text('SOS!')
 
-    await answer.pure_text('SOS!', session, user, story)
-
-    mock_interface.send_text_message.assert_called_once_with(user, text='Hey, bro! Where is your rocket?')
+        mock_interface.send_text_message.assert_called_once_with(talk.user, text='Hey, bro! Where is your rocket?')
 
 
 @pytest.mark.asyncio
 @pytest.mark.skip
 async def test_get_location_as_result_of_asking_of_location(mock_interface):
-    session = build_fake_session()
-    user = build_fake_user()
-
     trigger = SimpleTrigger()
 
-    global story
-    story = Story()
-    story.use(mock_interface)
+    with answer.Talk() as talk:
+        story = talk.story
+        story.use(mock_interface)
 
-    @story.on('SOS!')
-    def one_story():
-        @story.part()
-        def then(ctx):
-            return story.ask_location('Hey, bro! Where is your rocket?', ctx['user'])
+        @story.on('SOS!')
+        def one_story():
+            @story.part()
+            def then(ctx):
+                return story.ask_location('Hey, bro! Where is your rocket?', ctx['user'])
 
-        @story.part()
-        def then(ctx):
-            trigger.receive(location.get_location(ctx))
+            @story.part()
+            def then(ctx):
+                trigger.receive(location.get_location(ctx))
 
-    await answer.pure_text('SOS!', session, user, story)
-    await answer.location('somewhere', session, user, story)
+        await talk.pure_text('SOS!')
+        await talk.location('somewhere')
 
-    assert trigger.result() == 'somewhere'
+        assert trigger.result() == 'somewhere'
 
 
 @pytest.mark.asyncio
