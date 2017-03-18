@@ -41,10 +41,11 @@ class Chat:
         # 4 ask details once we not sure
         return [location.Any(), text.Any()]
 
-    async def list_elements(self, elements, buttons, user):
+    async def list_elements(self, elements, buttons, user, options):
         tasks = [interface.send_list(recipient=user,
                                      elements=elements,
-                                     buttons=buttons)
+                                     buttons=buttons,
+                                     options=options)
                  for _, interface in self.interfaces.items()]
 
         res = [body for body in await asyncio.gather(*tasks)]

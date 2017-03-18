@@ -137,7 +137,7 @@ class FBInterface:
                 'message': message,
             })
 
-    async def send_list(self, recipient, elements, buttons=None):
+    async def send_list(self, recipient, elements, buttons=None, options=None):
         """
         send list of elements
         :param recipient:
@@ -152,8 +152,11 @@ class FBInterface:
 
         buttons = [{**b, 'type': b.get('type', 'postback')} for b in buttons]
 
+        options = options or {}
+
         return await self.send_template(recipient, {
             'template_type': 'list',
+            'top_element_style': options.get('top_element_style', 'large'),
             'elements': elements,
             'buttons': buttons,
         })
