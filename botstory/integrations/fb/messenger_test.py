@@ -321,6 +321,78 @@ async def test_send_list():
 
 
 @pytest.mark.asyncio
+async def test_should_send_template_based_message():
+    with answer.Talk() as talk:
+        story = talk.story
+        fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty1'))
+        mock_http = story.use(mockhttp.MockHttpInterface())
+        await story.start()
+        payload = {
+            'template_type': 'receipt',
+            'recipient_name': 'Stephane Crozatier',
+            'order_number': '12345678902',
+            'currency': 'USD',
+            'payment_method': 'Visa 2345',
+            'order_url': 'http://petersapparel.parseapp.com/order?order_id=123456',
+            'timestamp': '1428444852',
+            'elements': [{
+                'title': 'Classic White T-Shirt',
+                'subtitle': '100% Soft and Luxurious Cotton',
+                'quantity': 2,
+                'price': 50,
+                'currency': 'USD',
+                'image_url': 'http://petersapparel.parseapp.com/img/whiteshirt.png'
+            }, {
+                'title': 'Classic Gray T-Shirt',
+                'subtitle': '100% Soft and Luxurious Cotton',
+                'quantity': 1,
+                'price': 25,
+                'currency': 'USD',
+                'image_url': 'http://petersapparel.parseapp.com/img/grayshirt.png'
+            }],
+            'address': {
+                'street_1': '1 Hacker Way',
+                'street_2': '',
+                'city': 'Menlo Park',
+                'postal_code': '94025',
+                'state': 'CA',
+                'country': 'US'
+            },
+            'summary': {
+                'subtotal': 75.00,
+                'shipping_cost': 4.95,
+                'total_tax': 6.19,
+                'total_cost': 56.14
+            },
+            'adjustments': [{
+                'name': 'New Customer Discount',
+                'amount': 20
+            }, {
+                'name': '$10 Off Coupon',
+                'amount': 10
+            }]
+        }
+        await fb_interface.send_template(talk.user, payload)
+        mock_http.post.assert_called_with(
+            'https://graph.facebook.com/v2.6/me/messages/',
+            params={
+                'access_token': 'qwerty1',
+            },
+            json={
+                'message': {
+                    'attachment': {
+                        'type': 'template',
+                        'payload': payload,
+                    }
+                },
+                'recipient': {
+                    'id': talk.user['facebook_user_id'],
+                },
+            }
+        )
+
+
+@pytest.mark.asyncio
 async def test_integration():
     user = utils.build_fake_user()
 

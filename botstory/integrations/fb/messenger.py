@@ -162,6 +162,13 @@ class FBInterface:
         })
 
     async def send_template(self, recipient, payload):
+        """
+        send template based message
+
+        :param recipient:
+        :param payload:
+        :return:
+        """
         return await self.http.post(
             self.api_uri + '/me/messages/',
             params={
