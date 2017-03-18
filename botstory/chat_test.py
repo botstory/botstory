@@ -24,6 +24,11 @@ def mock_interface(mocker):
         'send_text_message',
         aiohttp.test_utils.make_mocked_coro('something'),
     )
+    mocker.patch.object(
+        botstory.integrations.fb.messenger.FBInterface,
+        'send_list',
+        aiohttp.test_utils.make_mocked_coro('something'),
+    )
     return botstory.integrations.fb.messenger.FBInterface()
 
 
@@ -99,3 +104,105 @@ async def test_get_location_as_result_of_asking_of_location(mock_interface):
     await answer.location('somewhere', session, user, story)
 
     assert trigger.result() == 'somewhere'
+
+
+@pytest.mark.asyncio
+async def test_should_list_elements(mock_interface):
+    with answer.Talk() as talk:
+        story = talk.story
+        story.use(mock_interface)
+
+        @story.on('hi there!')
+        def one_story():
+            @story.part()
+            async def then(ctx):
+                await story.list_elements(elements=[{
+                    'title': 'Classic T-Shirt Collection',  # (*) required
+                    'image_url': 'https://peterssendreceiveapp.ngrok.io/img/collection.png',
+                    'subtitle': 'See all our colors',
+                    'default_action': {
+                        'type': 'web_url',
+                        'url': 'https://peterssendreceiveapp.ngrok.io/shop_collection',
+                        'messenger_extensions': True,
+                        'webview_height_ratio': 'tall',
+                        'fallback_url': 'https://peterssendreceiveapp.ngrok.io/'
+                    },
+                    'buttons': [{
+                        'title': 'View',
+                        'type': 'web_url',
+                        'url': 'https://peterssendreceiveapp.ngrok.io/collection',
+                        'messenger_extensions': True,
+                        'webview_height_ratio': 'tall',
+                        'fallback_url': 'https://peterssendreceiveapp.ngrok.io/'
+                    }]
+                }, {
+                    'title': 'Classic White T-Shirt',
+                    'image_url': 'https://peterssendreceiveapp.ngrok.io/img/white-t-shirt.png',
+                    'subtitle': '100% Cotton, 200% Comfortable',
+                    'default_action': {
+                        'type': 'web_url',
+                        'url': 'https://peterssendreceiveapp.ngrok.io/view?item=100',
+                        'messenger_extensions': True,
+                        'webview_height_ratio': 'tall',
+                        'fallback_url': 'https://peterssendreceiveapp.ngrok.io/'
+                    },
+                    'buttons': [{
+                        'title': 'Shop Now',
+                        'type': 'web_url',
+                        'url': 'https://peterssendreceiveapp.ngrok.io/shop?item=100',
+                        'messenger_extensions': True,
+                        'webview_height_ratio': 'tall',
+                        'fallback_url': 'https://peterssendreceiveapp.ngrok.io/'
+                    }]
+                }], buttons=[{
+                    'title': 'View More',
+                    'payload': 'payload',
+                }], user=ctx['user'])
+
+        await talk.ask('hi there!')
+
+        mock_interface.send_list.assert_called_once_with(
+            recipient=talk.user,
+            elements=[{
+                'title': 'Classic T-Shirt Collection',  # (*) required
+                'image_url': 'https://peterssendreceiveapp.ngrok.io/img/collection.png',
+                'subtitle': 'See all our colors',
+                'default_action': {
+                    'type': 'web_url',
+                    'url': 'https://peterssendreceiveapp.ngrok.io/shop_collection',
+                    'messenger_extensions': True,
+                    'webview_height_ratio': 'tall',
+                    'fallback_url': 'https://peterssendreceiveapp.ngrok.io/'
+                },
+                'buttons': [{
+                    'title': 'View',
+                    'type': 'web_url',
+                    'url': 'https://peterssendreceiveapp.ngrok.io/collection',
+                    'messenger_extensions': True,
+                    'webview_height_ratio': 'tall',
+                    'fallback_url': 'https://peterssendreceiveapp.ngrok.io/'
+                }]
+            }, {
+                'title': 'Classic White T-Shirt',
+                'image_url': 'https://peterssendreceiveapp.ngrok.io/img/white-t-shirt.png',
+                'subtitle': '100% Cotton, 200% Comfortable',
+                'default_action': {
+                    'type': 'web_url',
+                    'url': 'https://peterssendreceiveapp.ngrok.io/view?item=100',
+                    'messenger_extensions': True,
+                    'webview_height_ratio': 'tall',
+                    'fallback_url': 'https://peterssendreceiveapp.ngrok.io/'
+                },
+                'buttons': [{
+                    'title': 'Shop Now',
+                    'type': 'web_url',
+                    'url': 'https://peterssendreceiveapp.ngrok.io/shop?item=100',
+                    'messenger_extensions': True,
+                    'webview_height_ratio': 'tall',
+                    'fallback_url': 'https://peterssendreceiveapp.ngrok.io/'
+                }]
+            }], buttons=[{
+                'title': 'View More',
+                'payload': 'payload',
+            }],
+        )

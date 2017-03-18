@@ -86,6 +86,9 @@ class Story:
     async def ask(self, body, quick_replies=None, options=None, user=None):
         return await self.chat.ask(body, quick_replies, options, user)
 
+    async def list_elements(self, elements, buttons, user):
+        return await self.chat.list_elements(elements, buttons, user)
+
     async def say(self, body, user, options=None):
         return await self.chat.say(body, user, options)
 
