@@ -41,6 +41,16 @@ class Chat:
         # 4 ask details once we not sure
         return [location.Any(), text.Any()]
 
+    async def list_elements(self, elements, buttons, user, options):
+        tasks = [interface.send_list(recipient=user,
+                                     elements=elements,
+                                     buttons=buttons,
+                                     options=options)
+                 for _, interface in self.interfaces.items()]
+
+        res = [body for body in await asyncio.gather(*tasks)]
+        return res
+
     async def say(self, body, user, options):
         """
         say something to user
@@ -51,6 +61,14 @@ class Chat:
         """
         return await self.send_text_message_to_all_interfaces(
             recipient=user, text=body, options=options)
+
+    async def send_template(self, payload, user):
+        tasks = [interface.send_template(recipient=user,
+                                         payload=payload)
+                 for _, interface in self.interfaces.items()]
+
+        res = [body for body in await asyncio.gather(*tasks)]
+        return res
 
     async def send_text_message_to_all_interfaces(self, *args, **kwargs):
         """

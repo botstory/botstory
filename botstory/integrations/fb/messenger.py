@@ -137,6 +137,56 @@ class FBInterface:
                 'message': message,
             })
 
+    async def send_list(self, recipient, elements, buttons=None, options=None):
+        """
+        send list of elements
+        :param recipient:
+        :param elements:
+        :param buttons:
+        :return:
+        """
+        # try:
+        #     validate.send_listd
+        # except
+        # ....
+
+        buttons = [{**b, 'type': b.get('type', 'postback')} for b in buttons]
+
+        options = options or {}
+
+        return await self.send_template(recipient, {
+            'template_type': 'list',
+            'top_element_style': options.get('top_element_style', 'large'),
+            'elements': elements,
+            'buttons': buttons,
+        })
+
+    async def send_template(self, recipient, payload):
+        """
+        send template based message
+
+        :param recipient:
+        :param payload:
+        :return:
+        """
+        return await self.http.post(
+            self.api_uri + '/me/messages/',
+            params={
+                'access_token': self.token,
+            },
+            json={
+                'recipient': {
+                    'id': recipient['facebook_user_id'],
+                },
+
+                'message': {
+                    'attachment': {
+                        'type': 'template',
+                        'payload': payload,
+                    }
+                },
+            })
+
     async def request_profile(self, facebook_user_id):
         """
         Make request to facebook

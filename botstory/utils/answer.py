@@ -46,6 +46,8 @@ class Talk:
                     }), {}))
         if 'sticker_id' in payload:
             return await self.wrap_user_talk(sticker)(payload)
+        if isinstance(payload, str):
+            return await self.pure_text(payload)
         raise NotImplementedError('put all other message types here')
 
     def wrap_user_talk(self, fn):
