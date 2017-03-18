@@ -10,9 +10,9 @@ def get_sticker(ctx):
 
 
 ANY_LIKE = None
-SMALL_LIKE = '369239263222822'
-MEDIUM_LIKE = '369239343222814'
-BIG_LIKE = '369239383222810'
+SMALL_LIKE = 369239263222822
+MEDIUM_LIKE = 369239343222814
+BIG_LIKE = 369239383222810
 
 LIKE_STICKERS = (SMALL_LIKE, MEDIUM_LIKE, BIG_LIKE)
 
@@ -36,7 +36,7 @@ class Like:
         if size == ANY_LIKE:
             self.valid_likes = LIKE_STICKERS
         else:
-            self.valid_likes = size
+            self.valid_likes = [size]
 
     def validate(self, ctx):
         return get_sticker(ctx) in self.valid_likes
