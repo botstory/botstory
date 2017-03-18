@@ -89,6 +89,15 @@ class Story:
     async def list_elements(self, elements=None, buttons=None, user=None, options=None):
         return await self.chat.list_elements(elements, buttons, user, options)
 
+    async def send_template(self, payload, user):
+        """
+        send template based message (button, generic, list, receipt, airline and etc
+        :param payload:
+        :param user:
+        :return:
+        """
+        return await self.chat.send_template(payload, user)
+
     async def say(self, body, user, options=None):
         return await self.chat.say(body, user, options)
 

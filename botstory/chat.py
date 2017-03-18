@@ -62,6 +62,14 @@ class Chat:
         return await self.send_text_message_to_all_interfaces(
             recipient=user, text=body, options=options)
 
+    async def send_template(self, payload, user):
+        tasks = [interface.send_template(recipient=user,
+                                         payload=payload)
+                 for _, interface in self.interfaces.items()]
+
+        res = [body for body in await asyncio.gather(*tasks)]
+        return res
+
     async def send_text_message_to_all_interfaces(self, *args, **kwargs):
         """
         TODO:

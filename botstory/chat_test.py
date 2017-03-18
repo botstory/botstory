@@ -22,6 +22,11 @@ def mock_interface(mocker):
         'send_list',
         aiohttp.test_utils.make_mocked_coro('something'),
     )
+    mocker.patch.object(
+        botstory.integrations.fb.messenger.FBInterface,
+        'send_template',
+        aiohttp.test_utils.make_mocked_coro('something'),
+    )
     return botstory.integrations.fb.messenger.FBInterface()
 
 
@@ -191,3 +196,62 @@ async def test_should_list_elements(mock_interface):
             }],
             options=None,
         )
+
+
+@pytest.mark.asyncio
+async def test_should_send_tempalate_based_message(mock_interface):
+    with answer.Talk() as talk:
+        story = talk.story
+        story.use(mock_interface)
+
+        payload = {
+            'template_type': 'receipt',
+            'recipient_name': 'Stephane Crozatier',
+            'order_number': '12345678902',
+            'currency': 'USD',
+            'payment_method': 'Visa 2345',
+            'order_url': 'http://petersapparel.parseapp.com/order?order_id=123456',
+            'timestamp': '1428444852',
+            'elements': [{
+                'title': 'Classic White T-Shirt',
+                'subtitle': '100% Soft and Luxurious Cotton',
+                'quantity': 2,
+                'price': 50,
+                'currency': 'USD',
+                'image_url': 'http://petersapparel.parseapp.com/img/whiteshirt.png'
+            }, {
+                'title': 'Classic Gray T-Shirt',
+                'subtitle': '100% Soft and Luxurious Cotton',
+                'quantity': 1,
+                'price': 25,
+                'currency': 'USD',
+                'image_url': 'http://petersapparel.parseapp.com/img/grayshirt.png'
+            }],
+            'address': {
+                'street_1': '1 Hacker Way',
+                'street_2': '',
+                'city': 'Menlo Park',
+                'postal_code': '94025',
+                'state': 'CA',
+                'country': 'US'
+            },
+            'summary': {
+                'subtotal': 75.00,
+                'shipping_cost': 4.95,
+                'total_tax': 6.19,
+                'total_cost': 56.14
+            },
+            'adjustments': [{
+                'name': 'New Customer Discount',
+                'amount': 20
+            }, {
+                'name': '$10 Off Coupon',
+                'amount': 10
+            }]
+        }
+
+        await story.send_template(payload,
+                                  user=talk.user)
+
+        mock_interface.send_template.assert_called_once_with(recipient=talk.user,
+                                                             payload=payload)
