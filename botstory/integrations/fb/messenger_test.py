@@ -225,6 +225,7 @@ async def test_send_list():
                         'type': 'template',
                         'payload': {
                             'template_type': 'list',
+                            'top_element_style': 'large',
                             'elements': [{
                                 'title': 'Classic T-Shirt Collection',  # (*) required
                                 'image_url': 'https://peterssendreceiveapp.ngrok.io/img/collection.png',

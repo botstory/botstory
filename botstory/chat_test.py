@@ -205,4 +205,5 @@ async def test_should_list_elements(mock_interface):
                 'title': 'View More',
                 'payload': 'payload',
             }],
+            options=None,
         )
