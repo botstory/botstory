@@ -288,13 +288,15 @@ class FBInterface:
                             quick_reply = raw_message.get('quick_reply', None)
                             if quick_reply is not None:
                                 ctx = story_context.set_message_data(ctx,
-                                                                     'option', quick_reply['payload'])
+                                                                     'option',
+                                                                     'value', quick_reply['payload'])
 
                             ctx = await self.story_processor.match_message(ctx)
 
                     elif 'postback' in m:
                         ctx = story_context.set_message_data(ctx,
-                                                             'option', m['postback']['payload'])
+                                                             'option',
+                                                             'value', m['postback']['payload'])
                         ctx = await self.story_processor.match_message(ctx)
                     elif 'delivery' in m:
                         logger.debug('delivery notification')
@@ -332,7 +334,8 @@ class FBInterface:
         # check whether we have `On Start Story`
         have_on_start_story = not not self.library.get_global_story(story_context.set_message_data({
             'session': {}
-        }, 'option', option.OnStart.DEFAULT_OPTION_PAYLOAD))
+        }, 'option',
+            'value', option.OnStart.DEFAULT_OPTION_PAYLOAD))
         if have_on_start_story:
             await self.remove_greeting_call_to_action_payload()
             await self.set_greeting_call_to_action_payload(option.OnStart.DEFAULT_OPTION_PAYLOAD)

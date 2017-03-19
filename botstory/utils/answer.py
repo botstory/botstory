@@ -89,7 +89,8 @@ async def option(payload, session=None, user=None, story=None):
             story_context.clean_message_data({
                 'session': session,
                 'user': user,
-            }), 'option', payload))
+            }), 'option',
+            'value', payload))
 
 
 async def sticker(payload, session=None, user=None, story=None):

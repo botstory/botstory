@@ -77,11 +77,18 @@ async def test_discard_not_valid_text_message():
         assert not trigger.is_triggered
 
 
+def test_serialize_option_equal():
+    m_old = option.Equal('yellow')
+    m_new = matchers.deserialize(matchers.serialize(m_old))
+    assert isinstance(m_new, option.Equal)
+    assert m_new.option == m_old.option
+
+
 def test_serialize_option_match():
     m_old = option.Match('yellow')
     m_new = matchers.deserialize(matchers.serialize(m_old))
     assert isinstance(m_new, option.Match)
-    assert m_new.option == m_old.option
+    assert m_new.matcher.pattern == m_old.matcher.pattern
 
 
 @pytest.mark.asyncio
@@ -91,7 +98,7 @@ async def test_validate_only_option():
     with answer.Talk() as talk:
         story = talk.story
 
-        @story.on(receive=option.Match('green'))
+        @story.on(receive=option.Equal('green'))
         def one_story():
             @story.part()
             def store_option(ctx):
@@ -99,6 +106,27 @@ async def test_validate_only_option():
 
         await talk.option('green')
         assert trigger.is_triggered
+
+
+@pytest.mark.asyncio
+async def test_validate_regex_option():
+    correct_trigger = SimpleTrigger()
+
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.on(receive=option.Match('OPEN_TASK_.+'))
+        def correct_story():
+            @story.part()
+            def store_option(ctx):
+                correct_trigger.passed()
+
+        # task_id = 'qwerty1234567890'
+        # await talk.option('OPEN_TASK_{}'.format(task_id))
+        # assert trigger.result() == task_id
+
+        await talk.option('OPEN_TASK_qwerty'.format())
+        assert correct_trigger.is_passed()
 
 
 def test_serialize_on_start_option():
