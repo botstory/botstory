@@ -1,3 +1,4 @@
+from botstory.ast import story_context
 from botstory.middlewares import option
 import logging
 import pytest
@@ -110,7 +111,7 @@ async def test_validate_only_option():
 
 @pytest.mark.asyncio
 async def test_validate_regex_option():
-    correct_trigger = SimpleTrigger()
+    trigger = SimpleTrigger()
 
     with answer.Talk() as talk:
         story = talk.story
@@ -119,14 +120,30 @@ async def test_validate_regex_option():
         def correct_story():
             @story.part()
             def store_option(ctx):
-                correct_trigger.passed()
-
-        # task_id = 'qwerty1234567890'
-        # await talk.option('OPEN_TASK_{}'.format(task_id))
-        # assert trigger.result() == task_id
+                trigger.passed()
 
         await talk.option('OPEN_TASK_qwerty'.format())
-        assert correct_trigger.is_passed()
+        assert trigger.is_passed()
+
+
+@pytest.mark.asyncio
+async def test_get_matched_values_by_regex_option():
+    trigger = SimpleTrigger()
+
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.on(receive=option.Match('OPEN_TASK_(.+)'))
+        def correct_story():
+            @story.part()
+            def store_option(ctx):
+                trigger.receive(
+                    story_context.get_message_data(ctx, 'option', 'matches')[0]
+                )
+
+        task_id = 'qwerty1234567890'
+        await talk.option('OPEN_TASK_{}'.format(task_id))
+        assert trigger.result() == task_id
 
 
 def test_serialize_on_start_option():
