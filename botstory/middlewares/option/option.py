@@ -61,10 +61,6 @@ class Match:
             'flags': self.matcher.flags,
         }
 
-    @staticmethod
-    def deserialize(data):
-        return Match(data['pattern'], data['flags'])
-
 
 @matchers.matcher()
 class OnStart:
