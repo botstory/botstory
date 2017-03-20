@@ -751,13 +751,13 @@ async def test_handler_selected_option(build_fb_interface):
     correct_trigger = utils.SimpleTrigger()
     incorrect_trigger = utils.SimpleTrigger()
 
-    @story.on(receive=option.Match('GREEN'))
+    @story.on(receive=option.Equal('GREEN'))
     def correct_story():
         @story.part()
         def store_result(ctx):
             correct_trigger.receive(story_context.get_message_data(ctx))
 
-    @story.on(receive=option.Match('BLUE'))
+    @story.on(receive=option.Equal('BLUE'))
     def incorrect_story():
         @story.part()
         def store_result(ctx):
@@ -790,7 +790,9 @@ async def test_handler_selected_option(build_fb_interface):
 
     assert incorrect_trigger.value is None
     assert correct_trigger.value == {
-        'option': 'GREEN',
+        'option': {
+            'value': 'GREEN',
+        },
         'text': {
             'raw': 'Green!'
         }
@@ -804,13 +806,13 @@ async def test_handler_postback(build_fb_interface):
     correct_trigger = utils.SimpleTrigger()
     incorrect_trigger = utils.SimpleTrigger()
 
-    @story.on(receive=option.Match('GREEN'))
+    @story.on(receive=option.Equal('GREEN'))
     def correct_story():
         @story.part()
         def store_result(ctx):
             correct_trigger.receive(story_context.get_message_data(ctx))
 
-    @story.on(receive=option.Match('BLUE'))
+    @story.on(receive=option.Equal('BLUE'))
     def incorrect_story():
         @story.part()
         def store_result(ctx):
@@ -838,7 +840,7 @@ async def test_handler_postback(build_fb_interface):
 
     assert incorrect_trigger.value is None
     assert correct_trigger.value == {
-        'option': 'GREEN',
+        'option': {'value': 'GREEN'},
     }
 
 

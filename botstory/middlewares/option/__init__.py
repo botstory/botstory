@@ -1,3 +1,3 @@
-from .option import get_option, Any, Match, OnStart
+from .option import get_option, Any, Equal, Match, OnStart
 
-__all__ = [get_option, Any, Match, OnStart]
+__all__ = [get_option, Any, Equal, Match, OnStart]
