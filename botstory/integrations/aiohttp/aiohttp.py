@@ -1,5 +1,5 @@
 import aiohttp
-from aiohttp import errors, web
+from aiohttp import client_exceptions, web
 import asyncio
 import logging
 import json as _json
@@ -146,7 +146,7 @@ class AioHttpInterface:
                     url,
                     **kwargs,
                 )
-            except errors.ClientOSError as err:
+            except client_exceptions.ClientOSError as err:
                 raise common_errors.HttpRequestError(
                     code=400,
                     message='{} {}'.format(err.errno, err.strerror),
