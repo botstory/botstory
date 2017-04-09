@@ -30,9 +30,9 @@ async def execute(ctx):
     story_part = ctx.get_current_story_part()
     logger.debug('# going to call: {}'.format(story_part.__name__))
     waiting_for = story_part(ctx.message)
-    logger.debug('# got result {}'.format(waiting_for))
     if inspect.iscoroutinefunction(story_part):
         waiting_for = await waiting_for
+    logger.debug('# got result {}'.format(waiting_for))
 
     # story part could run callable story and return its context
     if isinstance(waiting_for, story_context.StoryContext):
@@ -129,6 +129,8 @@ def scope_in(ctx):
     compiled_story = None
     if not ctx.is_empty_stack():
         compiled_story = ctx.get_child_story()
+        logger.debug('# child')
+        logger.debug(compiled_story)
         # we match child story loop once by message
         # what should prevent multiple matching by the same message
         ctx.matched = True

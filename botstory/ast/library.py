@@ -20,8 +20,8 @@ class StoriesScope:
         self.stories.append(story)
 
     def all_filters(self):
-        return {s.topic: s.extensions['validator']
-                for s in self.stories if 'validator' in s.extensions}
+        return [(s.topic, s.extensions['validator'])
+                for s in self.stories if 'validator' in s.extensions]
 
     def match(self, message):
         matched_stories = [
@@ -111,7 +111,7 @@ class StoriesLibrary:
         # for forking.StoryPartFork
         inner_stories = [
             story.children for story in parent.story_line if hasattr(story, 'children')
-        ]
+            ]
 
         inner_stories = [item for sublist in inner_stories for item in sublist]
 

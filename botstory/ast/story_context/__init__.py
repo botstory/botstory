@@ -55,7 +55,7 @@ class StoryContext:
         return self.compiled_story() is not None and not self.matched
 
     def get_child_story(self):
-        logger.debug('get_child_story')
+        logger.debug('# get_child_story')
         """
         try child story that match message and get scope of it
         :return:
@@ -67,23 +67,33 @@ class StoryContext:
         story_part = self.get_current_story_part()
 
         if not hasattr(story_part, 'get_child_by_validation_result'):
+            logger.debug('# does not have get_child_by_validation_result')
             return None
 
         if isinstance(self.waiting_for, forking.SwitchOnValue):
+            logger.debug('# switch on value')
             return story_part.get_child_by_validation_result(self.waiting_for.value)
 
         # for some base classes we could try validate result direct
         child_story = story_part.get_child_by_validation_result(self.waiting_for)
-        logger.debug('child_story')
-        logger.debug(child_story)
         if child_story:
+            logger.debug('# child_story')
+            logger.debug(child_story)
             return child_story
 
         stack_tail = self.stack_tail()
         if stack_tail['data'] is not None and not self.matched:
             validator = matchers.deserialize(stack_tail['data'])
+            logger.debug('# validator')
+            logger.debug(validator)
+            logger.debug('# self.message')
+            logger.debug(self.message)
             validation_result = validator.validate(self.message)
+            logger.debug('# validation_result')
+            logger.debug(validation_result)
             res = story_part.get_child_by_validation_result(validation_result)
+            logger.debug('# res')
+            logger.debug(res)
             # or we validate message
             # but can't find right child story
             # maybe we should use independent validators for each story here
@@ -95,12 +105,18 @@ class StoryContext:
         return None
 
     def get_story_scope_child(self, story_part):
+        logger.debug('# get_story_scope_child')
         validator = story_part.children_matcher()
+        logger.debug('# validator')
+        logger.debug(validator)
+        logger.debug('# self.message')
+        logger.debug(self.message)
         topic = validator.validate(self.message)
         # if topic == None:
         # we inside story loop scope
         # but got message that doesn't match
         # any local stories
+        logger.debug('# topic {}'.format(topic))
         return story_part.by_topic(topic)
 
     def get_current_story_part(self):
