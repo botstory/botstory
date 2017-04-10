@@ -58,10 +58,13 @@ class StoryProcessor:
 
             # looking for first valid matcher
             while True:
+                logger.debug('# looking for first valid matcher')
                 if ctx.is_empty_stack():
                     # we have reach the bottom of stack
+                    logger.debug('# we have reach the bottom of stack')
                     if ctx.does_it_match_any_story():
                         # but sometimes we could jump on other global matcher
+                        logger.debug('# but sometimes we could jump on other global matcher')
                         ctx = story_context.reducers.scope_in(ctx)
                         ctx = await self.process_story(ctx)
                         ctx = story_context.reducers.scope_out(ctx)
@@ -88,6 +91,7 @@ class StoryProcessor:
                 ctx = story_context.reducers.scope_out(ctx)
 
             if ctx.has_child_story():
+                logger.debug('# has child story')
                 ctx = story_context.reducers.scope_in(ctx)
             ctx = await self.process_story(ctx)
             logger.debug('# match_message scope_out')

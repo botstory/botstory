@@ -1,4 +1,5 @@
 from botstory import ast, matchers
+from collections import OrderedDict
 import logging
 import json
 
@@ -75,7 +76,9 @@ class StoryPartFork:
 @matchers.matcher()
 class Switch:
     def __init__(self, cases):
-        self.cases = cases
+        assert isinstance(cases, list)
+        assert all(isinstance(i, tuple) for i in cases)
+        self.cases = OrderedDict(cases)
 
     def validate(self, message):
         for case_id, validator in self.cases.items():
@@ -91,10 +94,8 @@ class Switch:
 
     @staticmethod
     def deserialize(data):
-        return Switch({
-                          case['id']: matchers.deserialize(case['data'])
-                          for case in data
-                          })
+        return Switch([(case['id'], matchers.deserialize(case['data']))
+                       for case in data])
 
     def to_json(self):
         return {

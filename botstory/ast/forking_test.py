@@ -6,7 +6,7 @@ import random
 
 from . import forking
 from .. import matchers
-from ..middlewares import location, text
+from ..middlewares import any, location, text
 from ..utils import answer, SimpleTrigger
 
 logger = logging.getLogger(__name__)
@@ -28,10 +28,10 @@ async def test_cases():
             @story.part()
             async def start(ctx):
                 await story.say('Where do you go?', user=ctx['user'])
-                return forking.Switch({
-                    'location': location.Any(),
-                    'text': text.Any(),
-                })
+                return forking.Switch([
+                    ('location', location.Any()),
+                    ('text', text.Any()),
+                ])
 
             @story.case(match='location')
             def location_case():
@@ -271,9 +271,9 @@ async def test_one_sync_switch_inside_of_another_sync_switch_with_failed_switch(
                 def room_1_1():
                     @story.part()
                     def next_room_1_1(ctx):
-                        return forking.Switch({
-                            'no-exit': text.Match('no-exit'),
-                        })
+                        return forking.Switch([
+                            ('no-exit', text.Match('no-exit')),
+                        ])
 
                     @story.case(match='no-exit')
                     def room_1_1_1():
@@ -365,6 +365,46 @@ async def test_validator_is_default_case_argument():
         await talk.pure_text('no')
 
         assert not left_trigger.is_triggered
+        assert right_trigger.is_triggered
+
+
+@pytest.mark.asyncio
+async def test_validators_are_overlapped_so_order_rules_here():
+    wrong_trigger = SimpleTrigger()
+    right_trigger = SimpleTrigger()
+
+    with answer.Talk() as talk:
+        story = talk.story
+
+        @story.on('title')
+        def set_title_story():
+            @story.part()
+            async def ask_title(ctx):
+                return await story.ask('What is the title?',
+                                       user=ctx['user'])
+
+            @story.case('cancel')
+            def handle_cancel():
+                @story.part()
+                def process_cancel(ctx):
+                    return right_trigger.passed()
+
+            @story.case(text.Any())
+            def handel_text():
+                @story.part()
+                def process_text(ctx):
+                    return wrong_trigger.passed()
+
+            @story.case(any.Any())
+            def handle_any():
+                @story.part()
+                def process_any(ctx):
+                    return wrong_trigger.passed()
+
+        await talk.pure_text('title')
+        await talk.pure_text('cancel')
+
+        assert not wrong_trigger.is_triggered
         assert right_trigger.is_triggered
 
 
@@ -642,10 +682,10 @@ async def test_switch_without_right_case():
 
 
 def test_serialize():
-    m_old = forking.Switch({
-        'location': location.Any(),
-        'text': text.Any(),
-    })
+    m_old = forking.Switch([
+        ('location', location.Any()),
+        ('text', text.Any()),
+    ])
     ready_to_store = json.dumps(matchers.serialize(m_old))
     print('ready_to_store', ready_to_store)
     m_new = matchers.deserialize(json.loads(ready_to_store))
