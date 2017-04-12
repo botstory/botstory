@@ -102,3 +102,10 @@ async def test_match_different_size_of_fblike(match_size, message_size):
         })
 
         assert trigger_likes[match_size].is_triggered
+
+
+def test_serialize_like():
+    m_old = sticker.Like(sticker.BIG_LIKE)
+    m_new = matchers.deserialize(matchers.serialize(m_old))
+    assert isinstance(m_new, sticker.Like)
+    assert sticker.BIG_LIKE in m_new.valid_likes
