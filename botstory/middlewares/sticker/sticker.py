@@ -33,7 +33,9 @@ class Like:
     type = 'Sticker.Like'
 
     def __init__(self, size=ANY_LIKE):
-        if size == ANY_LIKE:
+        if isinstance(size, list):
+            self.valid_likes = size
+        elif size == ANY_LIKE:
             self.valid_likes = LIKE_STICKERS
         else:
             self.valid_likes = [size]
@@ -42,8 +44,8 @@ class Like:
         return get_sticker(ctx) in self.valid_likes
 
     def serialize(self):
-        return self.option
+        return self.valid_likes
 
     @staticmethod
     def deserialize(option):
-        return Match(option)
+        return Like(option)
