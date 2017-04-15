@@ -5,8 +5,8 @@ Under active development
 # Idea
 
 Easy reading API to describe dialogs (scenario) of bots in Python language.
-Key problem is asyn nature of any dialog - 
-we can wait for are months answer from user and should store context 
+Key problem is async nature of any dialog - 
+we can wait answer from user for are months and should store context 
 until that. As well dialog structure should be simply and clear 
 and show sequence of questions and reactions. 
  
@@ -20,24 +20,28 @@ clear enough to show story of dialog and should be open for modification.
 ```python
 """
 v0.2.2
-Bot asks user about destionation of space travelling.
+Bot asks user about destination of space travelling.
 - stateless story. it stores context of story (current question and results) somewhere (maybe DB)
 """
 @story.on('lets go!')
-def stateless_story(message):
+def stateless_story():
     @story.part()
-    def then(message):
-        return chat.ask_location(text='Where do you go?', user=message['user'])
+    async def ask_destination(ctx):
+        return await story.ask('Where do you go?', 
+                               user=ctx['user'])
 
     @story.part()
-    def then(message):
-        store_destination(message['location'])
-        return chat.ask_location(text='Where do you now?', user=message['user'])
+    async def ask_origin(ctx):
+        store_destination(ctx['location'])
+        return await story.ask('Where do you now?', 
+                               user=ctx['user'])
 
     @story.part()
-    def then(message):
-        store_origin(message['location'])
-        return chat.say('Thanks! Give me a minute I will find you right spaceship!', user=message['user'])
+    async def thanks(ctx):
+        store_origin(ctx['location'])
+        return await story.say('Thanks!\n'
+                               'Give me a minute I will find you right spaceship!', 
+                               user=ctx['user'])
 ```
 
 ## example with bifurcations
@@ -51,17 +55,8 @@ Bot asks user about destionation of space travelling.
 @story.on('lets go!')
 def stateless_story_with_bifurcation():
     @story.part()
-    def request_destination(message):
-        return chat.ask_location(text='Where do you go?', user=message['user'])
-
-    @story.part()
-    def receive_destination(message):
-        location = message['location']]
-        return SwitchOnValue(location)
-        
-        else:
-            store_destination(message['location'])
-            return request_origin(message)
+    def request_destination(ctx):
+        return chat.ask(text='Where do you go?', user=ctx['user'])
 
     @story.case(equal_to='stars')
     def stars():
