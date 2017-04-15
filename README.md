@@ -11,9 +11,15 @@ until that. As well dialog structure should be simply and clear
 and show sequence of questions and reactions. 
  
 Sure dialog can be made in diagrams but my thought that code should 
-clear enough to show story of dialog and should be open for modification. 
+clear enough to show story of dialog and should be open for modification.
 
-# Draft of API 0.2.2
+# Install
+
+```bash
+pip install botstory
+```
+
+# Draft of API 0.0.63
 
 ## Simple example
 
