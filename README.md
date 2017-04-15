@@ -19,7 +19,7 @@ clear enough to show story of dialog and should be open for modification.
 
 ```python
 """
-v0.2.2
+v0.0.63
 Bot asks user about destination of space travelling.
 - stateless story. it stores context of story (current question and results) somewhere (maybe DB)
 """
@@ -32,13 +32,13 @@ def stateless_story():
 
     @story.part()
     async def ask_origin(ctx):
-        store_destination(ctx['location'])
+        store_destination(ctx['message']['location'])
         return await story.ask('Where do you now?', 
                                user=ctx['user'])
 
     @story.part()
     async def thanks(ctx):
-        store_origin(ctx['location'])
+        store_origin(ctx['message']['location'])
         return await story.say('Thanks!\n'
                                'Give me a minute I will find you right spaceship!', 
                                user=ctx['user'])
@@ -48,42 +48,45 @@ def stateless_story():
 
 ```python
 """
-v0.2.2
-Bot asks user about destionation of space travelling.
+v0.0.63
+Bot asks user about destination of space travelling.
 - stateless story. it stores context of story (current question and results) somewhere (maybe DB)
 """
 @story.on('lets go!')
 def stateless_story_with_bifurcation():
     @story.part()
-    def request_destination(ctx):
-        return chat.ask(text='Where do you go?', user=ctx['user'])
+    async def request_destination(ctx):
+        return await story.ask('Where do you go?',
+                               user=ctx['user'])
 
-    @story.case(equal_to='stars')
+    @story.case('stars')
     def stars():
         @story.part()
-        def receive_destination_options(message):
-            return chat.ask_location(text='Which star do you prefer?', then=receive_destination)
+        async def receive_destination_options(ctx):
+            return await story.ask('Which star do you prefer?', 
+                                   user=ctx['user'])
 
-    @story.case(equal_to='planets')
+    @story.case('planets')
     def planets():
         @story.part()
-        def request_origin(message):
-            #cycle back
-            return ask_location(message['user'], text='Which planet do you prefer?', then=receive_destination)
+        async def request_origin(ctx):
+            return await story.ask('Which planet do you prefer?', 
+                                   user=ctx['user'])
 
     @story.case(default=True)
     def other():
         @story.part()
-        def choose_from_top10_planets(message):
-            return choose_option(top10_planets,
-                                 text='Here is the most popular places. Maybe you would like to choose one?',
-                                 then=receive_destination_options)
-    
+        async def choose_from_top10_planets(ctx):
+            return await choose_option(top10_planets,
+                                       text='Here is the most popular places. Maybe you would like to choose one?',
+                                       user=ctx['user'])
+
     @story.part()
-    def receive_origin(message):
-        store_origin(message['location'])
-        return chat.say('Thanks! Give me a minute I will find you right spaceship!', message['user'])
-        
+    async def receive_destination(ctx):
+        store_destination(ctx['message']['location'])
+        return await story.say('Thanks! Give me a minute I will find you right spaceship!', 
+                               user=ctx['user'])
+
 ```
 
 ## example of callable function
