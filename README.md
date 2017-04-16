@@ -1,4 +1,4 @@
-# State [![support python versions](https://img.shields.io/pypi/pyversions/botstory.svg)](https://pypi.python.org/pypi/botstory/) [![PyPI version](https://badge.fury.io/py/botstory.svg)](https://pypi.python.org/pypi/botstory/) [![Build Status](https://travis-ci.org/botstory/botstory.svg?branch=develop)](https://travis-ci.org/botstory/botstory) [![Coverage Status](https://coveralls.io/repos/github/botstory/botstory/badge.svg?branch=develop)](https://coveralls.io/github/botstory/botstory?branch=develop)
+# State [![support python versions](https://img.shields.io/pypi/pyversions/botstory.svg)](https://pypi.python.org/pypi/botstory/) [![PyPI version](https://img.shields.io/pypi/v/botstory.svg)](https://pypi.python.org/pypi/botstory/) [![Build Status](https://travis-ci.org/botstory/botstory.svg?branch=develop)](https://travis-ci.org/botstory/botstory) [![Coverage Status](https://coveralls.io/repos/github/botstory/botstory/badge.svg?branch=develop)](https://coveralls.io/github/botstory/botstory?branch=develop)
 
 Under active development
 
