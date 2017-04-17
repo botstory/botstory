@@ -21,12 +21,12 @@ story.use(fb.FBInterface(
 ))
 
 # http interface 
-self.story.use(aiohttp.AioHttpInterface(
+story.use(aiohttp.AioHttpInterface(
     port=int(os.environ.get('PORT', 8080)),
 ))
 
 # db interface
-self.story.use(mongodb.MongodbInterface(
+story.use(mongodb.MongodbInterface(
     uri=os.environ.get('MONGODB_URI', 'mongo'),
     db_name=os.environ.get('MONGODB_DB_NAME', 'todobot'),
 ))
