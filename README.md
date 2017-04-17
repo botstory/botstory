@@ -81,9 +81,10 @@ contribution and would love to hear about your experience.*
 
 and many other features
 
-# Idea
+# Background
 
-Easy reading API to describe dialogs (scenario) of bots in Python language.
+We are developing botstory mindful of the need to have easily reading API 
+which describe dialogues (scenario) of bots in Python language.
 Key problem is async nature of any dialog - 
 we can wait answer from user for are months and should store context 
 until that. As well dialog structure should be simply and clear 
@@ -91,6 +92,8 @@ and show sequence of questions and reactions.
  
 Sure dialog can be made in diagrams but my thought that code should 
 clear enough to show story of dialog and should be open for modification.
+
+As well it is too hard to use git for store versions of diagrams.
 
 # Install
 
