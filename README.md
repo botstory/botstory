@@ -2,6 +2,49 @@
 
 Under active development
 
+# Get Started
+
+```python
+import botstory
+from botstory.integrations import aiohttp, fb, mongodb
+import os
+
+
+story = botstory.Story()
+
+# setup modules
+
+# facebook integration
+story.use(fb.FBInterface(
+    webhook_url='/webhook{}'.format(os.environ.get('FB_WEBHOOK_URL_SECRET_PART', '')),
+    webhook_token=os.environ.get('FB_WEBHOOK_TOKEN', None),
+))
+
+# http interface 
+self.story.use(aiohttp.AioHttpInterface(
+    port=int(os.environ.get('PORT', 8080)),
+))
+
+# db interface
+self.story.use(mongodb.MongodbInterface(
+    uri=os.environ.get('MONGODB_URI', 'mongo'),
+    db_name=os.environ.get('MONGODB_DB_NAME', 'todobot'),
+))
+
+# match user queries
+@story.on('Hello')
+def hello_story():
+    @story.part()
+    async def say_hi(ctx):
+        await story.say('Hello {}!'.format(ctx['user'].name))
+        
+        
+# start service 
+
+asyncio.get_event_loop().run_until_complete(story.start())
+
+```
+
 # Idea
 
 Easy reading API to describe dialogs (scenario) of bots in Python language.
