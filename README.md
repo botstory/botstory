@@ -101,9 +101,11 @@ As well it is too hard to use git for store versions of diagrams.
 pip install botstory
 ```
 
-# Draft of API 0.0.63
+# Examples
 
-## Simple example
+- [TODO bot](https://github.com/botstory/todo-bot) - support fb messenger
+
+## Linear dialog
 
 ```python
 """
@@ -132,7 +134,7 @@ def stateless_story():
                                user=ctx['user'])
 ```
 
-## example with bifurcations
+## Forking of Dialog (bifurcations)
 
 ```python
 """
@@ -177,7 +179,9 @@ def stateless_story_with_bifurcation():
 
 ```
 
-## example of callable function
+## Reuse parts of Dialog (callable)
+
+TODO: should be updated
 
 ```python
 
@@ -371,3 +375,8 @@ def ask_date_time():
 
 ```
 [original sources](https://gist.github.com/hyzhak/b9adcc938abe9bfb4335cf31ef0abbee)
+
+## Dialog Loops
+
+TODO: should be added
+
