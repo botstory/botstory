@@ -45,6 +45,42 @@ asyncio.get_event_loop().run_until_complete(story.start())
 
 ```
 
+# Features
+
+- **Use frontier features of Python**
+*Botstory is heavily based on brand new Python features, like async/await.
+We always focus on its evolution and don't support legacy versions (<3.5).*
+
+- **All messengers in one place**
+*Right now botstory supports only fb Messengers, but we are going to 
+support many others. So you can use common code base for different 
+platform and seamlessly organize communication between them. As well 
+we always open for contribution. And if you sure that one platform 
+should be here, just drop PR with unit tests.*
+
+- **Almost 100% test coverage**
+*Code is covered by tests except few trivial places. 
+That way we are almost sure that any changes won't break other 
+functionality. And any breaking features won't come hidden.*  
+
+- **Declarative user dialogs**
+*Match user queries, lead, fork and loop dialogs.*
+
+- **Store use session**
+*We remember user context and could return it any time and on any 
+app instance. So you can scale app, and start and stop it without 
+fair of bot amnesia.*
+
+- **Easily scale**
+*We focus on micro-services and especially on Docker. So you can 
+very easy scale any part of the system.*
+
+- **Open source**
+*MIT licence gives you many rights. And we are very open for your 
+contribution and would love to hear about your experience.*
+
+and many other features
+
 # Idea
 
 Easy reading API to describe dialogs (scenario) of bots in Python language.
