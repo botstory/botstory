@@ -58,7 +58,7 @@ platform and seamlessly organize communication between them. As well
 we always open for contribution. And if you sure that one platform 
 should be here, just drop PR with unit tests.*
 
-- **Almost 100% test coverage**
+- **More than 90% test coverage**
 *Code is covered by tests except few trivial places. 
 That way we are almost sure that any changes won't break other 
 functionality. And any breaking features won't come hidden.*  
