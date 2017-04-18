@@ -243,3 +243,7 @@ def list_of_tasks_story():
 
 ```
 
+# Contributing
+
+Contributions of all sizes are welcome.
+
