@@ -31,7 +31,7 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
     install_requires=[
-        'aiohttp==2.0.1',
+        'aiohttp==2.0.7',
         'motor==1.1',
         'yarl==0.10.0',
     ],
