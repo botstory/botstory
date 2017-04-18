@@ -179,204 +179,67 @@ def stateless_story_with_bifurcation():
 
 ```
 
-## Reuse parts of Dialog (callable)
-
-TODO: should be updated
+## Reuse parts of Dialog (callable) and Dialog Loops
 
 ```python
 
-from ... import chat, story
-from ...matchers.any import any
-from ...matchers.location import location
-from ...matchers.text import text
+from botstory.ast import callable, loop, story_context
+from botstory.middlewares import option, sticker, text
+import emoji
+import logging
+from todo import reflection
+
+
+# Loop version
+async def show_list_next_page(ctx):
+    user_data = story_context.get_user_data(ctx)
+    page_index = user_data.get('page_index', 0)
+    list_title = user_data['list_title']
+    title_field = user_data['title_field']
+    page_length = user_data['page_length']
+    list_type = user_data.get('list_type', 'pure')
+    # render page of list ....
 
 
 @story.callable()
-def ask_location():
-    """
-    v0.2.2
-
-    case/default/recursion version
-    based on indents and no any goto
-
-    :return:
-    """
-    @story.begin()
-    def ask(body=None, options=None, user=None):
-        if not options:
-            # default aliases for current user
-            # like 'home', 'work', or other
-            options = default_aleases(user)
-        if not body:
-            body = default_question(user)
-        chat.say(body, options, user)
-        return Switch({
-            'location': location.Any(),
-            'option': option.Any(),
-            'text': text.Any(),
-        })
-
-    # 2 wait for answer
-    @story.case(match='location')
-    def location_case():
-        @story.part()
-        def return_location(message):
-            return EndOfStory({
-                'location': message,
-            })
-
-    @story.case(match='option')
-    def aliase():
-        @story.part()
-        def return_aliase(message):
-            # it can be location or any other message data
-            return EndOfStory({
-                'location': message['option']['data'],
-            })
-
-    @story.case(match='text')
-    def text_case():
-        @story.part()
-        def parse_text(message):
-            text_message = message['text']['raw']
-            # try aliases (common names like home, work, or other)
-            aliase = aliases.lookup(text_message)
-            if aliase:
-                return return EndOfStory({
-                    'location': aliase['data'],
-                })
-
-            # if it is not alias maybe it is name of some place
-            options = googlemap.lookup_location_by_name(text_message)
-            if len(options) > 0:
-                return {
-                    'args': 'many',
-                    'wait': chat.choose_option(
-                        body='We have few options',
-                        options=[{'title': o.name, 'data': o.json()} for o in options],
-                        user=message['user'],
-                    ),
-                }
-            else:
-                return {
-                    'args': None,
-                }
-
-        @story.case(equal_to='many')
-        def have_options():
-            @story.part()
-            def choose_one_location_from_many(message):
-                location = message['option']['data']
-                if location:
-                    return EndOfStory({
-                        'location': location,
-                    })
-                else:
-                    # choose something else
-                    pass
-
-        @story.case(equal_=None)
-        def not_any_option():
-            @story.check_alternative_stories()
-            @story.part()
-            def do_you_have_other_data(message):
-                text_message = message['text']['raw']
-                return chat.ask(
-                    body='I can not find {} on map. Do you mean something else? Skip it?'.format(text_message),
-                    options=[{
-                        'title': 'skip',
-                        'data': 'skip',
-                    }],
-                    user=message['user'],
-                )
-
-            @story.part()
-            def unknown_name(message):
-                if message['option']['data'] == 'skip':
-                    return EndOfStory({
-                        'location': None,
-                    })
-                else:
-                    # TODO: restart (tail recursion?)
-                    return {
-                        # ????
-                        'recursion': location_case,
-                    }
-
-    @story.case(default=True)
-    def default_case():
-        @story.check_alternative_stories()
-        @story.part()
-        def react_on_joke(message):
-            chat.say('Very funny! :)', message['user'])
-            return EndOfStory({
-                'location': None,
-            })
-
-
-@story.callable()
-def ask_date_time():
-    """
-    
-    ask date time from user
-
-    :return:
-    """
+def pagination_loop():
     @story.part()
-    def ask(body=None, options=None, user=None):
-        if not options:
-            # default aliases for current user
-            # like 'home', 'work', or other
-            options = default_aleases(user)
-        if not body:
-            body = default_question(user)
-        chat.say(body, options, user)
-        return SwitchOnValue({
-            'option': option.Any(),
-            'text': text.Any(),
-        })
-    
-    @story.case(match='option')
-    def option_case():
-        @story.part()
-        def return_option(message):
-            return {
-                'return': message['option']['data']
-            }
-        
-    @story.case(match='text')
-    def text_case():
-        @story.part()
-        def parse_text(message):
-            datetime_options = parse_text_to_date_time(message)
-            if len(datetime_options) == 0:
-                return EndOfStory({
-                    'datetime': datetime_options,
-                })
-            elif len(datetime_options) == 1:
-                return EndOfStory({
-                    'datetime': datetime_options,
-                })
-            else:
-                return chat.choose_option(
-                    body='Hm what time do you mean?',
-                    options=[{
-                        'title': d['name'], 'data': {'datetime': d['value']}
-                    } for d in datetime_options],
-                    user=message['user'],
-                )
-            
-        @story.part()
-        def return_option(message):
-            return EndOfStory({
-                'datetime': message['option']['data'],
-            })
+    async def show_zero_page(ctx):
+        if not await _show_list_next_page(ctx):
+            return callable.EndOfStory()
 
+    @story.loop()
+    def list_loop():
+        @story.on([
+            option.Match('NEXT_PAGE_OF_A_LIST'),
+            sticker.Like(),
+            text.text.EqualCaseIgnore('more'),
+            text.text.EqualCaseIgnore('next'),
+        ])
+        def next_page():
+            @story.part()
+            async def show_part_of_list(ctx):
+                if not await show_list_next_page(ctx):
+                    return loop.BreakLoop()
+                return None
+
+
+@story.on([
+    text.EqualCaseIgnore('todo'),
+])
+def list_of_tasks_story():
+    @story.part()
+    async def list_of_tasks(ctx):
+        logger.info('list of tasks')
+        return await pagination_list.pagination_loop(
+            ctx,
+            subtitle_renderer=reflection.class_to_str(tasks_document.task_details_renderer),
+            list_title='List of actual tasks:',
+            list_type='template',
+            page_length=os.environ.get('LIST_PAGE_LENGTH', 4),
+            target_document=reflection.class_to_str(tasks_document.TaskDocument),
+            title_field='description',
+        )
 
 ```
-[original sources](https://gist.github.com/hyzhak/b9adcc938abe9bfb4335cf31ef0abbee)
-
-## Dialog Loops
-
-TODO: should be added
 
