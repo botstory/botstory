@@ -477,14 +477,17 @@ class FBInterface:
             return
 
         await self.http.post(
-            self.api_uri + '/me/thread_settings',
+            self.api_uri + '/me/messenger_profile',
             params={
                 'access_token': self.token,
             },
             json={
-                'setting_type': 'call_to_actions',
-                'thread_state': 'existing_thread',
-                'call_to_actions': menu,
+                'persistent_menu': [
+                    {
+                        'locale': 'default',
+                        'call_to_actions': menu,
+                    },
+                ],
             }
         )
 

@@ -1126,22 +1126,25 @@ async def test_set_persistent_menu():
     }])
 
     mock_http.post.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/thread_settings',
+        'https://graph.facebook.com/v2.6/me/messenger_profile',
         params={
             'access_token': 'qwerty13',
         },
         json={
-            'setting_type': 'call_to_actions',
-            'thread_state': 'existing_thread',
-            'call_to_actions': [{
-                'type': 'postback',
-                'title': 'Help',
-                'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP'
-            }, {
-                'type': 'web_url',
-                'title': 'View Website',
-                'url': 'http://petersapparel.parseapp.com/'
-            }]
+            'persistent_menu': [
+                {
+                    'locale': 'default',
+                    'call_to_actions': [{
+                        'type': 'postback',
+                        'title': 'Help',
+                        'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP',
+                    }, {
+                        'type': 'web_url',
+                        'title': 'View Website',
+                        'url': 'http://petersapparel.parseapp.com/',
+                    }],
+                },
+            ],
         }
     )
 
@@ -1170,22 +1173,25 @@ async def test_can_set_persistent_menu_before_http():
     await asyncio.sleep(0.1)
 
     mock_http.post.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/thread_settings',
+        'https://graph.facebook.com/v2.6/me/messenger_profile',
         params={
             'access_token': 'qwerty14',
         },
         json={
-            'setting_type': 'call_to_actions',
-            'thread_state': 'existing_thread',
-            'call_to_actions': [{
-                'type': 'postback',
-                'title': 'Help',
-                'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP'
-            }, {
-                'type': 'web_url',
-                'title': 'View Website',
-                'url': 'http://petersapparel.parseapp.com/'
-            }]
+            'persistent_menu': [
+                {
+                    'locale': 'default',
+                    'call_to_actions': [{
+                        'type': 'postback',
+                        'title': 'Help',
+                        'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP'
+                    }, {
+                        'type': 'web_url',
+                        'title': 'View Website',
+                        'url': 'http://petersapparel.parseapp.com/'
+                    }],
+                },
+            ],
         }
     )
 
@@ -1226,22 +1232,25 @@ async def test_can_set_persistent_menu_inside_of_constructor():
     )
 
     mock_http.post.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/thread_settings',
+        'https://graph.facebook.com/v2.6/me/messenger_profile',
         params={
             'access_token': 'qwerty15',
         },
         json={
-            'setting_type': 'call_to_actions',
-            'thread_state': 'existing_thread',
-            'call_to_actions': [{
-                'type': 'postback',
-                'title': 'Help',
-                'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP'
-            }, {
-                'type': 'web_url',
-                'title': 'View Website',
-                'url': 'http://petersapparel.parseapp.com/'
-            }]
+            'persistent_menu': [
+                {
+                    'locale': 'default',
+                    'call_to_actions': [{
+                        'type': 'postback',
+                        'title': 'Help',
+                        'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP'
+                    }, {
+                        'type': 'web_url',
+                        'title': 'View Website',
+                        'url': 'http://petersapparel.parseapp.com/'
+                    }],
+                },
+            ],
         }
     )
 
