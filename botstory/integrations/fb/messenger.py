@@ -489,17 +489,16 @@ class FBInterface:
         )
 
     async def remove_persistent_menu(self):
-        logger.debug('remove_persistent_menu')
+        logger.debug('# remove_persistent_menu')
         if not self.http:
             return
 
         await self.http.delete(
-            self.api_uri + '/me/thread_settings',
+            self.api_uri + '/me/messenger_profile',
             params={
                 'access_token': self.token,
             },
-            json={
-                'setting_type': 'call_to_actions',
-                'thread_state': 'existing_thread',
-            }
+            json={'fields': [
+                'persistent_menu',
+            ]}
         )
