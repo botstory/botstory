@@ -465,12 +465,25 @@ class FBInterface:
         :return:
         """
         logger.debug('set_persistent_menu')
-        try:
-            validate.persistent_menu(menu)
-        except validate.Invalid as i:
-            logger.warn(str(i))
+        if not isinstance(menu, list) or len(menu) == 0:
+            raise ValueError(
+                'Menu should be not empty list. '
+                'More info here: '
+                'https://developers.facebook.com/docs/messenger-platform/messenger-profile/persistent-menu')
+        if all('locale' in item for item in menu):
+            # TODO: should validate as well
+            persistent_menu = menu
+        else:
+            try:
+                validate.persistent_menu(menu)
+            except validate.Invalid as i:
+                logger.warn(str(i))
+            persistent_menu = [{
+                'locale': 'default',
+                'call_to_actions': menu,
+            }]
 
-        self.persistent_menu = menu
+        self.persistent_menu = persistent_menu
 
         if not self.http:
             # should wait until receive http
@@ -482,12 +495,7 @@ class FBInterface:
                 'access_token': self.token,
             },
             json={
-                'persistent_menu': [
-                    {
-                        'locale': 'default',
-                        'call_to_actions': menu,
-                    },
-                ],
+                'persistent_menu': persistent_menu,
             }
         )
 

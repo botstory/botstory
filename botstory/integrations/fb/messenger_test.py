@@ -1150,6 +1150,81 @@ async def test_set_persistent_menu():
 
 
 @pytest.mark.asyncio
+async def test_seet_persistent_menu_with_locales():
+    global story
+    story = Story()
+
+    fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty13'))
+    mock_http = story.use(mockhttp.MockHttpInterface())
+
+    await fb_interface.set_persistent_menu([
+        {
+            'locale': 'default',
+            "composer_input_disabled": True,
+            'call_to_actions': [{
+                'type': 'postback',
+                'title': 'Help',
+                'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP',
+            }, {
+                'type': 'web_url',
+                'title': 'View Website',
+                'url': 'http://petersapparel.parseapp.com/',
+            }],
+        },
+        {
+            'locale': 'uk_UA',
+            "composer_input_disabled": True,
+            'call_to_actions': [{
+                'type': 'postback',
+                'title': 'Допомога',
+                'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP',
+            }, {
+                'type': 'web_url',
+                'title': 'Переглянути сторінку',
+                'url': 'http://petersapparel.parseapp.com/',
+            }],
+        },
+    ])
+
+    mock_http.post.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/messenger_profile',
+        params={
+            'access_token': 'qwerty13',
+        },
+        json={
+            'persistent_menu': [
+                {
+                    'locale': 'default',
+                    "composer_input_disabled": True,
+                    'call_to_actions': [{
+                        'type': 'postback',
+                        'title': 'Help',
+                        'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP',
+                    }, {
+                        'type': 'web_url',
+                        'title': 'View Website',
+                        'url': 'http://petersapparel.parseapp.com/',
+                    }],
+                },
+                {
+                    'locale': 'uk_UA',
+                    "composer_input_disabled": True,
+                    'call_to_actions': [{
+                        'type': 'postback',
+                        'title': 'Допомога',
+                        'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP',
+                    }, {
+                        'type': 'web_url',
+                        'title': 'Переглянути сторінку',
+                        'url': 'http://petersapparel.parseapp.com/',
+                    }],
+                },
+            ],
+        }
+    )
+
+
+@pytest.mark.asyncio
 async def test_can_set_persistent_menu_before_http():
     global story
     story = Story()
