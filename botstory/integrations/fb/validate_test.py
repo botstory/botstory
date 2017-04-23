@@ -31,7 +31,7 @@ async def test_validate_greeting_text(mocker, greeting_text, valid):
         'type': 'postback',
         'title': 'Help',
         'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP'
-    }] * 10, 'menu should not exceed 5 call to actions'),
+    }] * 4, 'menu should not exceed 3 call to actions'),
 
     ([{
         'type': 'postback',

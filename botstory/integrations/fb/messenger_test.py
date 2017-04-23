@@ -1150,7 +1150,7 @@ async def test_set_persistent_menu():
 
 
 @pytest.mark.asyncio
-async def test_seet_persistent_menu_with_locales():
+async def test_set_persistent_menu_with_locales():
     global story
     story = Story()
 

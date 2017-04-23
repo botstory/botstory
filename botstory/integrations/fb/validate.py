@@ -26,8 +26,8 @@ def persistent_menu(menu):
     :param menu:
     :return:
     """
-    if len(menu) > 5:
-        raise Invalid('menu should not exceed 5 call to actions')
+    if len(menu) > 3:
+        raise Invalid('menu should not exceed 3 call to actions')
 
     for item in menu:
         if len(item['title']) > 30:
