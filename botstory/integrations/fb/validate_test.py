@@ -34,6 +34,26 @@ async def test_validate_greeting_text(mocker, greeting_text, valid):
     }] * 4, 'menu should not exceed 3 call to actions'),
 
     ([{
+        'title': 'My Account',
+        'type': 'nested',
+        'call_to_actions': [{
+            'type': 'postback',
+            'title': 'Child Item',
+            'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP'
+        }] * 5
+    }], False),
+
+    ([{
+        'title': 'My Account',
+        'type': 'nested',
+        'call_to_actions': [{
+            'type': 'postback',
+            'title': 'Child Item',
+            'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP'
+        }] * 6
+    }], 'call_to_actions is limited to 5 for sub-levels'),
+
+    ([{
         'type': 'postback',
         'title': 'Help',
         'payload': 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP'

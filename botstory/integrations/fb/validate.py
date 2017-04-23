@@ -29,6 +29,9 @@ def persistent_menu(menu):
     if len(menu) > 3:
         raise Invalid('menu should not exceed 3 call to actions')
 
+    if any(len(item['call_to_actions']) > 5 for item in menu if item['type'] == 'nested'):
+        raise Invalid('call_to_actions is limited to 5 for sub-levels')
+
     for item in menu:
         if len(item['title']) > 30:
             raise Invalid('menu item title should not exceed 30 characters')
