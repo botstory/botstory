@@ -62,6 +62,10 @@ class Chat:
         return await self.send_text_message_to_all_interfaces(
             recipient=user, text=body, options=options)
 
+    async def send_image(self, url, user):
+        tasks = [interface.send_image(user, url) for _, interface in self.interfaces.items()]
+        return [body for body in await asyncio.gather(*tasks)]
+
     async def send_template(self, payload, user):
         tasks = [interface.send_template(recipient=user,
                                          payload=payload)

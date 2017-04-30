@@ -24,6 +24,11 @@ def mock_interface(mocker):
     )
     mocker.patch.object(
         botstory.integrations.fb.messenger.FBInterface,
+        'send_image',
+        aiohttp.test_utils.make_mocked_coro('something'),
+    )
+    mocker.patch.object(
+        botstory.integrations.fb.messenger.FBInterface,
         'send_template',
         aiohttp.test_utils.make_mocked_coro('something'),
     )
@@ -199,7 +204,7 @@ async def test_should_list_elements(mock_interface):
 
 
 @pytest.mark.asyncio
-async def test_should_send_tempalate_based_message(mock_interface):
+async def test_should_send_template_based_message(mock_interface):
     with answer.Talk() as talk:
         story = talk.story
         story.use(mock_interface)
@@ -255,3 +260,15 @@ async def test_should_send_tempalate_based_message(mock_interface):
 
         mock_interface.send_template.assert_called_once_with(recipient=talk.user,
                                                              payload=payload)
+
+
+@pytest.mark.asyncio
+async def test_send_image(mock_interface):
+    with answer.Talk() as talk:
+        story = talk.story
+        story.use(mock_interface)
+
+        await story.send_image('http://some.ua/image.gif',
+                               user=talk.user)
+
+        mock_interface.send_image.assert_called_once_with(talk.user, 'http://some.ua/image.gif')
