@@ -3,7 +3,7 @@ from botstory.ast import story_context
 
 
 def get_location(ctx):
-    return story_context.get_message_data(ctx, 'location')
+    return story_context.get_message_attachment(ctx, 'location')
 
 
 @matchers.matcher()

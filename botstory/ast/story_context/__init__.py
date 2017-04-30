@@ -213,6 +213,14 @@ def get_message_data(ctx, *args, **kwargs):
     return utils.safe_get(get_user_data(ctx)['message'], *args, **kwargs)
 
 
+def get_message_attachment(ctx, attachment_type):
+    logger.debug('# get_message_data(ctx)')
+    logger.debug(get_message_data(ctx))
+    attachment_list = get_message_data(ctx, 'attachments')
+    attachment_list_of_type = [a for a in attachment_list if a['type'] == attachment_type]
+    return len(attachment_list_of_type) > 0 and attachment_list_of_type[0]
+
+
 def set_user_data(ctx, data):
     ctx['session']['data'] = {
         **get_user_data(ctx),

@@ -282,6 +282,9 @@ class FBInterface:
                                 ctx = story_context.set_message_data(ctx,
                                                                      'sticker_id', raw_message['sticker_id'],
                                                                      )
+                            elif 'attachments' in raw_message:
+                                ctx = story_context.set_message_data(ctx,
+                                                                     'attachments', raw_message['attachments'])
                             else:
                                 logger.warning('  entry {} "text"'.format(e))
 
