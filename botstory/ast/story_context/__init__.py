@@ -217,8 +217,12 @@ def get_message_attachment(ctx, attachment_type):
     logger.debug('# get_message_data(ctx)')
     logger.debug(get_message_data(ctx))
     attachment_list = get_message_data(ctx, 'attachments')
+    if attachment_list is None or len(attachment_list) == 0:
+        return None
     attachment_list_of_type = [a for a in attachment_list if a['type'] == attachment_type]
-    return len(attachment_list_of_type) > 0 and attachment_list_of_type[0]
+    if attachment_list_of_type is None or len(attachment_list_of_type) == 0:
+        return None
+    return attachment_list_of_type[0]
 
 
 def set_user_data(ctx, data):

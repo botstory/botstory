@@ -69,7 +69,10 @@ async def location(loc, session=None, user=None, story=None):
             story_context.clean_message_data({
                 'session': session,
                 'user': user,
-            }), 'location', loc))
+            }), 'attachments', [{
+                'type': 'location',
+                'payload': loc
+            }]))
 
 
 async def pure_text(text, session=None, user=None, story=None):
