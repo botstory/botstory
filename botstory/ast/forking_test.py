@@ -37,7 +37,9 @@ async def test_cases():
             def location_case():
                 @story.part()
                 def store_location(ctx):
-                    trigger_location.receive(story_context.get_message_data(ctx))
+                    trigger_location.receive(
+                        story_context.get_message_attachment(ctx, 'location')['payload']
+                    )
 
             @story.case(match='text')
             def text_case():
@@ -53,7 +55,7 @@ async def test_cases():
         await say_location({'x': 123, 'y': 321})
 
         assert trigger_location.result() == {
-            'location': {'x': 123, 'y': 321}
+            'x': 123, 'y': 321
         }
         assert not trigger_text.result()
         assert trigger_after_switch.is_triggered

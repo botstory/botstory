@@ -151,7 +151,7 @@ async def test_delete_200(event_loop):
             http = AioHttpInterface()
             http.session = session
 
-            await http.delete(fake_server.URI.format('/v2.6/me/thread_settings'))
+            await http.delete(fake_server.URI.format('/v2.6/me/messenger_profile'))
 
 
 @pytest.mark.asyncio

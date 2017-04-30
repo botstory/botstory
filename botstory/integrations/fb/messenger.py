@@ -282,6 +282,9 @@ class FBInterface:
                                 ctx = story_context.set_message_data(ctx,
                                                                      'sticker_id', raw_message['sticker_id'],
                                                                      )
+                            elif 'attachments' in raw_message:
+                                ctx = story_context.set_message_data(ctx,
+                                                                     'attachments', raw_message['attachments'])
                             else:
                                 logger.warning('  entry {} "text"'.format(e))
 
@@ -322,26 +325,26 @@ class FBInterface:
         logger.debug('setup')
 
         if self.greeting_text:
-            asyncio.ensure_future(
-                self.replace_greeting_text(self.greeting_text)
-            )
-
-        if self.persistent_menu:
-            asyncio.ensure_future(
-                self.replace_persistent_menu(self.persistent_menu)
-            )
+            await self.replace_greeting_text(self.greeting_text)
 
         # check whether we have `On Start Story`
+
+        # error if we don't have start button handler but have persistent menu:
+        # (#100) You must set a Get Started button if you also wish to use persistent menu.
         have_on_start_story = not not self.library.get_global_story(story_context.set_message_data({
             'session': {}
         }, 'option',
             'value', option.OnStart.DEFAULT_OPTION_PAYLOAD))
-        if have_on_start_story:
+
+        if have_on_start_story or self.persistent_menu:
             await self.remove_greeting_call_to_action_payload()
             await self.set_greeting_call_to_action_payload(option.OnStart.DEFAULT_OPTION_PAYLOAD)
 
+        if self.persistent_menu:
+            await self.replace_persistent_menu(self.persistent_menu)
+
     async def before_start(self):
-        logger.debug('start')
+        logger.debug('# start')
         if self.webhook and self.http:
             self.http.webhook(self.webhook, self.handle, self.webhook_token)
 
@@ -373,6 +376,12 @@ class FBInterface:
         :return:
         """
         logger.debug('set_greeting_text')
+
+        greeting_data = {
+            'locale': 'default',
+            'text': message,
+        }
+
         try:
             validate.greeting_text(message)
         except validate.Invalid as i:
@@ -385,35 +394,36 @@ class FBInterface:
             return
 
         await self.http.post(
-            self.api_uri + '/me/thread_settings',
+            self.api_uri + '/me/messenger_profile',
             params={
                 'access_token': self.token,
             },
             json={
-                'setting_type': 'greeting',
-                'greeting': {
-                    'text': message,
-                },
+                'greeting': [
+                    greeting_data,
+                ],
             }
         )
 
     async def remove_greeting_text(self):
-        logger.debug('remove_greeting_text')
+        logger.debug('# remove_greeting_text')
         if not self.http:
             return
 
         await self.http.delete(
-            self.api_uri + '/me/thread_settings',
+            self.api_uri + '/me/messenger_profile',
             params={
                 'access_token': self.token,
             },
             json={
-                'setting_type': 'greeting',
+                'fields': [
+                    'greeting',
+                ]
             }
         )
 
     async def set_greeting_call_to_action_payload(self, payload):
-        logger.debug('set_greeting_call_to_action_payload')
+        logger.debug('# set_greeting_call_to_action_payload')
         """
 
         more: https://developers.facebook.com/docs/messenger-platform/thread-settings/get-started-button
@@ -422,35 +432,34 @@ class FBInterface:
         :return:
         """
         await self.http.post(
-            self.api_uri + '/me/thread_settings',
+            self.api_uri + '/me/messenger_profile',
             params={
                 'access_token': self.token,
             },
             json={
-                'setting_type': 'call_to_actions',
-                'thread_state': 'new_thread',
-                'call_to_actions': [{'payload': payload}]
+                'get_started': {'payload': payload}
             }
         )
 
     async def remove_greeting_call_to_action_payload(self):
-        logger.debug('remove_greeting_call_to_action_payload')
+        logger.debug('# remove_greeting_call_to_action_payload')
         if not self.http:
             return
 
         await self.http.delete(
-            self.api_uri + '/me/thread_settings',
+            self.api_uri + '/me/messenger_profile',
             params={
                 'access_token': self.token,
             },
             json={
-                'setting_type': 'call_to_actions',
-                'thread_state': 'new_thread',
+                'fields': [
+                    'get_started',
+                ]
             }
         )
 
     async def replace_persistent_menu(self, menu):
-        logger.debug('replace_persistent_menu')
+        logger.debug('# replace_persistent_menu')
         try:
             await self.remove_persistent_menu()
         except Exception:
@@ -464,7 +473,7 @@ class FBInterface:
         :param menu:
         :return:
         """
-        logger.debug('set_persistent_menu')
+        logger.debug('# set_persistent_menu')
         if not isinstance(menu, list) or len(menu) == 0:
             raise ValueError(
                 'Menu should be not empty list. '
@@ -487,6 +496,7 @@ class FBInterface:
 
         if not self.http:
             # should wait until receive http
+            logger.warning('There is no http interface yet')
             return
 
         await self.http.post(
