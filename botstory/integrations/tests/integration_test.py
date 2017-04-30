@@ -1,16 +1,14 @@
-from botstory.ast import story_context
-from botstory.middlewares import text
 import logging
 import os
-
 import pytest
 
+from botstory.ast import story_context
+from botstory.middlewares import text
 from . import fake_server
 from .. import aiohttp, fb, mongodb, mockhttp
 from ... import Story, utils
 
 logger = logging.getLogger(__name__)
-
 
 story = None
 
@@ -193,29 +191,26 @@ async def test_story_on_start(open_db, build_context):
         await story.setup()
 
         http.delete.assert_called_with(
-            'https://graph.facebook.com/v2.6/me/thread_settings',
+            'https://graph.facebook.com/v2.6/me/messenger_profile',
             params={
                 'access_token': 'qwerty',
             },
             json={
-                'setting_type': 'call_to_actions',
-                'thread_state': 'new_thread',
+                'fields': [
+                    'get_started',
+                ]
             }
         )
 
         http.post.assert_called_with(
-            'https://graph.facebook.com/v2.6/me/thread_settings',
+            'https://graph.facebook.com/v2.6/me/messenger_profile',
             params={
                 'access_token': 'qwerty',
             },
             json={
-                'setting_type': 'call_to_actions',
-                'thread_state': 'new_thread',
-                'call_to_actions': [
-                    {
-                        'payload': 'BOT_STORY.PUSH_GET_STARTED_BUTTON'
-                    }
-                ]
+                'get_started': {
+                    'payload': 'BOT_STORY.PUSH_GET_STARTED_BUTTON',
+                }
             }
         )
 

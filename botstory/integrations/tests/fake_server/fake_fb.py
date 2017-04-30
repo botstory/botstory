@@ -59,14 +59,14 @@ class FakeFacebook(FakeServer):
             'status': 'ok',
         })
 
-    @post('/v2.6/me/thread_settings')
-    async def on_thread_settings_post(self, request):
+    @post('/v2.6/me/messenger_profile')
+    async def on_post_messenger_profile(self, request):
         return web.json_response({
             'status': 'ok',
         })
 
-    @delete('/v2.6/me/thread_settings')
-    async def on_remove_thread_setting(self, request):
+    @delete('/v2.6/me/messenger_profile')
+    async def on_remove_messenger_profile(self, request):
         return web.json_response({
             'status': 'ok',
         })

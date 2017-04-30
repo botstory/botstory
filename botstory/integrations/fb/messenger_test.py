@@ -958,15 +958,15 @@ async def test_set_greeting_text():
     await fb_interface.set_greeting_text('Hi there {{user_first_name}}!')
 
     mock_http.post.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/thread_settings',
+        'https://graph.facebook.com/v2.6/me/messenger_profile',
         params={
             'access_token': 'qwerty7',
         },
         json={
-            'setting_type': 'greeting',
-            'greeting': {
+            'greeting': [{
+                'locale': 'default',
                 'text': 'Hi there {{user_first_name}}!',
-            },
+            }],
         }
     )
 
@@ -987,15 +987,15 @@ async def test_can_set_greeting_text_before_inject_http():
     await asyncio.sleep(0.1)
 
     mock_http.post.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/thread_settings',
+        'https://graph.facebook.com/v2.6/me/messenger_profile',
         params={
             'access_token': 'qwerty8',
         },
         json={
-            'setting_type': 'greeting',
-            'greeting': {
+            'greeting': [{
+                'locale': 'default',
                 'text': 'Hi there {{user_first_name}}!',
-            },
+            }],
         }
     )
 
@@ -1018,25 +1018,27 @@ async def test_can_set_greeting_text_in_constructor():
     await asyncio.sleep(0.1)
 
     mock_http.delete.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/thread_settings',
+        'https://graph.facebook.com/v2.6/me/messenger_profile',
         params={
             'access_token': 'qwerty9',
         },
         json={
-            'setting_type': 'greeting',
+            'fields': [
+                'greeting',
+            ]
         },
     )
 
     mock_http.post.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/thread_settings',
+        'https://graph.facebook.com/v2.6/me/messenger_profile',
         params={
             'access_token': 'qwerty9',
         },
         json={
-            'setting_type': 'greeting',
-            'greeting': {
+            'greeting': [{
+                'locale': 'default',
                 'text': 'Hi there {{user_first_name}}!',
-            },
+            }],
         }
     )
 
@@ -1052,12 +1054,14 @@ async def test_remove_greeting_text():
     await fb_interface.remove_greeting_text()
 
     mock_http.delete.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/thread_settings',
+        'https://graph.facebook.com/v2.6/me/messenger_profile',
         params={
             'access_token': 'qwerty10',
         },
         json={
-            'setting_type': 'greeting',
+            'fields': [
+                'greeting',
+            ]
         }
     )
 
@@ -1073,14 +1077,12 @@ async def test_set_greeting_call_to_action_payload():
     await fb_interface.set_greeting_call_to_action_payload('SOME_PAYLOAD')
 
     mock_http.post.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/thread_settings',
+        'https://graph.facebook.com/v2.6/me/messenger_profile',
         params={
             'access_token': 'qwerty11',
         },
         json={
-            'setting_type': 'call_to_actions',
-            'thread_state': 'new_thread',
-            'call_to_actions': [{'payload': 'SOME_PAYLOAD'}]
+            'get_started': {'payload': 'SOME_PAYLOAD'}
         }
     )
 
@@ -1096,13 +1098,14 @@ async def test_remove_greeting_call_to_action_payload():
     await fb_interface.remove_greeting_call_to_action_payload()
 
     mock_http.delete.assert_called_with(
-        'https://graph.facebook.com/v2.6/me/thread_settings',
+        'https://graph.facebook.com/v2.6/me/messenger_profile',
         params={
             'access_token': 'qwerty12',
         },
         json={
-            'setting_type': 'call_to_actions',
-            'thread_state': 'new_thread',
+            'fields': [
+                'get_started',
+            ]
         }
     )
 
