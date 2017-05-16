@@ -161,6 +161,27 @@ class FBInterface:
             'buttons': buttons,
         })
 
+    async def send_image(self, recipient, url):
+        return await self.http.post(
+            self.api_uri + '/me/messages/',
+            params={
+                'access_token': self.token,
+            },
+            json={
+                'recipient': {
+                    'id': recipient['facebook_user_id'],
+                },
+
+                'message': {
+                    'attachment': {
+                        'type': 'image',
+                        'payload': {
+                            'url': url,
+                        },
+                    },
+                },
+            })
+
     async def send_template(self, recipient, payload):
         """
         send template based message
