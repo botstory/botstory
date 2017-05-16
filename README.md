@@ -81,6 +81,10 @@ contribution and would love to hear about your experience.*
 
 and many other features
 
+# News and Changelog
+
+[CHANGELOG.md](CHANGELOG.md)
+
 # Background
 
 We are developing botstory mindful of the need to have easily reading API 
@@ -242,6 +246,10 @@ def list_of_tasks_story():
         )
 
 ```
+
+# License
+
+[MIT](LICENSE.txt)
 
 # Contributing
 
