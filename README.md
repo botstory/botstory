@@ -247,6 +247,10 @@ def list_of_tasks_story():
 
 ```
 
+# License
+
+[MIT](LICENSE.txt)
+
 # Contributing
 
 Contributions of all sizes are welcome.
