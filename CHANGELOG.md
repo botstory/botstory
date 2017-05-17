@@ -1,5 +1,37 @@
 # Change Log
 
+## [0.1.1](https://github.com/botstory/botstory/tree/0.1.1) (2017-05-17)
+[Full Changelog](https://github.com/botstory/botstory/compare/0.1.0...0.1.1)
+
+**Implemented enhancements:**
+
+- send attachment [\#198](https://github.com/botstory/botstory/issues/198)
+- version number in botstory instance [\#196](https://github.com/botstory/botstory/issues/196)
+- migrate /me/thread\_settings -\> me/messenger\_profile [\#194](https://github.com/botstory/botstory/issues/194)
+- add changelog [\#53](https://github.com/botstory/botstory/issues/53)
+
+**Fixed bugs:**
+
+- update persist menu [\#178](https://github.com/botstory/botstory/issues/178)
+
+**Closed issues:**
+
+- update fb integration [\#192](https://github.com/botstory/botstory/issues/192)
+
+**Merged pull requests:**
+
+- feature/version-at-module [\#211](https://github.com/botstory/botstory/pull/211) ([hyzhak](https://github.com/hyzhak))
+- Feature/changelog [\#210](https://github.com/botstory/botstory/pull/210) ([hyzhak](https://github.com/hyzhak))
+- send simple image [\#208](https://github.com/botstory/botstory/pull/208) ([hyzhak](https://github.com/hyzhak))
+- Update pytest-flakes to 2.0.0 [\#206](https://github.com/botstory/botstory/pull/206) ([pyup-bot](https://github.com/pyup-bot))
+- Update pytest-cov to 2.5.1 [\#205](https://github.com/botstory/botstory/pull/205) ([pyup-bot](https://github.com/pyup-bot))
+- Update pytest-cov to 2.5.0 [\#204](https://github.com/botstory/botstory/pull/204) ([pyup-bot](https://github.com/pyup-bot))
+- Update yarl to 0.10.2 [\#203](https://github.com/botstory/botstory/pull/203) ([pyup-bot](https://github.com/pyup-bot))
+- Update yarl to 0.10.1 [\#199](https://github.com/botstory/botstory/pull/199) ([pyup-bot](https://github.com/pyup-bot))
+- Feature/migrate to me/messenger profile [\#197](https://github.com/botstory/botstory/pull/197) ([hyzhak](https://github.com/hyzhak))
+- Feature/fix fb persist menu [\#193](https://github.com/botstory/botstory/pull/193) ([hyzhak](https://github.com/hyzhak))
+- Feature/update readme [\#191](https://github.com/botstory/botstory/pull/191) ([hyzhak](https://github.com/hyzhak))
+
 ## [0.1.0](https://github.com/botstory/botstory/tree/0.1.0) (2017-04-18)
 [Full Changelog](https://github.com/botstory/botstory/compare/0.0.63...0.1.0)
 
