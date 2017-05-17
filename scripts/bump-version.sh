@@ -26,6 +26,9 @@ if [[ ${versions} == *${next_version}* ]]; then
    exit 1
 fi
 
+# update CHANGELOG
+github_changelog_generator
+
 ${DIR}/deploy.sh
 
 git commit -am "bump to ${next_version}"
