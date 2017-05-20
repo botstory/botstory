@@ -139,7 +139,7 @@ async def test_integrate_mongodb_with_facebook(open_db, build_context):
             def store_result(ctx):
                 trigger.receive(ctx)
 
-        await facebook.handle(build_message(
+        await facebook.process(build_message(
             user['facebook_user_id'], {
                 'text': 'hello, world!'
             }
@@ -166,7 +166,7 @@ async def test_integrate_mongodb_with_facebook_with_none_session(open_db, build_
             def store_result_for_new_user(message):
                 trigger.receive(message)
 
-        await facebook.handle(build_message('some-facebook-id', {
+        await facebook.process(build_message('some-facebook-id', {
             'text': 'hello, world!'
         }))
 
@@ -216,7 +216,7 @@ async def test_story_on_start(open_db, build_context):
 
         await story.start()
 
-        await facebook.handle({
+        await facebook.process({
             'object': 'page',
             'entry': [{
                 'id': 'PAGE_ID',
@@ -267,10 +267,10 @@ async def test_should_prevent_other_story_to_start_until_we_waiting_for_answer(o
 
         await story.start()
 
-        await facebook.handle(build_message(user['facebook_user_id'], {
+        await facebook.process(build_message(user['facebook_user_id'], {
             'text': 'hi there!'
         }))
-        await facebook.handle(build_message(user['facebook_user_id'], {
+        await facebook.process(build_message(user['facebook_user_id'], {
             'text': 'Great!'
         }))
 

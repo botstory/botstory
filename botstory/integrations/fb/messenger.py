@@ -1,5 +1,6 @@
 import asyncio
 from botstory.ast import story_context
+import functools
 import logging
 from . import validate
 from .. import commonhttp
@@ -226,6 +227,31 @@ class FBInterface:
         )
 
     async def handle(self, data):
+        """
+        handle fb messenger message and return 200Ok as quick as possible
+        In background we launch process of handling incoming message
+        This solution is ok only for small apps for bigger one it is much better
+        to use a queue.
+
+        TODO: support third party queue
+
+        :param data:
+        :return:
+        """
+        loop = asyncio.get_event_loop()
+        loop.create_task(self.process(data))
+        return {
+            'status': 200,
+            'text': 'Ok!',
+        }
+
+    async def process(self, data):
+        """
+        async process message which comes from fb messenger
+
+        :param data:
+        :return:
+        """
         logger.debug('')
         logger.debug('> handle <')
         logger.debug('')
