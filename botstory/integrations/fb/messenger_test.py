@@ -549,7 +549,7 @@ async def test_should_request_user_data_once_we_do_not_know_current_user():
     }))
     story.use(mockdb.MockDB())
 
-    await fb_interface.handle({
+    await fb_interface.process({
         'object': 'page',
         'entry': [{
             'id': 'PAGE_ID',
@@ -595,7 +595,7 @@ async def test_should_request_user_data_and_fail():
         get_raise=commonhttp.errors.HttpRequestError()))
     db = story.use(mockdb.MockDB())
 
-    await fb_interface.handle({
+    await fb_interface.process({
         'object': 'page',
         'entry': [{
             'id': 'PAGE_ID',
@@ -635,7 +635,7 @@ async def test_webhook_handler_should_return_ok_status_if_http_fail():
     story.use(mockhttp.MockHttpInterface(get_raise=commonhttp.errors.HttpRequestError()))
     story.use(mockdb.MockDB())
 
-    res = await fb_interface.handle({
+    res = await fb_interface.process({
         'object': 'page',
         'entry': [{
             'id': 'PAGE_ID',
@@ -669,7 +669,7 @@ async def test_webhook_handler_should_return_ok_status_in_any_case():
 
     fb_interface = messenger.FBInterface()
     with mock.patch('botstory.integrations.fb.messenger.logger') as mock_logger:
-        res = await fb_interface.handle({
+        res = await fb_interface.process({
             'object': 'page',
             'entry': [{
                 'id': 'PAGE_ID',
@@ -741,7 +741,7 @@ async def test_handler_raw_text(build_fb_interface):
         def store_result(ctx):
             incorrect_trigger.receive(story_context.get_message_data(ctx))
 
-    await fb_interface.handle({
+    await fb_interface.process({
         'object': 'page',
         'entry': [{
             'id': 'PAGE_ID',
@@ -792,7 +792,7 @@ async def test_handler_selected_option(build_fb_interface):
         def store_result(ctx):
             incorrect_trigger.receive(story_context.get_message_data(ctx))
 
-    await fb_interface.handle({
+    await fb_interface.process({
         'object': 'page',
         'entry': [{
             'id': 'PAGE_ID',
@@ -847,7 +847,7 @@ async def test_handler_postback(build_fb_interface):
         def store_result(ctx):
             incorrect_trigger.receive(story_context.get_message_data(ctx))
 
-    await fb_interface.handle({
+    await fb_interface.process({
         'object': 'page',
         'entry': [{
             'id': 'PAGE_ID',
@@ -885,7 +885,7 @@ async def test_handler_thumbsup(build_fb_interface):
         def store_result(ctx):
             like_is_here_trigger.passed()
 
-    await fb_interface.handle({
+    await fb_interface.process({
         'object': 'page',
         'entry': [{
             'id': 'PAGE_ID',
@@ -920,7 +920,7 @@ async def test_should_not_process_echo_delivery_and_read_messages_as_regular(bui
         def sync_part(message):
             echo_trigger.passed()
 
-    await fb_interface.handle({
+    await fb_interface.process({
         'entry': [
             {
                 'id': '329188380752158',
@@ -1416,3 +1416,57 @@ def test_bind_fb_deps():
 
         assert isinstance(di.injector.get('one_class').fb.http, mockhttp.MockHttpInterface)
         assert isinstance(di.injector.get('one_class').fb.storage, mockdb.MockDB)
+
+
+def one_message(talk):
+    return {
+        'object': 'page',
+        'entry': [{
+            'id': 'PAGE_ID',
+            'time': 1473204787206,
+            'messaging': [
+                {
+                    'sender': {
+                        'id': talk.user['facebook_user_id'],
+                    },
+                    'recipient': {
+                        'id': 'PAGE_ID'
+                    },
+                    'timestamp': 1458692752478,
+                    'message': {
+                        'mid': 'mid.1457764197618:41d102a3e1ae206a38',
+                        'seq': 73,
+                        'text': 'hello, world!'
+                    }
+                }
+            ]
+        }]
+    }
+
+
+@pytest.mark.asyncio
+async def test_quickly_returns_200ok():
+    trigger = utils.SimpleTrigger()
+
+    with answer.Talk() as talk:
+        story = talk.story
+        fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty1'))
+        story.use(mockdb.MockDB())
+        story.use(mockhttp.MockHttpInterface())
+
+        @story.on('hello, world!')
+        def one_story():
+            @story.part()
+            def store_result(ctx):
+                trigger.passed()
+
+        await story.start()
+
+        res = await fb_interface.handle(one_message(talk))
+        assert res == {
+            'status': 200,
+            'text': 'Ok!',
+        }
+        assert not trigger.is_passed()
+        await asyncio.sleep(0)
+        assert trigger.is_passed()
