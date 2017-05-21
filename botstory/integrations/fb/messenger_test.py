@@ -1470,3 +1470,19 @@ async def test_quickly_returns_200ok():
         assert not trigger.is_passed()
         await asyncio.sleep(0)
         assert trigger.is_passed()
+
+
+@pytest.mark.asyncio
+async def test_subscribe():
+    fb_interface = messenger.FBInterface(
+        page_access_token='one-token',
+    )
+    http_interface = mockhttp.MockHttpInterface()
+    fb_interface.add_http(http_interface)
+    await fb_interface.subscribe()
+    http_interface.post.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/subscribed_apps',
+        params={
+            'access_token': 'one-token',
+        },
+    )

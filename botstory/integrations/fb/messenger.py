@@ -570,3 +570,12 @@ class FBInterface:
                 'persistent_menu',
             ]}
         )
+
+    async def subscribe(self):
+        logger.debug('# subscribe page')
+        await self.http.post(
+            self.api_uri + '/me/subscribed_apps',
+            params={
+                'access_token': self.token,
+            },
+        )
