@@ -390,6 +390,8 @@ class FBInterface:
         if self.persistent_menu:
             await self.replace_persistent_menu(self.persistent_menu)
 
+        await self.subscribe()
+
     async def before_start(self):
         logger.debug('# start')
         if self.webhook and self.http:
@@ -572,6 +574,13 @@ class FBInterface:
         )
 
     async def subscribe(self):
+        """
+        subscribe the app to page updates
+        docs:
+        https://developers.facebook.com/docs/messenger-platform/guides/setup#subscribe_app
+
+        :return:
+        """
         logger.debug('# subscribe page')
         await self.http.post(
             self.api_uri + '/me/subscribed_apps',

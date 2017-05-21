@@ -1,7 +1,9 @@
+import aiohttp
 import asyncio
 from botstory.ast import story_context
 from botstory.utils import answer
 import logging
+import unittest
 from unittest import mock
 import pytest
 
@@ -1015,7 +1017,7 @@ async def test_can_set_greeting_text_before_inject_http():
     # give few a moment for lazy initialization of greeting text
     await asyncio.sleep(0.1)
 
-    mock_http.post.assert_called_with(
+    mock_http.post.assert_has_calls([unittest.mock.call(
         'https://graph.facebook.com/v2.6/me/messenger_profile',
         params={
             'access_token': 'qwerty8',
@@ -1026,7 +1028,7 @@ async def test_can_set_greeting_text_before_inject_http():
                 'text': 'Hi there {{user_first_name}}!',
             }],
         }
-    )
+    )])
 
 
 @pytest.mark.asyncio
@@ -1058,7 +1060,7 @@ async def test_can_set_greeting_text_in_constructor():
         },
     )
 
-    mock_http.post.assert_called_with(
+    mock_http.post.assert_has_calls([unittest.mock.call(
         'https://graph.facebook.com/v2.6/me/messenger_profile',
         params={
             'access_token': 'qwerty9',
@@ -1069,7 +1071,7 @@ async def test_can_set_greeting_text_in_constructor():
                 'text': 'Hi there {{user_first_name}}!',
             }],
         }
-    )
+    )])
 
 
 @pytest.mark.asyncio
@@ -1279,7 +1281,7 @@ async def test_can_set_persistent_menu_before_http():
     # give few a moment for lazy initialization of greeting text
     await asyncio.sleep(0.1)
 
-    mock_http.post.assert_called_with(
+    mock_http.post.assert_has_calls([unittest.mock.call(
         'https://graph.facebook.com/v2.6/me/messenger_profile',
         params={
             'access_token': 'qwerty14',
@@ -1300,7 +1302,7 @@ async def test_can_set_persistent_menu_before_http():
                 },
             ],
         }
-    )
+    )])
 
 
 @pytest.mark.asyncio
@@ -1338,7 +1340,7 @@ async def test_can_set_persistent_menu_inside_of_constructor():
         ]}
     )
 
-    mock_http.post.assert_called_with(
+    mock_http.post.assert_has_calls([unittest.mock.call(
         'https://graph.facebook.com/v2.6/me/messenger_profile',
         params={
             'access_token': 'qwerty15',
@@ -1359,7 +1361,23 @@ async def test_can_set_persistent_menu_inside_of_constructor():
                 },
             ],
         }
-    )
+    )], any_order=True)
+
+
+@pytest.mark.asyncio
+async def test_subscribe_to_page_on_setup():
+    with answer.Talk() as talk:
+        story = talk.story
+        fb_interface = messenger.FBInterface(
+            page_access_token='one-token',
+        )
+        fb_interface.subscribe = aiohttp.test_utils.make_mocked_coro()
+        http_interface = mockhttp.MockHttpInterface()
+        story.use(fb_interface)
+        story.use(http_interface)
+
+        await story.setup()
+        fb_interface.subscribe.assert_called_with()
 
 
 @pytest.mark.asyncio

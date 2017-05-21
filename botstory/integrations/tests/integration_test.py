@@ -1,6 +1,7 @@
 import logging
 import os
 import pytest
+import unittest
 
 from botstory.ast import story_context
 from botstory.middlewares import text
@@ -202,7 +203,7 @@ async def test_story_on_start(open_db, build_context):
             }
         )
 
-        http.post.assert_called_with(
+        http.post.assert_has_calls([unittest.mock.call(
             'https://graph.facebook.com/v2.6/me/messenger_profile',
             params={
                 'access_token': 'qwerty',
@@ -212,7 +213,7 @@ async def test_story_on_start(open_db, build_context):
                     'payload': 'BOT_STORY.PUSH_GET_STARTED_BUTTON',
                 }
             }
-        )
+        )], any_order=True)
 
         await story.start()
 
