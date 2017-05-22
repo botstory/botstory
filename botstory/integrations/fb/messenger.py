@@ -589,7 +589,19 @@ class FBInterface:
         )
 
     async def stop_typing(self, user):
-        pass
+        logger.debug('# stop typing')
+        await self.http.post(
+            self.api_uri + '/me/messages',
+            params={
+                'access_token': self.token,
+            },
+            json={
+                'recipient': {
+                    'id': user['facebook_user_id'],
+                },
+                'sender_action': 'typing_off',
+            },
+        )
 
     async def subscribe(self):
         """

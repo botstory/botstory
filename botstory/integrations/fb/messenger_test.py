@@ -1529,3 +1529,29 @@ async def test_start_typing():
             'sender_action': 'typing_on',
         }
     )
+
+
+
+@pytest.mark.asyncio
+async def test_stop_typing():
+    fake_user = utils.build_fake_user()
+
+    fb_interface = messenger.FBInterface(
+        page_access_token='one-token',
+    )
+    http_interface = mockhttp.MockHttpInterface()
+    fb_interface.add_http(http_interface)
+
+    await fb_interface.stop_typing(fake_user)
+    http_interface.post.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/messages',
+        params={
+            'access_token': 'one-token',
+        },
+        json={
+            'recipient': {
+                'id': fake_user['facebook_user_id'],
+            },
+            'sender_action': 'typing_off',
+        }
+    )
