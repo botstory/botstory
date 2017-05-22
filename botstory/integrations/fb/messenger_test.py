@@ -1531,7 +1531,6 @@ async def test_start_typing():
     )
 
 
-
 @pytest.mark.asyncio
 async def test_stop_typing():
     fake_user = utils.build_fake_user()

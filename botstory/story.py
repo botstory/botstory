@@ -104,6 +104,24 @@ class Story:
     async def say(self, body, user, options=None):
         return await self.chat.say(body, user, options)
 
+    async def start_typing(self, user):
+        """
+        start typing (show indicator) to messenger
+
+        :param user:
+        :return:
+        """
+        return await self.chat.start_typing(user)
+
+    async def stop_typing(self, user):
+        """
+        stop typing (hide indicator) to messenger
+
+        :param user:
+        :return:
+        """
+        pass
+
     def use(self, middleware):
         """
         attache middleware
