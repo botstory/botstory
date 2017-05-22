@@ -120,7 +120,7 @@ class Story:
         :param user:
         :return:
         """
-        pass
+        return await self.chat.stop_typing(user)
 
     def use(self, middleware):
         """

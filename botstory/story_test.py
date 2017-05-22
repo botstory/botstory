@@ -311,3 +311,15 @@ async def test_start_typing():
             await story.start_typing(talk.user)
 
             fb_interface.start_typing.assert_called_with(talk.user)
+
+
+@pytest.mark.asyncio
+async def test_stop_typing():
+    with di.child_scope():
+        with answer.Talk() as talk:
+            story = talk.story
+            fb_interface = story.use(FakeFbIntegration())
+
+            await story.stop_typing(talk.user)
+
+            fb_interface.stop_typing.assert_called_with(talk.user)
