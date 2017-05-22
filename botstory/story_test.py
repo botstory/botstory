@@ -302,34 +302,11 @@ class FakeFbIntegration:
 
 
 @pytest.mark.asyncio
-async def test_start_typing(mocker):
+async def test_start_typing():
     with di.child_scope():
         with answer.Talk() as talk:
             story = talk.story
-
-            # @di.desc()
-            # class MockExtension:
-            #     handler = mocker.stub()
-            #
-            #     async def before_start(self):
-            #         self.handler('before_start')
-            #
-            #     async def start(self):
-            #         self.handler('start')
-            #
-            #     async def after_start(self):
-            #         self.handler('after_start')
-
-            # ext = story.use(MockExtension())
-            # ext.handler.assert_has_calls([
-            #     call('before_start'),
-            #     call('start'),
-            #     call('after_start'),
-            # ])
-            story.use(mockdb.MockDB())
-            story.use(mockhttp.MockHttpInterface())
             fb_interface = story.use(FakeFbIntegration())
-            await story.start()
 
             await story.start_typing(talk.user)
 
