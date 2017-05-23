@@ -96,6 +96,22 @@ class Chat:
         logger.debug(res)
         return res
 
+    async def start_typing(self, user):
+        logger.debug('# start typing')
+        tasks = [interface.start_typing(user)
+                 for _, interface in self.interfaces.items()]
+
+        res = [body for body in await asyncio.gather(*tasks)]
+        return res
+
+    async def stop_typing(self, user):
+        logger.debug('# stop typing')
+        tasks = [interface.stop_typing(user)
+                 for _, interface in self.interfaces.items()]
+
+        res = [body for body in await asyncio.gather(*tasks)]
+        return res
+
     def add_interface(self, interface):
         logger.debug('add_interface')
         logger.debug(interface)

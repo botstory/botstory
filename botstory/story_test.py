@@ -1,3 +1,4 @@
+import aiohttp
 import asyncio
 import logging
 import pytest
@@ -288,3 +289,37 @@ async def test_should_run_before_start_start_and_then_after_start(mocker):
                 call('start'),
                 call('after_start'),
             ])
+
+
+@di.desc('fb', reg=False)
+class FakeFbIntegration:
+    type = 'fake facebook'
+
+    def __init__(self):
+        self.send_text_message = aiohttp.test_utils.make_mocked_coro()
+        self.start_typing = aiohttp.test_utils.make_mocked_coro()
+        self.stop_typing = aiohttp.test_utils.make_mocked_coro()
+
+
+@pytest.mark.asyncio
+async def test_start_typing():
+    with di.child_scope():
+        with answer.Talk() as talk:
+            story = talk.story
+            fb_interface = story.use(FakeFbIntegration())
+
+            await story.start_typing(talk.user)
+
+            fb_interface.start_typing.assert_called_with(talk.user)
+
+
+@pytest.mark.asyncio
+async def test_stop_typing():
+    with di.child_scope():
+        with answer.Talk() as talk:
+            story = talk.story
+            fb_interface = story.use(FakeFbIntegration())
+
+            await story.stop_typing(talk.user)
+
+            fb_interface.stop_typing.assert_called_with(talk.user)
