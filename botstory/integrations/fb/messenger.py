@@ -1,3 +1,4 @@
+import aiohttp
 import asyncio
 from botstory.ast import story_context
 import functools
@@ -162,7 +163,24 @@ class FBInterface:
             'buttons': buttons,
         })
 
-    async def send_image(self, recipient, url):
+    async def send_image(self, recipient, url, options=None):
+        if options is None:
+            options = {}
+
+        should_try = True
+        delay = options.get('retry_delay', 1)
+        tries = options.get('retry_times', 3)
+
+        while tries > 0 and should_try:
+            try:
+                tries -= 1
+                await self._send_image(recipient, url)
+                should_try = False
+            except aiohttp.http_exceptions.HttpBadRequest:
+                should_try = True
+                await asyncio.sleep(delay)
+
+    async def _send_image(self, recipient, url):
         return await self.http.post(
             self.api_uri + '/me/messages/',
             params={

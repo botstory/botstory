@@ -271,4 +271,4 @@ async def test_send_image(mock_interface):
         await story.send_image('http://some.ua/image.gif',
                                user=talk.user)
 
-        mock_interface.send_image.assert_called_once_with(talk.user, 'http://some.ua/image.gif')
+        mock_interface.send_image.assert_called_once_with(talk.user, 'http://some.ua/image.gif', None)
