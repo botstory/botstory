@@ -423,6 +423,60 @@ async def test_send_image():
         )
 
 
+def should_post_attachment(mock_http, talk):
+    mock_http.post.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/messages/',
+        params={
+            'access_token': 'qwerty1',
+        },
+        json={
+            'message': {
+                'attachment': {
+                    'type': 'image',
+                    'payload': {
+                        'url': 'http://shevchenko.ua/image.gif',
+                    },
+                }
+            },
+            'recipient': {
+                'id': talk.user['facebook_user_id'],
+            },
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_retry_send_image():
+    with answer.Talk() as talk:
+        story = talk.story
+        fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty1'))
+        mock_http = story.use(mockhttp.MockHttpInterface(
+            post_raise=aiohttp.http_exceptions.HttpBadRequest('fail'),
+        ))
+        await story.start()
+
+        send_task = fb_interface.send_image(talk.user, 'http://shevchenko.ua/image.gif', options={
+            'retry_times': 3,
+            'retry_delay': 1,
+        })
+
+        async def lazy_fix_http():
+            # here should pass first 2 retry
+            await asyncio.sleep(1.5)
+            # than we change mock http without post raise
+            # so on 3 try it should pass without problem
+            story.use(mockhttp.MockHttpInterface())
+
+        await asyncio.gather(
+            lazy_fix_http(),
+            send_task,
+        )
+
+        should_post_attachment(mock_http, talk)
+        should_post_attachment(mock_http, talk)
+        should_post_attachment(mock_http, talk)
+
+
 @pytest.mark.asyncio
 async def test_integration():
     user = utils.build_fake_user()

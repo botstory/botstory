@@ -89,8 +89,8 @@ class Story:
     async def list_elements(self, elements=None, buttons=None, user=None, options=None):
         return await self.chat.list_elements(elements, buttons, user, options)
 
-    async def send_image(self, url, user):
-        return await self.chat.send_image(url, user)
+    async def send_image(self, url, user, options=None):
+        return await self.chat.send_image(url, user, options)
 
     async def send_template(self, payload, user):
         """
