@@ -1,6 +1,6 @@
-import aiohttp
 import asyncio
 from botstory.ast import story_context
+from botstory.integrations.commonhttp import errors as commonhttp_errors
 import functools
 import logging
 from . import validate
@@ -176,7 +176,7 @@ class FBInterface:
                 tries -= 1
                 await self._send_image(recipient, url)
                 should_try = False
-            except aiohttp.http_exceptions.HttpBadRequest:
+            except commonhttp_errors.HttpRequestError:
                 should_try = True
                 await asyncio.sleep(delay)
 

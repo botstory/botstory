@@ -1,6 +1,7 @@
 import aiohttp
 import asyncio
 from botstory.ast import story_context
+from botstory.integrations.commonhttp import errors as commonhttp_errors
 from botstory.utils import answer
 import logging
 import unittest
@@ -451,7 +452,7 @@ async def test_retry_send_image():
         story = talk.story
         fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty1'))
         mock_http = story.use(mockhttp.MockHttpInterface(
-            post_raise=aiohttp.http_exceptions.HttpBadRequest('fail'),
+            post_raise=commonhttp_errors.HttpRequestError(),
         ))
         await story.start()
 
