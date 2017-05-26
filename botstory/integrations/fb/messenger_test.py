@@ -458,12 +458,12 @@ async def test_retry_send_image():
 
         send_task = fb_interface.send_image(talk.user, 'http://shevchenko.ua/image.gif', options={
             'retry_times': 3,
-            'retry_delay': 1,
+            'retry_delay': 0.1,
         })
 
         async def lazy_fix_http():
             # here should pass first 2 retry
-            await asyncio.sleep(1.5)
+            await asyncio.sleep(0.15)
             # than we change mock http without post raise
             # so on 3 try it should pass without problem
             story.use(mockhttp.MockHttpInterface())
@@ -474,7 +474,24 @@ async def test_retry_send_image():
         )
 
         should_post_attachment(mock_http, talk)
-        should_post_attachment(mock_http, talk)
+
+
+@pytest.mark.asyncio
+async def test_retry_send_image_should_fail_on_tries_exceed():
+    with answer.Talk() as talk:
+        story = talk.story
+        fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty1'))
+        mock_http = story.use(mockhttp.MockHttpInterface(
+            post_raise=commonhttp_errors.HttpRequestError(),
+        ))
+        await story.start()
+
+        with pytest.raises(commonhttp_errors.HttpRequestError):
+            await fb_interface.send_image(talk.user, 'http://shevchenko.ua/image.gif', options={
+                'retry_times': 3,
+                'retry_delay': 0.1,
+            })
+
         should_post_attachment(mock_http, talk)
 
 
