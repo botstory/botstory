@@ -177,6 +177,7 @@ class FBInterface:
                 await self._send_image(recipient, url)
                 should_try = False
             except commonhttp_errors.HttpRequestError:
+                logger.warning('# retry to send image {}'.format(url))
                 should_try = True
                 await asyncio.sleep(delay)
 
