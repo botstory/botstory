@@ -62,9 +62,10 @@ def send_text_message(text, quick_replies):
             raise Invalid('send message quick replies should not exceed 10 limit')
 
         for item in quick_replies:
-            if len(item['title']) > 20:
-                raise Invalid('send message quick replies title should not exceed 20 character limit')
             if 'content_type' not in item:
                 raise Invalid('send message quick replies should have content_type')
-            if item['content_type'] == 'text' and len(item['payload']) > 1000:
-                raise Invalid('send message quick replies payload should not exceed 1000 character limit')
+            if item['content_type'] == 'text':
+                if len(item['title']) > 20:
+                    raise Invalid('send message quick replies title should not exceed 20 character limit')
+                if len(item['payload']) > 1000:
+                    raise Invalid('send message quick replies payload should not exceed 1000 character limit')
