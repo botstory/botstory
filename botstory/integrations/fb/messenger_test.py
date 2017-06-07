@@ -584,6 +584,67 @@ async def test_quick_replies():
 
 
 @pytest.mark.asyncio
+async def test_quick_replies_with_location():
+    user = utils.build_fake_user()
+
+    global story
+    story = Story()
+
+    story.use(messenger.FBInterface(page_access_token='qwerty3'))
+    story.use(mockdb.MockDB())
+    mock_http = story.use(mockhttp.MockHttpInterface())
+
+    await story.ask(
+        'Where do you live?',
+        quick_replies=[{
+            'content_type': 'location',
+        }, {
+            'title': 'Europe',
+            'payload': 'SET_LOCATION_EU',
+        }, {
+            'title': 'US :',
+            'payload': 'SET_LOCATION_US',
+        }, {
+            'title': 'Ukraine',
+            'payload': 'SET_LOCATION_UA',
+        }, ],
+        user=user,
+    )
+
+    mock_http.post.assert_called_with(
+        'https://graph.facebook.com/v2.6/me/messages/',
+        params={
+            'access_token': 'qwerty3',
+        },
+        json={
+            'message': {
+                'text': 'Where do you live?',
+                'quick_replies': [
+                    {
+                        'content_type': 'location',
+                    }, {
+                        'content_type': 'text',
+                        'title': 'Europe',
+                        'payload': 'SET_LOCATION_EU',
+                    }, {
+                        'content_type': 'text',
+                        'title': 'US :',
+                        'payload': 'SET_LOCATION_US',
+                    }, {
+                        'content_type': 'text',
+                        'title': 'Ukraine',
+                        'payload': 'SET_LOCATION_UA',
+                    },
+                ],
+            },
+            'recipient': {
+                'id': user['facebook_user_id'],
+            },
+        }
+    )
+
+
+@pytest.mark.asyncio
 async def test_setup_webhook():
     global story
     story = Story()

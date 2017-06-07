@@ -123,7 +123,7 @@ class FBInterface:
             'text': text,
         }
 
-        quick_replies = [{**reply, 'content_type': 'text'} for reply in quick_replies]
+        quick_replies = [{'content_type': 'text', **reply} for reply in quick_replies]
         if len(quick_replies) > 0:
             message['quick_replies'] = quick_replies
 
