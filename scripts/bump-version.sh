@@ -7,7 +7,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo 'bump to new version'
 
-version=`cat ${DIR}/../version.txt`
+version=`cat ${DIR}/../botstory/version.txt`
 versions=`git tag --list`
 
 echo 'current version' ${version}
@@ -18,7 +18,7 @@ next_version="${version%.*}.$((${version##*.}+1))"
 #TODO: increase major and beta version based on arguments
 
 echo 'new version' ${next_version}
-echo ${next_version} > ${DIR}/../version.txt
+echo ${next_version} > ${DIR}/../botstory/version.txt
 echo 'updated version.txt'
 
 if [[ ${versions} == *${next_version}* ]]; then
