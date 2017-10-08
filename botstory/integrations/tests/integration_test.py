@@ -82,8 +82,8 @@ def open_db():
             return self.db_interface
 
         async def __aexit__(self, exc_type, exc_val, exc_tb):
-            self.db_interface.stop()
             await self.db_interface.clear_collections()
+            await self.db_interface.stop()
             self.db_interface = None
 
     return AsyncDBConnection
