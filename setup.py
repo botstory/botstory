@@ -7,8 +7,9 @@ if os.path.exists('README.md'):
     longDesc = open('README.md').read().strip()
 
 version = ''
-if os.path.exists('version.txt'):
-    version = open('version.txt').read().strip()
+version_path = os.path.join('botstory', 'version.txt')
+if os.path.exists(version_path):
+    version = open(version_path).read().strip()
 
 setup(
     name='botstory',
