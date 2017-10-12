@@ -37,6 +37,6 @@ setup(
         'yarl==0.10.0',
     ],
     package_data={
-        '': ['*.crt', '*.key']
+        '': ['*.crt', '*.key', '*.txt']
     },
 )
