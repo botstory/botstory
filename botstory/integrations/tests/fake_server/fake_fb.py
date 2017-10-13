@@ -70,3 +70,9 @@ class FakeFacebook(FakeServer):
         return web.json_response({
             'status': 'ok',
         })
+
+    @post('/v2.6/me/subscribed_apps')
+    async def on_messages(self, request):
+        return web.json_response({
+            'status': 'ok',
+        })
