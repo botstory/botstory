@@ -7,7 +7,6 @@ https://github.com/KeepSafe/aiohttp/blob/master/examples/fake_server.py
 import aiohttp
 from aiohttp import web
 from aiohttp.test_utils import unused_port
-
 from aiohttp.resolver import DefaultResolver
 import logging
 import pathlib
@@ -89,6 +88,7 @@ class FakeServer:
         for name in dir(self.__class__):
             func = getattr(self.__class__, name)
             if hasattr(func, '__method__'):
+                logger.debug('listen {} {}'.format(func.__method__, func.__path__))
                 self.app.router.add_route(func.__method__,
                                           func.__path__,
                                           getattr(self, name))
@@ -104,8 +104,8 @@ class FakeServer:
 
     async def middleware_factory(self, app, handler):
         async def middleware(request):
-            response = await handler(request)
             logger.debug('request: {}'.format(request))
+            response = await handler(request)
             logger.debug('response: {}'.format(response))
 
             self.history.append({
