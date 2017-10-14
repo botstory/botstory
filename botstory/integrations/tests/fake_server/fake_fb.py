@@ -18,14 +18,21 @@ class FakeFacebook(FakeServer):
     ROOT_URI = 'graph.facebook.com'
 
     @get('/v2.7/me')
-    async def on_me(self, request):
+    async def on_get_me(self, request):
+        return web.json_response({
+            "name": "John Doe",
+            "id": "12345678901234567"
+        })
+
+    @get('/v2.6/USER_ID')
+    async def on_get_user_profile(self, req):
         return web.json_response({
             "name": "John Doe",
             "id": "12345678901234567"
         })
 
     @get('/v2.7/me/friends')
-    async def on_my_friends(self, request):
+    async def on_get_my_friends(self, request):
         return web.json_response({
             "data": [
                 {
@@ -54,7 +61,7 @@ class FakeFacebook(FakeServer):
             }})
 
     @post('/v2.6/me/messages/')
-    async def on_messages(self, request):
+    async def on_post_messages(self, request):
         return web.json_response({
             'status': 'ok',
         })
@@ -66,13 +73,13 @@ class FakeFacebook(FakeServer):
         })
 
     @delete('/v2.6/me/messenger_profile')
-    async def on_remove_messenger_profile(self, request):
+    async def on_delete_messenger_profile(self, request):
         return web.json_response({
             'status': 'ok',
         })
 
     @post('/v2.6/me/subscribed_apps')
-    async def on_messages(self, request):
+    async def on_post_subscribed_apps(self, request):
         return web.json_response({
             'status': 'ok',
         })
