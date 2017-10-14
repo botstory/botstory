@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.1.4](https://github.com/botstory/botstory/tree/0.1.4) (2017-10-14)
+[Full Changelog](https://github.com/botstory/botstory/compare/0.1.3...0.1.4)
+
 ## [0.1.3](https://github.com/botstory/botstory/tree/0.1.3) (2017-10-12)
 [Full Changelog](https://github.com/botstory/botstory/compare/0.1.2...0.1.3)
 
