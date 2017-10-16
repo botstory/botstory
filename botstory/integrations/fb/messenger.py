@@ -406,7 +406,13 @@ class FBInterface:
             'value', option.OnStart.DEFAULT_OPTION_PAYLOAD))
 
         if have_on_start_story or self.persistent_menu:
-            await self.remove_greeting_call_to_action_payload()
+            try:
+                await self.remove_greeting_call_to_action_payload()
+            except commonhttp_errors.HttpRequestError as e:
+                # TODO: we are getting error
+                # botstory.integrations.commonhttp.errors.HttpRequestError
+                # 400, message='{"error":{"message":"(#100) You must set a Get Started button if you also wish to use persistent menu.","type":"OAuthException","code":100,"error_subcode":2018145,"fbtrace_id":"D5icEMNngN0"}}'
+                logger.error(e)
             await self.set_greeting_call_to_action_payload(option.OnStart.DEFAULT_OPTION_PAYLOAD)
 
         if self.persistent_menu:
