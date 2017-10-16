@@ -164,6 +164,14 @@ class FBInterface:
         })
 
     async def send_audio(self, recipient, url, options=None):
+        """
+        send audio attachment
+
+        :param recipient:
+        :param url:
+        :param options:
+        :return:
+        """
         if options is None:
             options = {}
 
@@ -185,25 +193,18 @@ class FBInterface:
                     raise err
 
     async def _send_audio(self, recipient, url):
-        return await self.http.post(
-            self.api_uri + '/me/messages/',
-            params={
-                'access_token': self.token,
-            },
-            json={
-                'recipient': {
-                    'id': recipient['facebook_user_id'],
-                },
+        """
+        send audio attachment
 
-                'message': {
-                    'attachment': {
-                        'type': 'audio',
-                        'payload': {
-                            'url': url,
-                        },
-                    },
-                },
-            })
+        :param recipient:
+        :param url:
+        :return:
+        """
+        return await self._send_attachment(
+            recipient,
+            attachment_type='audio',
+            url=url,
+        )
 
     async def send_image(self, recipient, url, options=None):
         if options is None:
@@ -227,6 +228,21 @@ class FBInterface:
                     raise err
 
     async def _send_image(self, recipient, url):
+        return await self._send_attachment(
+            recipient,
+            attachment_type='image',
+            url=url,
+        )
+
+    async def _send_attachment(self, recipient, attachment_type, url):
+        """
+        send attachment to user
+
+        :param recipient: target user
+        :param attachment_type:
+        :param url:
+        :return:
+        """
         return await self.http.post(
             self.api_uri + '/me/messages/',
             params={
@@ -239,7 +255,7 @@ class FBInterface:
 
                 'message': {
                     'attachment': {
-                        'type': 'image',
+                        'type': attachment_type,
                         'payload': {
                             'url': url,
                         },
