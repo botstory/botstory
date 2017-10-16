@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def mock_interface(mocker):
     mocker.patch.object(
         botstory.integrations.fb.messenger.FBInterface,
-        'send_text_message',
+        'send_audio',
         aiohttp.test_utils.make_mocked_coro('something'),
     )
     mocker.patch.object(
@@ -30,6 +30,11 @@ def mock_interface(mocker):
     mocker.patch.object(
         botstory.integrations.fb.messenger.FBInterface,
         'send_template',
+        aiohttp.test_utils.make_mocked_coro('something'),
+    )
+    mocker.patch.object(
+        botstory.integrations.fb.messenger.FBInterface,
+        'send_text_message',
         aiohttp.test_utils.make_mocked_coro('something'),
     )
     return botstory.integrations.fb.messenger.FBInterface()
@@ -260,6 +265,18 @@ async def test_should_send_template_based_message(mock_interface):
 
         mock_interface.send_template.assert_called_once_with(recipient=talk.user,
                                                              payload=payload)
+
+
+@pytest.mark.asyncio
+async def test_send_audio(mock_interface):
+    with answer.Talk() as talk:
+        story = talk.story
+        story.use(mock_interface)
+
+        await story.send_audio('http://some.ua/image.gif',
+                               user=talk.user)
+
+        mock_interface.send_audio.assert_called_once_with(talk.user, 'http://some.ua/image.gif', None)
 
 
 @pytest.mark.asyncio

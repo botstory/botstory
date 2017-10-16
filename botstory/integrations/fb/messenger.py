@@ -163,6 +163,9 @@ class FBInterface:
             'buttons': buttons,
         })
 
+    async def send_audio(self, recipient, url, options=None):
+        pass
+
     async def send_image(self, recipient, url, options=None):
         if options is None:
             options = {}
