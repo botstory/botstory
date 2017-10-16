@@ -11,6 +11,36 @@ from ...middlewares import option
 logger = logging.getLogger(__name__)
 
 
+def retry_request(retry_message=None):
+    def retry_wrapper(f):
+        async def wrapped(*args, **kwargs):
+            options = kwargs.get('options', {})
+            url = kwargs.get('url')
+
+            should_try = True
+            delay = options.get('retry_delay', 1)
+            tries = options.get('retry_times', 3)
+            res = None
+            while should_try:
+                try:
+                    res = await f(*args, **kwargs)
+                    should_try = False
+                except commonhttp_errors.HttpRequestError as err:
+                    if tries > 0:
+                        tries -= 1
+                        logger.warning(retry_message.format(url))
+                        should_try = True
+                        await asyncio.sleep(delay)
+                    else:
+                        raise err
+
+            return res
+
+        return wrapped
+
+    return retry_wrapper
+
+
 @di.desc('fb', reg=False)
 class FBInterface:
     type = 'facebook'
@@ -163,6 +193,7 @@ class FBInterface:
             'buttons': buttons,
         })
 
+    @retry_request(retry_message='# retry to send audio {}')
     async def send_audio(self, recipient, url, options=None):
         """
         send audio attachment
@@ -172,25 +203,11 @@ class FBInterface:
         :param options:
         :return:
         """
-        if options is None:
-            options = {}
-
-        should_try = True
-        delay = options.get('retry_delay', 1)
-        tries = options.get('retry_times', 3)
-
-        while should_try:
-            try:
-                await self._send_audio(recipient, url)
-                should_try = False
-            except commonhttp_errors.HttpRequestError as err:
-                if tries > 0:
-                    tries -= 1
-                    logger.warning('# retry to send audio {}'.format(url))
-                    should_try = True
-                    await asyncio.sleep(delay)
-                else:
-                    raise err
+        return await self._send_attachment(
+            recipient,
+            attachment_type='audio',
+            url=url,
+        )
 
     async def _send_audio(self, recipient, url):
         """
@@ -206,26 +223,13 @@ class FBInterface:
             url=url,
         )
 
+    @retry_request(retry_message='# retry to send image {}')
     async def send_image(self, recipient, url, options=None):
-        if options is None:
-            options = {}
-
-        should_try = True
-        delay = options.get('retry_delay', 1)
-        tries = options.get('retry_times', 3)
-
-        while should_try:
-            try:
-                await self._send_image(recipient, url)
-                should_try = False
-            except commonhttp_errors.HttpRequestError as err:
-                if tries > 0:
-                    tries -= 1
-                    logger.warning('# retry to send image {}'.format(url))
-                    should_try = True
-                    await asyncio.sleep(delay)
-                else:
-                    raise err
+        return await self._send_attachment(
+            recipient,
+            attachment_type='image',
+            url=url,
+        )
 
     async def _send_image(self, recipient, url):
         return await self._send_attachment(
