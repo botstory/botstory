@@ -164,7 +164,46 @@ class FBInterface:
         })
 
     async def send_audio(self, recipient, url, options=None):
-        pass
+        if options is None:
+            options = {}
+
+        should_try = True
+        delay = options.get('retry_delay', 1)
+        tries = options.get('retry_times', 3)
+
+        while should_try:
+            try:
+                await self._send_audio(recipient, url)
+                should_try = False
+            except commonhttp_errors.HttpRequestError as err:
+                if tries > 0:
+                    tries -= 1
+                    logger.warning('# retry to send audio {}'.format(url))
+                    should_try = True
+                    await asyncio.sleep(delay)
+                else:
+                    raise err
+
+    async def _send_audio(self, recipient, url):
+        return await self.http.post(
+            self.api_uri + '/me/messages/',
+            params={
+                'access_token': self.token,
+            },
+            json={
+                'recipient': {
+                    'id': recipient['facebook_user_id'],
+                },
+
+                'message': {
+                    'attachment': {
+                        'type': 'audio',
+                        'payload': {
+                            'url': url,
+                        },
+                    },
+                },
+            })
 
     async def send_image(self, recipient, url, options=None):
         if options is None:

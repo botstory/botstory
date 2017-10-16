@@ -396,6 +396,35 @@ async def test_should_send_template_based_message():
 
 
 @pytest.mark.asyncio
+async def test_send_audio():
+    with answer.Talk() as talk:
+        story = talk.story
+        fb_interface = story.use(messenger.FBInterface(page_access_token='qwerty1'))
+        mock_http = story.use(mockhttp.MockHttpInterface())
+        await story.start()
+        await fb_interface.send_audio(talk.user, 'http://shevchenko.ua/speach.mp3')
+        mock_http.post.assert_called_with(
+            'https://graph.facebook.com/v2.6/me/messages/',
+            params={
+                'access_token': 'qwerty1',
+            },
+            json={
+                'message': {
+                    'attachment': {
+                        'type': 'audio',
+                        'payload': {
+                            'url': 'http://shevchenko.ua/speach.mp3',
+                        },
+                    }
+                },
+                'recipient': {
+                    'id': talk.user['facebook_user_id'],
+                },
+            }
+        )
+
+
+@pytest.mark.asyncio
 async def test_send_image():
     with answer.Talk() as talk:
         story = talk.story
