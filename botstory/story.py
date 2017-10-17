@@ -89,6 +89,17 @@ class Story:
     async def list_elements(self, elements=None, buttons=None, user=None, options=None):
         return await self.chat.list_elements(elements, buttons, user, options)
 
+    async def send_audio(self, url, user, options=None):
+        """
+        send audio message
+
+        :param url: link to the audio file
+        :param user: target user
+        :param options:
+        :return:
+        """
+        return await self.chat.send_audio(url, user, options)
+
     async def send_image(self, url, user, options=None):
         return await self.chat.send_image(url, user, options)
 

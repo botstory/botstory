@@ -62,6 +62,18 @@ class Chat:
         return await self.send_text_message_to_all_interfaces(
             recipient=user, text=body, options=options)
 
+    async def send_audio(self, url, user, options=None):
+        """
+        send audio message
+
+        :param url: link to the audio file
+        :param user: target user
+        :param options:
+        :return:
+        """
+        tasks = [interface.send_audio(user, url, options) for _, interface in self.interfaces.items()]
+        return [body for body in await asyncio.gather(*tasks)]
+
     async def send_image(self, url, user, options=None):
         tasks = [interface.send_image(user, url, options) for _, interface in self.interfaces.items()]
         return [body for body in await asyncio.gather(*tasks)]
