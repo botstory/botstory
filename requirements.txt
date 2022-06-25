@@ -1,4 +1,4 @@
-aiohttp==2.2.5
+aiohttp==3.8.1
 motor==1.2.1
 pytest==3.2.1
 pytest-asyncio==0.8.0
